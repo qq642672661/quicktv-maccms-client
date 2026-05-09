@@ -1,121 +1,263 @@
-# hello tv
+# QuickTV MacCMS Client
+
 [![License](https://img.shields.io/badge/license-Apache2.0-blue.svg)](https://opensource.org/licenses/apache-2-0)
-[![vue version](https://img.shields.io/badge/vue-3.2-green.svg)](https://github.com/vuejs/core)
-[![vue version](https://img.shields.io/badge/@quicktvui/quicktvui3-latest-green.svg)](https://www.npmjs.com/package/@quicktvui/quicktvui3?activeTab=versions)
+[![Vue](https://img.shields.io/badge/vue-3.4-green.svg)](https://github.com/vuejs/core)
+[![QuickTVUI](https://img.shields.io/badge/@quicktvui/quicktvui3-1.2.0-green.svg)](https://www.npmjs.com/package/@quicktvui/quicktvui3)
+[![MacCMS](https://img.shields.io/badge/MacCMS-10.x-orange.svg)](https://github.com/magicblack/maccms10)
 
-HelloTV是基于 [QuickTVUI](http://v3.quicktvui.com/zh/) 框架的视频点播直播应用，面向使用遥控器交互的安卓大屏设备。
-项目目的是让开发者通过对本项目源码的简单修改，快速实现一些TV端常见的功能页面，从而加速开发进度。如果使用者并不具备编程能力，可以参考“HelloTV-Case”项目，简单修改该项目配置文件就可以快速实现一个标准化的视频类应用。
-点播页面包括瀑布流首页、内容列表、筛选、搜索、详情、历史、收藏、登录等，直播页面包括多级列表页、播放详情页等。
-以下是一些页面效果：
+> 基于 QuickTVUI 框架和 MacCMS 后端的智能电视应用客户端
 
-瀑布流首页
-![image](https://extcdn.hsrc.tv/extend_screen/images/example_app/bgplay.png)
-搜索
-![image](https://extcdn.hsrc.tv/extend_screen/images/example_app/search.png)
-筛选
-![image](https://extcdn.hsrc.tv/extend_screen/images/example_app/filter.png)
-详情页
-![image](https://extcdn.hsrc.tv/extend_screen/images/example_app/detail.png)
-内容编辑页
-![image](doc/edit.png)
-<!-- [![Build Status](https://travis-ci.org/your-username/your-project.svg?branch=master)](https://travis-ci.org/your-username/your-project) -->
-<!-- [![npm version](https://badge.fury.io/js/your-package.svg)](https://badge.fury.io/js/your-package) -->
+这是一个专业的电视端影视应用，整合了 [QuickTVUI](http://v3.quicktvui.com/zh/) 前端框架和 [MacCMS](https://github.com/magicblack/maccms10) 内容管理系统，为智能电视、盒子、投影仪等大屏设备提供完整的影视点播解决方案。
 
+## ✨ 特性
 
+- 🎬 **完整的影视功能** - 点播、直播、搜索、筛选、详情、历史记录
+- 🚀 **快速开发** - 基于 HelloTV 模板，开箱即用
+- 🔌 **MacCMS 集成** - 无缝对接 MacCMS API，支持多资源站
+- 📱 **多设备支持** - 适配小米盒子、Android TV、智能投影等设备
+- 🎨 **精美界面** - 瀑布流首页、沉浸式播放、流畅动画
+- ⚡ **热更新** - 前端代码实时更新，无需重新安装
+- 🔧 **易于定制** - 模块化架构，方便扩展和修改
 
-## 快速开始
+## 📸 界面预览
 
-### 调试
-#### 1. 确认编译环境
-建议windows:
-- node version 16.20.2
-- npm version 8.10
+<table>
+  <tr>
+    <td><img src="https://extcdn.hsrc.tv/extend_screen/images/example_app/bgplay.png" alt="瀑布流首页"/><br/><center>瀑布流首页</center></td>
+    <td><img src="https://extcdn.hsrc.tv/extend_screen/images/example_app/search.png" alt="搜索页面"/><br/><center>搜索页面</center></td>
+  </tr>
+  <tr>
+    <td><img src="https://extcdn.hsrc.tv/extend_screen/images/example_app/filter.png" alt="筛选页面"/><br/><center>筛选页面</center></td>
+    <td><img src="https://extcdn.hsrc.tv/extend_screen/images/example_app/detail.png" alt="详情页面"/><br/><center>详情页面</center></td>
+  </tr>
+</table>
 
+## 🏗️ 架构说明
 
-#### 2. 安装运行Runtime
-下载并安装 [运行环境](http://v3.quicktvui.com/zh/resource/runtime.html) (需要日志时使用debug包，否则使用release)</b>
+本项目是多仓库架构的一部分：
 
-#### 3. 安装依赖
-进入项目录下
+```
+quicktv-maccms 生态系统
+├── quicktv-maccms-client (本仓库)    # 前端应用
+├── quicktv-maccms-adapter             # MacCMS 数据适配器 (开发中)
+├── quicktv-maccms-server              # 后端服务 (可选)
+└── quicktv-maccms-docs                # 文档站点 (计划中)
+```
+
+### 上游依赖追踪
+
+本项目追踪以下上游仓库的更新：
+
+- **HelloTV**: https://github.com/quicktvui/hellotv (基础框架)
+- **MacCMS**: https://github.com/magicblack/maccms10 (后端 CMS)
+- **QuickTVUI**: https://github.com/quicktvui/quicktvui3 (UI 组件库，通过 npm)
+
+## 🚀 快速开始
+
+### 环境要求
+
+- **Node.js**: 16.20.2 (推荐)
+- **npm**: 8.10+
+- **操作系统**: Windows / macOS / Linux
+
+### 1. 安装依赖
+
 ```bash
 npm install --legacy-peer-deps
 ```
-#### 4. 编译调试
+
+### 2. 配置 MacCMS 后端
+
+编辑 `src/config/build-config.ts`：
+
+```typescript
+export default {
+  // MacCMS API 地址
+  requestBaseUrl: 'http://your-maccms-api.com/api',
+  
+  // 应用包名
+  packageName: 'es.tv.huan.hellotv',
+  
+  // 是否使用模拟数据
+  useMockData: false,
+}
+```
+
+### 3. 启动开发服务器
+
 ```bash
 npm run dev
 ```
-#### 5. 打开运行Runtime apk，查看效果
-点击下图加载测试代码
-![image](https://github.com/quicktvui/hellotv/assets/11962446/4571fb02-b761-405e-bbc8-a6baaa6f8a4a)
->> 注意这里电脑调试地址要改成你电脑本机ip
+
+服务器将在 `http://0.0.0.0:38989` 启动。
+
+### 4. 配置设备连接
+
+#### 方式一：通过 ADB 配置
+
 ```bash
-adb shell am broadcast -a  com.extscreen.runtime.ACTION_CHANGE_DEBUG_SERVER --es ip 192.168.xx.xx(电脑IP地址)
+# 连接设备
+adb connect <设备IP>:5555
+
+# 配置调试服务器地址
+adb shell am broadcast -a com.extscreen.runtime.ACTION_CHANGE_DEBUG_SERVER --es ip <你的电脑IP>
+
+# 触发代码更新
+adb shell am broadcast -a eskit.sdk.action.CODE_CHANGED -f 32
 ```
-关于adb等其它配置具体说明请查看 <u>[安装和环境配置]([http://developer.extscreen.com/guide/](http://v3.quicktvui.com/zh/guide/installation.html)) </u>
 
+#### 方式二：在设备上手动配置
 
-最后看到加载出页面，表示完成调试，即可随时修改源码查看效果。
+1. 在设备上安装 [QuickTVUI Runtime](http://v3.quicktvui.com/zh/resource/runtime.html)
+2. 打开 Runtime 应用
+3. 点击"加载测试代码"
+4. 输入电脑 IP 地址（如 `192.168.10.133`）
+5. 点击加载
 
+### 5. 查看效果
 
-#### 6. 打包生成APK
+应用会自动从开发服务器加载代码，修改源码后会实时更新。
 
-[APK配置](android/README.md)
+## 📦 打包发布
 
-``` bash
-# 生成debug包
+### 生成 APK
+
+```bash
+# Debug 包
 npm run build-apk-debug
-# 生成release包
+
+# Release 包
 npm run build-apk-release
 ```
-打包完成后apk在 `./android/app/build/outputs/apk/` 文件夹下
 
-## 源码修改
-接入网络数据的准备工作请查看[PROJECT-README.md](PROJECT-README.md)
-通过对每个页面提供的接口进行数据替换，即可实现自己的业务逻辑。
+APK 文件位于 `./android/app/build/outputs/apk/`
 
-如有定制样式需求，可自行修改页面里样式文件。
+### 配置签名
 
-具体可查看[/src/pages](./src/pages)目录下对应README说明。
+编辑 `android/app/build.gradle`，配置签名信息。详见 [Android 配置文档](android/README.md)。
 
+## 🔧 MacCMS 对接
 
-## 开发进度
-- [x] 瀑布流首页
-- [x] 搜索页
-- [x] 媒资详情页
-- [x] 筛选页
-- [x] 多级列表页
-- [x] 一键打包生成APK
+### API 端点映射
 
-以上页面开发完成，如发现问题，请提交issue
+本项目通过统一的 API 适配层对接 MacCMS：
 
-开发中
-- [ ] 内容编辑页
+| 功能 | 端点 | MacCMS 对应 |
+|------|------|-------------|
+| 首页导航 | `/home/tabs` | 分类列表 |
+| 内容列表 | `/home/tabs/{id}` | 视频列表 |
+| 搜索 | `/search` | 搜索接口 |
+| 详情 | `/album/details/{id}` | 视频详情 |
+| 筛选 | `/filter/{id}/contents` | 筛选接口 |
+| 播放地址 | `/streams/{id}` | 播放地址解析 |
 
-计划中
-- [ ] 短视频浏览
+### 数据适配
 
-## 关于QuickTVUI
-QuickTVUI是基于[Hippy](https://github.com/Tencent/Hippy)框架实现的TV快应用开发框架，旨在解决大屏开发困难、更新困难等疑难问题。  
-它具有以下特征：
-- 开发便捷：内置了大量针对智能电视开发的UI组件，简单易用;
-- 快速更新：利用前端生态，实现免下载、免安装，方便快速迭代；
-- 接近原生的体验：采用react-native的形式,底层用native实现，保证接近原生的体验;
-- 全面兼容：已适配市面上大部分型号的智能电视、盒子、智能投影等，可免除开发者大量的适配工作;
+所有 MacCMS 数据通过适配器层转换为标准格式，适配器代码位于：
 
+- `src/pages/*/api/` - 各页面的 API 调用
+- `src/pages/*/adapter/` - 数据转换逻辑
+- `src/tools/request/` - 统一请求管理
 
-<!-- ## 文档 -->
-<!-- 查看完整的文档和示例，请访问[quicktvUI](http://quicktvui.com/)文档。 -->
+## 📁 项目结构
 
-## 贡献
-我们欢迎并鼓励贡献，您可以通过以下方式参与：
-- 提交错误报告或功能请求
-- 提交拉取请求
-<!-- 请阅读[贡献指南](CONTRIBUTING.md)获取更多信息。 -->
-## 许可证
-该项目基于Apache2.0许可证。请查阅 [LICENSE](https://opensource.org/licenses/apache-2-0) 文件以获取更多信息。
+```
+quicktv-maccms-client/
+├── src/
+│   ├── pages/              # 页面
+│   │   ├── home/          # 首页
+│   │   ├── detail/        # 详情页
+│   │   ├── search/        # 搜索页
+│   │   ├── filter/        # 筛选页
+│   │   └── ...
+│   ├── components/        # 公共组件
+│   ├── config/           # 配置文件
+│   │   └── build-config.ts  # 主配置
+│   ├── tools/            # 工具类
+│   │   └── request/      # 请求管理
+│   ├── api/              # 全局 API
+│   └── assets/           # 资源文件
+├── scripts/              # 构建脚本
+│   ├── dev.ts           # 开发脚本
+│   ├── build.ts         # 构建脚本
+│   └── quicktvui-webpack.dev.ts  # Webpack 配置
+├── android/              # Android 配置
+└── package.json
+```
 
-## 支持
+详细说明请查看 [PROJECT-README.md](PROJECT-README.md)
 
-如果您有任何问题或疑问，请通过以下方式联系我们：
+## 🔄 同步上游更新
 
-- 邮箱：zhaopeng1@huan.tv
+### 同步 HelloTV 更新
+
+```bash
+git fetch upstream-hellotv
+git merge upstream-hellotv/dev-1.5-standard
+```
+
+### 同步 MacCMS 更新
+
+MacCMS 主要是后端系统，前端只需关注 API 变化。如果 MacCMS API 有更新，需要相应调整适配器代码。
+
+### 更新 QuickTVUI
+
+```bash
+npm update @quicktvui/quicktvui3
+```
+
+## 🛠️ 开发指南
+
+### 添加新页面
+
+1. 在 `src/pages/` 创建页面目录
+2. 创建 `api/`、`adapter/`、`components/` 子目录
+3. 在 `src/routes.ts` 注册路由
+4. 参考现有页面的结构和命名规范
+
+### 修改 API 对接
+
+1. 编辑 `src/config/build-config.ts` 修改 API 地址
+2. 在对应页面的 `api/request-url.ts` 修改端点
+3. 在 `adapter/index.ts` 调整数据转换逻辑
+
+### 自定义样式
+
+每个页面的样式文件位于 `src/pages/*/scss/`，可以自由修改。
+
+## 📚 相关文档
+
+- [QuickTVUI 官方文档](http://v3.quicktvui.com/zh/)
+- [MacCMS 官方文档](https://www.maccms.la/)
+- [Hippy 框架文档](https://hippyjs.org/)
+- [Vue 3 文档](https://cn.vuejs.org/)
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+在提交 PR 前，请确保：
+
+1. 代码通过 ESLint 检查：`npm run lint`
+2. 遵循现有的代码风格和目录结构
+3. 添加必要的注释和文档
+
+## 📄 许可证
+
+本项目基于 [Apache 2.0](LICENSE) 许可证开源。
+
+## 🙏 致谢
+
+- [QuickTVUI](https://github.com/quicktvui) - 提供优秀的 TV 开发框架
+- [HelloTV](https://github.com/quicktvui/hellotv) - 提供项目模板
+- [MacCMS](https://github.com/magicblack/maccms10) - 提供内容管理系统
+- [Hippy](https://github.com/Tencent/Hippy) - 提供跨平台框架
+
+## 📮 联系方式
+
+- 项目主页：https://github.com/qq642672661/quicktv-maccms-client
+- 问题反馈：https://github.com/qq642672661/quicktv-maccms-client/issues
+
+---
+
+**注意**：本项目仅供学习交流使用，请遵守相关法律法规，不得用于非法用途。
