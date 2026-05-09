@@ -5,6 +5,7 @@ node_modules
 # local env files
 .env.local
 .env.*.local
+.env
 
 # Log files
 npm-debug.log*
@@ -25,6 +26,15 @@ pnpm-debug.log*
 /package-lock.json
 yarn.lock
 
+# Android
 .gradle
 android/.gradle
 android/.idea
+android/app/build/
+*.apk
+*.aab
+
+# OS files
+Thumbs.db
+*.swp
+*~
