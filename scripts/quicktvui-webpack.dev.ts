@@ -16,10 +16,12 @@ module.exports = {
     aggregateTimeout: 1500
   },
   devServer: {
+    host: '0.0.0.0',
+    port: 38989,
     // remote debug server address
     remote: {
       protocol: 'http',
-      host: '127.0.0.1',
+      host: '0.0.0.0',
       port: 38989
     },
     // support inspect vue components, store and router, by default is disabled
@@ -54,7 +56,7 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify('development'),
-        HOST: JSON.stringify(process.env.DEV_HOST || '127.0.0.1'),
+        HOST: JSON.stringify(process.env.DEV_HOST || '0.0.0.0'),
         PORT: JSON.stringify(process.env.DEV_PORT || 38989)
       },
       __VUE_OPTIONS_API__: true,
