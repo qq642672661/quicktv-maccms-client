@@ -12,7 +12,6 @@ export interface Item {
     options: object
   }
 
-  // 内部私有
   _timestamp: number
   _type?: 'history' | 'favorite'
   _action?: 'add' | 'del'
@@ -24,9 +23,33 @@ export interface Records {
   items: Item[]
 }
 
+export interface PlayHistoryRecord {
+  id: string
+  videoId: string
+  videoTitle: string
+  episodeId: string
+  episodeTitle: string
+  coverUrl: string
+  playProgress: number
+  totalDuration: number
+  lastPlayTime: number
+  deviceId: string
+}
+
+export interface ContinuePlayInfo {
+  videoId: string
+  episodeId: string
+  playProgress: number
+  canContinue: boolean
+}
+
 export interface HistoryApi {
-  // 获取历史/收藏列表
   getRecords(deviceId: string, type: 'history' | 'favorite', page?: number, limit?: number): Promise<Records>
-  // 删除/清空历史、收藏记录
   delRecords(deviceId: string, type: 'history' | 'favorite', recordId?: string): Promise<any>
+  addPlayHistory(deviceId: string, record: Partial<PlayHistoryRecord>): Promise<any>
+  getPlayHistory(deviceId: string, page?: number, limit?: number): Promise<{ total: number; items: PlayHistoryRecord[] }>
+  clearPlayHistory(deviceId: string): Promise<any>
+  deletePlayHistoryItem(deviceId: string, recordId: string): Promise<any>
+  getContinuePlayInfo(deviceId: string, videoId: string): Promise<ContinuePlayInfo>
+  updatePlayProgress(deviceId: string, recordId: string, progress: number, duration: number): Promise<any>
 }
