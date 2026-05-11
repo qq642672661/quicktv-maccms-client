@@ -20,6 +20,7 @@ import { onMounted, ref } from 'vue'
 import { ESKeyEvent, ESKeyCode, useESToast } from '@extscreen/es3-core'
 import { useESRouter } from '@extscreen/es3-router'
 import { mockMediaList, mockCategories, mockChannels, mockPrograms } from './mock/index'
+import liveManager from '../../api/live'
 import playerLive from './components/player/index.vue'
 import channelMenu from './components/menu/index.vue'
 
@@ -29,9 +30,37 @@ const playerRef = ref()
 const menuRef = ref()
 const showMenu = ref(false)
 
-onMounted(() => {
-  playerRef.value?.init({ mediaList: mockMediaList })
-  menuRef.value?.init({ categories: mockCategories, channels: mockChannels })
+onMounted(async () => {
+  try {
+    const channelsData = await liveManager.getChannelList('', 1, 50)
+    const categories = await liveManager.getCategoryList()
+    
+    if (channelsData && channelsData.data && channelsData.data.items) {
+      const channels = channelsData.data.items.map((ch: any) => ({
+        id: ch.id,
+        name: ch.name,
+        logo: ch.logo,
+        url: ch.stream_url,
+        category: ch.category,
+        status: ch.status,
+        viewerCount: ch.viewer_count
+      }))
+      
+      playerRef.value?.init({ mediaList: channels })
+      menuRef.value?.init({ categories: categories || mockCategories, channels })
+      
+      toast.showToast(`已加载 ${channels.length} 个真实频道`)
+    } else {
+      playerRef.value?.init({ mediaList: mockMediaList })
+      menuRef.value?.init({ categories: mockCategories, channels: mockChannels })
+      toast.showToast('使用 Mock 数据')
+    }
+  } catch (error) {
+    console.error('加载频道失败:', error)
+    playerRef.value?.init({ mediaList: mockMediaList })
+    menuRef.value?.init({ categories: mockCategories, channels: mockChannels })
+    toast.showToast('加载失败，使用 Mock 数据')
+  }
 })
 
 function loadPrograms(channelId: string, callback: (channelId: string) => object) {

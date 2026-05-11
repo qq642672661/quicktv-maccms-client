@@ -5,9 +5,25 @@ const { VueLoaderPlugin } = require('vue-loader')
 const webpack = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
 const WebpackObfuscator = require('webpack-obfuscator')
+const dotenv = require('dotenv')
+const fs = require('fs')
 const platform = 'android'
 const pkg = require('../package.json')
-let cssLoader = "@extscreen/es3-vue-css-loader";
+let cssLoader = '@extscreen/es3-vue-css-loader'
+
+const envPath = path.resolve(__dirname, '../.env')
+const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {}
+
+const envVars = {
+  'import.meta.env.VITE_MACCMS_API_URL': JSON.stringify(envConfig.VITE_MACCMS_API_URL || 'http://192.168.10.133:3000'),
+  'import.meta.env.VITE_MACCMS_TIMEOUT': JSON.stringify(envConfig.VITE_MACCMS_TIMEOUT || '10000'),
+  'import.meta.env.VITE_APP_PACKAGE_NAME': JSON.stringify(envConfig.VITE_APP_PACKAGE_NAME || 'es.tv.huan.hellotv'),
+  'import.meta.env.VITE_APP_VERSION': JSON.stringify(envConfig.VITE_APP_VERSION || '1.0.5'),
+  'import.meta.env.VITE_USE_MOCK_DATA': JSON.stringify(envConfig.VITE_USE_MOCK_DATA || 'false'),
+  'import.meta.env.VITE_DEBUG_MODE': JSON.stringify(envConfig.VITE_DEBUG_MODE || 'false'),
+  'import.meta.env.VITE_DEV_SERVER_HOST': JSON.stringify(envConfig.VITE_DEV_SERVER_HOST || '0.0.0.0'),
+  'import.meta.env.VITE_DEV_SERVER_PORT': JSON.stringify(envConfig.VITE_DEV_SERVER_PORT || '38989')
+}
 
 module.exports = {
   mode: 'production',
@@ -79,7 +95,7 @@ module.exports = {
       __TEST__: false,
       __FEATURE_PROD_DEVTOOLS__: false,
       __BROWSER__: false,
-      'process.env': '{}'
+      ...envVars
     }),
     new CaseSensitivePathsPlugin(),
     new VueLoaderPlugin(),
@@ -110,13 +126,13 @@ module.exports = {
         ]
       },
       {
-        test:/\.(sc|c)ss$/,
+        test: /\.(sc|c)ss$/,
         use: [
           cssLoader,
           {
             loader: 'sass-loader',
             options: {
-              additionalData:`@use 'src/config/public-config.scss' as *;`,
+              additionalData: `@use 'src/config/public-config.scss' as *;`
             }
           }
         ]
@@ -179,7 +195,7 @@ module.exports = {
     extensions: ['.js', '.vue', '.json', '.ts'],
     alias: (() => {
       const aliases = {
-        src: path.resolve('./src'),
+        src: path.resolve('./src')
       }
       return aliases
     })()
