@@ -1,6 +1,6 @@
 import testLogger from './testLogger.js'
 
-const API_BASE_URL = 'http://your-server-ip:3000/api'
+const API_BASE_URL = 'http://192.168.10.133:8080/api.php/provide/vod'
 
 export default {
   async request(url, options = {}) {
