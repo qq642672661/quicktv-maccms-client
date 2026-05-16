@@ -1,12 +1,34 @@
+<!--
+  视频详情页组件
+  功能：
+  1. 显示视频播放器
+  2. 展示视频元信息（标题、演员、导演等）
+  3. 显示剧情简介
+  4. 选集列表（支持多集切换）
+  5. 自动播放下一集
+-->
 <template>
+  <!-- 视频详情页主容器 -->
   <div class="video-detail-page">
+    <!-- 顶部导航栏 -->
     <div class="header">
+      <!-- 返回按钮：返回上一页 -->
       <text class="back-btn" onclick="handleBack" focusable="true">← 返回</text>
+      <!-- 页面标题 -->
       <text class="title">视频详情</text>
     </div>
 
+    <!-- 内容区域：当数据加载完成且视频存在时显示 -->
     <div class="content" if="{{!loading && video}}">
+      <!-- 视频播放器容器 -->
       <div class="video-player">
+        <!--
+          视频播放器组件
+          - src: 当前播放的视频URL
+          - autoplay: 是否自动播放
+          - controls: 显示播放控制条
+          - 事件监听：准备完成、开始、暂停、结束、错误
+        -->
         <video
           id="player"
           src="{{currentPlayUrl}}"
@@ -20,30 +42,46 @@
         ></video>
       </div>
 
+      <!-- 视频元信息区域：包含标题、演员、导演、封面等 -->
       <div class="video-meta">
+        <!-- 左侧文字信息 -->
         <div class="meta-left">
+          <!-- 视频标题 -->
           <text class="video-name">{{video.vod_name}}</text>
+          <!-- 基本信息：类型、年份、地区、更新时间 -->
           <div class="meta-info">
             <text class="meta-item">类型: {{video.type_name}}</text>
             <text class="meta-item">年份: {{video.vod_year}}</text>
             <text class="meta-item">地区: {{video.vod_area}}</text>
             <text class="meta-item">更新: {{video.vod_time}}</text>
           </div>
+          <!-- 主演信息：如果存在则显示 -->
           <text class="video-actor" if="{{video.vod_actor}}">主演: {{video.vod_actor}}</text>
+          <!-- 导演信息：如果存在则显示 -->
           <text class="video-director" if="{{video.vod_director}}">导演: {{video.vod_director}}</text>
         </div>
+        <!-- 右侧封面图 -->
         <image class="video-poster" src="{{video.vod_pic}}" />
       </div>
 
+      <!-- 剧情简介区域：如果存在简介则显示 -->
       <div class="video-desc" if="{{video.vod_content}}">
         <text class="desc-title">剧情简介</text>
         <text class="desc-content">{{video.vod_content}}</text>
       </div>
 
+      <!-- 选集列表：如果有多集则显示 -->
       <div class="episode-list" if="{{episodes.length > 0}}">
         <text class="episode-title">选集</text>
+        <!-- 选集网格布局 -->
         <div class="episode-grid">
+          <!-- 循环渲染每一集 -->
           <block for="{{episodes}}">
+            <!--
+              选集按钮
+              - 当前播放的集数会高亮显示（active类）
+              - 点击切换到对应集数
+            -->
             <text
               class="episode-item {{currentEpisodeIndex === $idx ? 'active' : ''}}"
               onclick="handleEpisodeClick($idx)"
@@ -54,12 +92,15 @@
       </div>
     </div>
 
+    <!-- 加载状态：数据加载中时显示 -->
     <div class="loading" if="{{loading}}">
       <text>加载中...</text>
     </div>
 
+    <!-- 错误状态：加载失败时显示 -->
     <div class="error" if="{{!loading && !video}}">
       <text>视频加载失败</text>
+      <!-- 重试按钮：点击重新加载视频详情 -->
       <text class="retry-btn" onclick="loadVideoDetail" focusable="true">重试</text>
     </div>
   </div>
@@ -250,94 +291,159 @@
 }
 </style>
 
+<!--
+  脚本逻辑部分
+  负责视频详情数据加载、播放控制和选集切换
+-->
 <script>
+// 导入API服务模块，用于获取视频详情
 import api from '../services/api.js'
+// 导入路由模块，用于页面返回
 import router from '@system.router'
 
 export default {
+  // 数据定义：组件的响应式数据
   data: {
-    videoId: null,
-    video: null,
-    loading: false,
-    episodes: [],
-    currentEpisodeIndex: 0,
-    currentPlayUrl: '',
-    autoplay: true
+    videoId: null,              // 视频ID（从路由参数获取）
+    video: null,                // 视频详情数据对象
+    loading: false,             // 加载状态标识
+    episodes: [],               // 选集列表数组
+    currentEpisodeIndex: 0,     // 当前播放的集数索引
+    currentPlayUrl: '',         // 当前播放的视频URL
+    autoplay: true              // 是否自动播放
   },
 
+  /**
+   * 生命周期：页面初始化
+   * 从路由参数获取视频ID并加载视频详情
+   */
   onInit() {
+    // 从页面参数中获取视频ID
     this.videoId = this.$page.params.id
     if (this.videoId) {
+      // 如果视频ID存在，加载视频详情
       this.loadVideoDetail()
     }
   },
 
+  /**
+   * 加载视频详情
+   * 从后端API获取视频的完整信息，包括播放地址
+   */
   async loadVideoDetail() {
-    this.loading = true
+    this.loading = true  // 开始加载
     try {
+      // 调用API获取视频详情
       const response = await api.getVideoDetail(this.videoId)
       this.video = response.data
-      
+
+      // 如果视频存在且有播放地址，解析选集信息
       if (this.video && this.video.vod_play_url) {
+        // 解析MacCMS格式的播放地址
         this.parseEpisodes(this.video.vod_play_url)
+        // 如果有选集，设置第一集为当前播放URL
         if (this.episodes.length > 0) {
           this.currentPlayUrl = this.episodes[0].url
         }
       }
     } catch (error) {
       console.error('加载视频详情失败:', error)
-      this.video = null
+      this.video = null  // 加载失败时清空视频数据
     } finally {
-      this.loading = false
+      this.loading = false  // 结束加载状态
     }
   },
 
+  /**
+   * 解析选集信息
+   * MacCMS播放地址格式：第1集$url1#第2集$url2#第3集$url3
+   * 解析规则：
+   * 1. 用 # 分割不同集数
+   * 2. 每集用 $ 分割集名和URL
+   * @param {String} playUrl - MacCMS格式的播放地址字符串
+   */
   parseEpisodes(playUrl) {
-    this.episodes = []
-    
+    this.episodes = []  // 清空选集列表
+
+    // 如果播放地址为空，直接返回
     if (!playUrl) return
-    
+
+    // 按 # 分割成多个集数
     const lines = playUrl.split('#')
     lines.forEach((line, index) => {
+      // 按 $ 分割集名和URL
       const parts = line.split('$')
       if (parts.length === 2) {
+        // 添加到选集列表
         this.episodes.push({
-          name: parts[0] || `第${index + 1}集`,
-          url: parts[1]
+          name: parts[0] || `第${index + 1}集`,  // 集名，如果为空则使用默认名称
+          url: parts[1]                          // 播放URL
         })
       }
     })
   },
 
+  /**
+   * 处理选集点击
+   * 切换到指定集数并开始播放
+   * @param {Number} index - 选集索引
+   */
   handleEpisodeClick(index) {
-    this.currentEpisodeIndex = index
-    this.currentPlayUrl = this.episodes[index].url
-    this.autoplay = true
+    this.currentEpisodeIndex = index           // 更新当前集数索引
+    this.currentPlayUrl = this.episodes[index].url  // 更新播放URL
+    this.autoplay = true                       // 设置自动播放
   },
 
+  /**
+   * 处理返回按钮
+   * 返回上一页
+   */
   handleBack() {
     router.back()
   },
 
+  /**
+   * 视频播放器事件：准备完成
+   * 当视频准备好可以播放时触发
+   */
   handlePrepared() {
     console.log('视频准备完成')
   },
 
+  /**
+   * 视频播放器事件：开始播放
+   * 当视频开始播放时触发
+   */
   handleStart() {
     console.log('视频开始播放')
   },
 
+  /**
+   * 视频播放器事件：暂停
+   * 当视频暂停时触发
+   */
   handlePause() {
     console.log('视频暂停')
   },
 
+  /**
+   * 视频播放器事件：播放完成
+   * 当视频播放结束时触发
+   * 自动播放下一集（如果存在）
+   */
   handleFinish() {
     console.log('视频播放完成')
+    // 如果不是最后一集，自动播放下一集
     if (this.currentEpisodeIndex < this.episodes.length - 1) {
       this.handleEpisodeClick(this.currentEpisodeIndex + 1)
     }
   },
 
+  /**
+   * 视频播放器事件：播放错误
+   * 当视频播放出错时触发
+   * @param {Object} e - 错误事件对象
+   */
   handleError(e) {
     console.error('视频播放错误:', e)
   }

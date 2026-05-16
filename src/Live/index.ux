@@ -1,9 +1,24 @@
+<!--
+  直播频道列表页组件
+  功能：
+  1. 展示直播频道列表
+  2. 频道分类筛选（央视、卫视、地方等）
+  3. 频道搜索功能
+  4. 点击频道跳转到播放页面
+  5. 底部导航栏
+-->
 <template>
+  <!-- 直播页面主容器 -->
   <div class="live-page">
+    <!-- 顶部导航栏：包含返回按钮、标题和搜索栏 -->
     <div class="header">
+      <!-- 返回按钮：返回上一页 -->
       <text class="back-btn" onclick="handleBack" focusable="true">← 返回</text>
+      <!-- 页面标题 -->
       <text class="title">直播频道</text>
+      <!-- 搜索栏区域 -->
       <div class="search-bar">
+        <!-- 搜索输入框：绑定searchKeyword数据 -->
         <input
           type="text"
           class="search-input"
@@ -12,17 +27,22 @@
           onchange="handleSearchInput"
           focusable="true"
         />
+        <!-- 搜索按钮：点击触发搜索 -->
         <text class="search-btn" onclick="handleSearch" focusable="true">搜索</text>
       </div>
     </div>
 
+    <!-- 内容区域：左侧分类栏 + 右侧频道列表 -->
     <div class="content">
+      <!-- 左侧分类导航栏 -->
       <div class="sidebar">
+        <!-- "全部频道"按钮：显示所有频道 -->
         <text
           class="category-item {{currentCategory === null ? 'active' : ''}}"
           onclick="handleCategoryChange(null)"
           focusable="true"
         >全部频道</text>
+        <!-- 循环渲染各个分类按钮 -->
         <block for="{{categories}}">
           <text
             class="category-item {{currentCategory === $item ? 'active' : ''}}"
@@ -32,42 +52,54 @@
         </block>
       </div>
 
+      <!-- 右侧主内容区域：频道列表、加载状态、空状态 -->
       <div class="main-content">
+        <!-- 频道网格：当不在加载中且有频道数据时显示 -->
         <div class="channel-grid" if="{{!loading && channels.length > 0}}">
+          <!-- 循环渲染每个频道卡片 -->
           <block for="{{channels}}">
             <div
               class="channel-card"
               onclick="handleChannelClick($item)"
               focusable="true"
             >
+              <!-- 频道Logo：如果没有则显示默认图标 -->
               <image class="channel-logo" src="{{$item.logo || '/common/default-channel.png'}}" />
+              <!-- 频道名称 -->
               <text class="channel-name">{{$item.name}}</text>
+              <!-- 频道分类 -->
               <text class="channel-category">{{$item.category}}</text>
             </div>
           </block>
         </div>
 
+        <!-- 加载状态：数据加载中时显示 -->
         <div class="loading" if="{{loading}}">
           <text>加载中...</text>
         </div>
 
+        <!-- 空状态：没有频道数据时显示 -->
         <div class="empty" if="{{!loading && channels.length === 0}}">
           <text>暂无频道</text>
         </div>
       </div>
     </div>
 
+    <!-- 底部导航栏：首页、直播、管理三个标签 -->
     <div class="footer">
+      <!-- 首页标签 -->
       <text
         class="footer-btn"
         onclick="handleTabChange('home')"
         focusable="true"
       >首页</text>
+      <!-- 直播标签：当前激活状态 -->
       <text
         class="footer-btn active"
         onclick="handleTabChange('live')"
         focusable="true"
       >直播</text>
+      <!-- 管理标签 -->
       <text
         class="footer-btn"
         onclick="handleTabChange('admin')"
@@ -276,83 +308,153 @@
 }
 </style>
 
+<!--
+  脚本逻辑部分
+  负责直播频道数据加载、分类筛选和搜索功能
+-->
 <script>
+// 导入API服务模块，用于获取直播频道数据
 import api from '../services/api.js'
+// 导入路由模块，用于页面跳转
 import router from '@system.router'
 
 export default {
+  // 数据定义：组件的响应式数据
   data: {
-    searchKeyword: '',
+    searchKeyword: '',      // 搜索关键词
+    // 频道分类列表：预定义的常见分类
     categories: ['央视', '卫视', '地方', '体育', '新闻', '影视', '少儿', '其他'],
-    currentCategory: null,
-    channels: [],
-    loading: false
+    currentCategory: null,  // 当前选中的分类（null表示全部）
+    channels: [],           // 频道列表数据
+    loading: false          // 加载状态标识
   },
 
+  /**
+   * 生命周期：页面初始化
+   * 在页面加载时自动调用，加载频道列表
+   */
   onInit() {
-    this.loadChannels()
+    this.loadChannels()  // 加载直播频道列表
   },
 
+  /**
+   * 加载直播频道列表
+   * 从后端API获取频道数据，支持按分类筛选
+   */
   async loadChannels() {
-    this.loading = true
+    this.loading = true  // 开始加载
     try {
+      // 调用API获取频道列表：传入分类参数
       const response = await api.getLiveChannels(this.currentCategory)
-      this.channels = response.data || []
+      // 兼容不同的响应格式
+      const items = response.data?.items || response.data || []
+      // 数据映射：统一字段名称
+      this.channels = items.map(channel => ({
+        id: channel.id,                                    // 频道ID
+        name: channel.name,                                // 频道名称
+        logo: channel.logo,                                // 频道Logo
+        url: channel.streamUrl || channel.stream_url,      // 直播流URL
+        category: channel.category,                        // 频道分类
+        status: channel.status                             // 频道状态
+      }))
     } catch (error) {
       console.error('加载频道失败:', error)
-      this.channels = []
+      this.channels = []  // 加载失败时清空列表
     } finally {
-      this.loading = false
+      this.loading = false  // 结束加载状态
     }
   },
 
+  /**
+   * 处理搜索输入
+   * 当用户在搜索框输入时触发
+   * @param {Object} e - 事件对象，包含输入的值
+   */
   handleSearchInput(e) {
     this.searchKeyword = e.value
   },
 
+  /**
+   * 执行搜索
+   * 根据搜索关键词从后端搜索频道
+   */
   async handleSearch() {
+    // 如果搜索关键词为空，不执行搜索
     if (!this.searchKeyword.trim()) {
       return
     }
-    
-    this.loading = true
+
+    this.loading = true  // 开始搜索
     try {
+      // 调用搜索API：传入关键词
       const response = await api.searchLiveChannels(this.searchKeyword)
-      this.channels = response.data || []
+      // 兼容不同的响应格式
+      const items = response.data?.items || response.data || []
+      // 数据映射：统一字段名称
+      this.channels = items.map(channel => ({
+        id: channel.id,
+        name: channel.name,
+        logo: channel.logo,
+        url: channel.streamUrl || channel.stream_url,
+        category: channel.category,
+        status: channel.status
+      }))
     } catch (error) {
       console.error('搜索频道失败:', error)
-      this.channels = []
+      this.channels = []  // 搜索失败时清空列表
     } finally {
-      this.loading = false
+      this.loading = false  // 结束加载状态
     }
   },
 
+  /**
+   * 处理分类切换
+   * 当用户点击分类按钮时触发
+   * @param {String|null} category - 分类名称，null表示全部
+   */
   handleCategoryChange(category) {
-    this.currentCategory = category
-    this.loadChannels()
+    this.currentCategory = category  // 更新当前分类
+    this.loadChannels()              // 重新加载频道列表
   },
 
+  /**
+   * 处理频道点击
+   * 跳转到直播播放页面
+   * @param {Object} channel - 频道对象，包含name、url、logo等信息
+   */
   handleChannelClick(channel) {
     router.push({
-      uri: 'pages/LivePlayer',
+      uri: 'pages/LivePlayer',  // 目标页面路径
       params: {
-        name: channel.name,
-        url: channel.url,
-        logo: channel.logo
+        name: channel.name,     // 传递频道名称
+        url: channel.url,       // 传递直播流URL
+        logo: channel.logo      // 传递频道Logo
       }
     })
   },
 
+  /**
+   * 处理返回按钮
+   * 返回上一页
+   */
   handleBack() {
     router.back()
   },
 
+  /**
+   * 处理底部标签切换
+   * 根据选中的标签进行页面跳转
+   * @param {String} tab - 标签名称（home/live/admin）
+   */
   handleTabChange(tab) {
     if (tab === 'home') {
+      // 跳转到首页（使用replace避免返回到直播页）
       router.replace({ uri: 'pages/Home' })
     } else if (tab === 'admin') {
+      // 跳转到管理页面
       router.push({ uri: 'pages/Admin' })
     }
+    // live标签不需要跳转，因为已经在直播页
   }
 }
 </script>
