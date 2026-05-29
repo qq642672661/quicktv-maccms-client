@@ -1,16 +1,12 @@
-import myDataManager, { getMysection, ImySectionRes, posterTypes, VipInfo } from '../../pages/my/my-data-manager'
+import { getMysection, ImySectionRes, posterTypes, VipInfo } from '../../pages/my/my-data-manager'
 import ic_vip_normal from '../../assets/my/ic_vip_normal.png'
 import ic_collect_normal from '../../assets/my/ic_collect_normal.png'
 import ic_collect_focus from '../../assets/my/ic_collect_focus.png'
 import ic_order_normal from '../../assets/my/ic_order_normal.png'
 import ic_order_focus from '../../assets/my/ic_order_focus.png'
 import requestManager from '../../tools/request'
-import { getUserAccountList, urlGetAgreementConfig, urlGetLongHistory } from '../user/request-url'
-import launch from '../../tools/launch'
-import buildConfig from '../../config/build-config'
+import { urlGetAgreementConfig, urlGetLongHistory } from '../user/request-url'
 import { UserInfo } from '../user/impl-user'
-import BuildConfig from '../../config/build-config'
-import { getHistorySubTitle } from '../../tools/common'
 
 class MyAPi {
   /**
@@ -18,12 +14,14 @@ class MyAPi {
    * @param routerParams 当前页面的路由参数对象
    */
   async initPageData(routerParams: any): Promise<any> {
+    void routerParams
     return {}
   }
   /**
    * 获取用户订单信息信息 - 第一个板块展示
    */
   getCenterInfo(vipInfo: VipInfo, info: UserInfo | null): ImySectionRes {
+    void info
     return getMysection({
       id: '1getOrderInfo',
       title: '个人中心',
@@ -103,7 +101,6 @@ class MyAPi {
    * 获取更多板块信息
    */
   async getMoreList(agreementConfigList: any[]): Promise<ImySectionRes[]> {
-    console.log('agreementConfigList:' + JSON.stringify(agreementConfigList))
     return [
       getMysection({
         id: '3getMoreList',
