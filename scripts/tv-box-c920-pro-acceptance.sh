@@ -299,6 +299,15 @@ function numberFromCapabilities(line, name) {
   return match ? Number(match[1]) : null
 }
 
+function envTruthy(name) {
+  return /^(1|true|yes|y|force)$/i.test(process.env[name] || '')
+}
+
+function toNumber(value) {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : 0
+}
+
 const fieldRecord = readJson(path.join(reportDir, 'tv-box-field-record-latest.json'))
 const summary = readJson(path.join(reportDir, 'tv-box-compatibility-summary-latest.json'))
 const audit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
@@ -348,6 +357,8 @@ const previewActivityOpened = cameraSmokeStatus === '0'
 const realPreviewConfirmed = cameraPreviewResult === 'pass'
 const audioConfirmed = audioInputResult === 'pass'
 const hotplugConfirmed = usbHotplugResult === 'pass'
+const baselineJsonPath = path.join(reportDir, 'tv-box-c920-pro-baseline.json')
+const baselineMarkdownPath = path.join(reportDir, 'tv-box-c920-pro-baseline.md')
 
 function buildFieldDecision() {
   if (!usbVideoDetected && !camera2Enumerated) {
@@ -399,32 +410,6 @@ function buildFieldDecision() {
 }
 
 const fieldDecision = buildFieldDecision()
-const nextActions = []
-if (offlineAdbDevices.length > 0) {
-  nextActions.push(`ADB 设备列表还有离线/未授权噪声：${offlineAdbDevices.join(', ')}；现场验收前可执行 adb disconnect <序列号> 清理，避免选错设备。`)
-}
-nextActions.push(fieldDecision.primaryAction)
-if (cameraSmokeStatus !== '0') {
-  nextActions.push('摄像头冒烟未通过：先确认 C920 PRO 插紧；仍失败时改用带独立供电 USB Hub，重启盒子后重跑本命令。')
-}
-if (cameraCount === '0' || cameraCount === 'unknown' || cameraPreviewResult !== 'pass') {
-  nextActions.push('Camera2 预览还未闭环：只有电视上看到 C920 PRO 真实画面后，才能把 FIELD_CAMERA_PREVIEW 记为 pass。')
-}
-if ((usbVideoHints.length > 0 || (nativeCapabilities.usbVideoDeviceCount || 0) > 0) && (cameraCount === '0' || cameraCount === 'unknown')) {
-  nextActions.push('USB 层疑似看到视频设备但 CameraService 仍为 0：优先试带独立供电 USB Hub 和 C270；仍失败再评估盒子 Camera HAL 或用户态 UVC/WebRTC 路线。')
-}
-if (audioInputResult === 'unknown') {
-  nextActions.push('C920 PRO 自带麦克风未闭环：需要在摄像头页维护码/录音链路确认音频输入；不稳定时改用独立 USB 会议麦克风。')
-}
-if ((nativeCapabilities.usbAudioInputDeviceCount || 0) > 0 && audioInputResult !== 'pass') {
-  nextActions.push('系统/原生能力疑似看到 USB 音频输入，但业务录音未确认；请用录音或互动课链路确认后再把音频记为 pass。')
-}
-if (usbHotplugResult === 'unknown') {
-  nextActions.push('USB 热插拔未闭环：拔插 C920 PRO 后再跑一次验收，确认不会掉线或卡死。')
-}
-if (!nextActions.length) {
-  nextActions.push('C920 PRO 组合可进入更完整现场验收：直播播放、播放暂停键、退出确认、遥控器练习页和维护码照片。')
-}
 
 const report = {
   generatedAtUtc: new Date().toISOString(),
@@ -479,8 +464,177 @@ const report = {
   },
   completionAuditNextActions: audit?.nextActions || [],
   status: pass ? 'camera_preview_confirmed' : 'needs_camera_follow_up',
-  nextActions
+  nextActions: []
 }
+
+function baselineSnapshotFromReport(sourceReport) {
+  return {
+    generatedAtUtc: sourceReport.generatedAtUtc,
+    stamp: sourceReport.stamp,
+    runDir: sourceReport.runDir,
+    boxIp: sourceReport.boxIp,
+    deviceSerial: sourceReport.deviceSerial,
+    cameraModel: sourceReport.cameraModel,
+    status: sourceReport.status,
+    fieldDecision: sourceReport.fieldDecision,
+    cameraService: sourceReport.cameraService,
+    hardwareEvidence: {
+      kernelVideoNodeCount: sourceReport.hardwareEvidence.kernelVideoNodeCount,
+      kernelSndCaptureNodeCount: sourceReport.hardwareEvidence.kernelSndCaptureNodeCount,
+      usbVideoHintCount: sourceReport.hardwareEvidence.usbVideoHintCount,
+      usbAudioHintCount: sourceReport.hardwareEvidence.usbAudioHintCount,
+      nativeCapabilities: sourceReport.hardwareEvidence.nativeCapabilities
+    },
+    note: 'C920 到货前基线；用于后续比较插入摄像头后的 USB/Camera2/Audio 变化。'
+  }
+}
+
+function writeBaseline(snapshot, reason) {
+  fs.writeFileSync(baselineJsonPath, `${JSON.stringify({ ...snapshot, reason }, null, 2)}\n`)
+  const md = `# C920 到货前基线
+
+- 保存时间 UTC: \`${snapshot.generatedAtUtc}\`
+- 原因: \`${reason}\`
+- 盒子: \`${snapshot.boxIp || snapshot.deviceSerial || 'unknown'}\`
+- 到货判定: \`${snapshot.fieldDecision?.level || 'unknown'}\`
+- CameraService cameraCount: \`${snapshot.cameraService?.cameraCount ?? 'unknown'}\`
+- USB 视频线索数: \`${snapshot.hardwareEvidence?.usbVideoHintCount ?? 'unknown'}\`
+- USB 音频线索数: \`${snapshot.hardwareEvidence?.usbAudioHintCount ?? 'unknown'}\`
+- App 原生能力: \`camera=${snapshot.hardwareEvidence?.nativeCapabilities?.cameraCount ?? 'unknown'} external=${snapshot.hardwareEvidence?.nativeCapabilities?.externalCameraCount ?? 'unknown'} usbVideo=${snapshot.hardwareEvidence?.nativeCapabilities?.usbVideoDeviceCount ?? 'unknown'} audioInput=${snapshot.hardwareEvidence?.nativeCapabilities?.audioInputDeviceCount ?? 'unknown'} usbAudio=${snapshot.hardwareEvidence?.nativeCapabilities?.usbAudioInputDeviceCount ?? 'unknown'}\`
+- 原始日志目录: \`${snapshot.runDir}\`
+`
+  fs.writeFileSync(baselineMarkdownPath, md)
+}
+
+function metricSnapshot(sourceReport) {
+  return {
+    cameraServiceCameraCount: toNumber(sourceReport.cameraService?.cameraCount),
+    cameraServiceNormalCameraCount: toNumber(sourceReport.cameraService?.normalCameraCount),
+    usbVideoHintCount: toNumber(sourceReport.hardwareEvidence?.usbVideoHintCount),
+    usbAudioHintCount: toNumber(sourceReport.hardwareEvidence?.usbAudioHintCount),
+    kernelVideoNodeCount: toNumber(sourceReport.hardwareEvidence?.kernelVideoNodeCount),
+    kernelSndCaptureNodeCount: toNumber(sourceReport.hardwareEvidence?.kernelSndCaptureNodeCount),
+    nativeCameraCount: toNumber(sourceReport.hardwareEvidence?.nativeCapabilities?.cameraCount),
+    nativeExternalCameraCount: toNumber(sourceReport.hardwareEvidence?.nativeCapabilities?.externalCameraCount),
+    nativeUsbDeviceCount: toNumber(sourceReport.hardwareEvidence?.nativeCapabilities?.usbDeviceCount),
+    nativeUsbVideoDeviceCount: toNumber(sourceReport.hardwareEvidence?.nativeCapabilities?.usbVideoDeviceCount),
+    nativeAudioInputDeviceCount: toNumber(sourceReport.hardwareEvidence?.nativeCapabilities?.audioInputDeviceCount),
+    nativeUsbAudioInputDeviceCount: toNumber(sourceReport.hardwareEvidence?.nativeCapabilities?.usbAudioInputDeviceCount)
+  }
+}
+
+function buildBaselineComparison(sourceReport) {
+  const currentMetrics = metricSnapshot(sourceReport)
+  const baselineEligible = sourceReport.fieldDecision?.level === 'waiting_for_camera_or_usb_not_detected'
+  const baselineExists = fs.existsSync(baselineJsonPath)
+  const captureRequested = envTruthy('C920_BASELINE_CAPTURE')
+  const forceCapture = /^force$/i.test(process.env.C920_BASELINE_CAPTURE || '')
+
+  if ((!baselineExists && baselineEligible) || (captureRequested && (baselineEligible || forceCapture))) {
+    const reason = baselineExists ? 'refreshed_by_request' : 'initialized_from_no_camera_run'
+    writeBaseline(baselineSnapshotFromReport(sourceReport), reason)
+    return {
+      status: baselineExists ? 'baseline_refreshed' : 'baseline_initialized',
+      baselinePath: baselineJsonPath,
+      baselineMarkdownPath,
+      baselineGeneratedAtUtc: sourceReport.generatedAtUtc,
+      currentMetrics,
+      deltas: {},
+      signals: {
+        usbVideoIncreased: false,
+        camera2Increased: false,
+        usbAudioIncreased: false,
+        audioInputChanged: false
+      },
+      summary: '已保存当前无摄像头状态作为 C920 到货前基线；插上 C920 后重跑会自动比较变化。'
+    }
+  }
+
+  const baseline = readJson(baselineJsonPath)
+  if (!baseline) {
+    return {
+      status: 'baseline_missing',
+      baselinePath: baselineJsonPath,
+      baselineMarkdownPath,
+      currentMetrics,
+      deltas: {},
+      signals: {
+        usbVideoIncreased: false,
+        camera2Increased: false,
+        usbAudioIncreased: false,
+        audioInputChanged: false
+      },
+      summary: '还没有 C920 到货前基线；在未插摄像头时运行一次本命令即可自动保存。'
+    }
+  }
+
+  const baselineMetrics = metricSnapshot(baseline)
+  const deltas = Object.fromEntries(Object.keys(currentMetrics).map((key) => [
+    key,
+    currentMetrics[key] - baselineMetrics[key]
+  ]))
+  const signals = {
+    usbVideoIncreased: deltas.usbVideoHintCount > 0 || deltas.nativeUsbVideoDeviceCount > 0,
+    camera2Increased: deltas.cameraServiceCameraCount > 0 || deltas.nativeCameraCount > 0 || deltas.nativeExternalCameraCount > 0,
+    usbAudioIncreased: deltas.usbAudioHintCount > 0 || deltas.nativeUsbAudioInputDeviceCount > 0,
+    audioInputChanged: deltas.nativeAudioInputDeviceCount !== 0
+  }
+  const signalSummary = []
+  if (signals.usbVideoIncreased) signalSummary.push('相对基线新增 USB 视频线索')
+  if (signals.camera2Increased) signalSummary.push('相对基线新增 Camera2 摄像头枚举')
+  if (signals.usbAudioIncreased) signalSummary.push('相对基线新增 USB 音频线索')
+  if (signals.audioInputChanged) signalSummary.push('相对基线音频输入数量有变化')
+  if (!signalSummary.length) signalSummary.push('相对基线没有看到新增 USB 视频、Camera2 或 USB 音频变化')
+
+  return {
+    status: 'compared',
+    baselinePath: baselineJsonPath,
+    baselineMarkdownPath,
+    baselineGeneratedAtUtc: baseline.generatedAtUtc || '',
+    baselineRunDir: baseline.runDir || '',
+    baselineMetrics,
+    currentMetrics,
+    deltas,
+    signals,
+    summary: signalSummary.join('；')
+  }
+}
+
+report.baselineComparison = buildBaselineComparison(report)
+
+const nextActions = []
+if (offlineAdbDevices.length > 0) {
+  nextActions.push(`ADB 设备列表还有离线/未授权噪声：${offlineAdbDevices.join(', ')}；现场验收前可执行 adb disconnect <序列号> 清理，避免选错设备。`)
+}
+if (report.baselineComparison.status === 'baseline_missing') {
+  nextActions.push('建议先在未插摄像头时跑一次本命令保存 C920 到货前基线；之后插上 C920 的变化会更清楚。')
+}
+if (report.baselineComparison.status === 'compared') {
+  nextActions.push(`基线对比：${report.baselineComparison.summary}。`)
+}
+nextActions.push(fieldDecision.primaryAction)
+if (cameraSmokeStatus !== '0') {
+  nextActions.push('摄像头冒烟未通过：先确认 C920 PRO 插紧；仍失败时改用带独立供电 USB Hub，重启盒子后重跑本命令。')
+}
+if (cameraCount === '0' || cameraCount === 'unknown' || cameraPreviewResult !== 'pass') {
+  nextActions.push('Camera2 预览还未闭环：只有电视上看到 C920 PRO 真实画面后，才能把 FIELD_CAMERA_PREVIEW 记为 pass。')
+}
+if ((usbVideoHints.length > 0 || (nativeCapabilities.usbVideoDeviceCount || 0) > 0) && (cameraCount === '0' || cameraCount === 'unknown')) {
+  nextActions.push('USB 层疑似看到视频设备但 CameraService 仍为 0：优先试带独立供电 USB Hub 和 C270；仍失败再评估盒子 Camera HAL 或用户态 UVC/WebRTC 路线。')
+}
+if (audioInputResult === 'unknown') {
+  nextActions.push('C920 PRO 自带麦克风未闭环：需要在摄像头页维护码/录音链路确认音频输入；不稳定时改用独立 USB 会议麦克风。')
+}
+if ((nativeCapabilities.usbAudioInputDeviceCount || 0) > 0 && audioInputResult !== 'pass') {
+  nextActions.push('系统/原生能力疑似看到 USB 音频输入，但业务录音未确认；请用录音或互动课链路确认后再把音频记为 pass。')
+}
+if (usbHotplugResult === 'unknown') {
+  nextActions.push('USB 热插拔未闭环：拔插 C920 PRO 后再跑一次验收，确认不会掉线或卡死。')
+}
+if (!nextActions.length) {
+  nextActions.push('C920 PRO 组合可进入更完整现场验收：直播播放、播放暂停键、退出确认、遥控器练习页和维护码照片。')
+}
+report.nextActions = nextActions
 
 fs.writeFileSync(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`)
 
@@ -505,6 +659,8 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - USB 热插拔: \`${usbHotplugResult}\`
 - 到货判定: \`${fieldDecision.level}\`
 - 判定标题: \`${fieldDecision.title}\`
+- 基线对比状态: \`${report.baselineComparison.status}\`
+- 基线对比摘要: ${report.baselineComparison.summary}
 - 最新兼容性记录: \`${report.fieldResults.latestRecordId || 'unknown'}\`
 - 最新记录结论: \`${report.fieldResults.latestVerdict}\`
 - 当前状态: \`${report.status}\`
@@ -522,6 +678,17 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - 结论: ${fieldDecision.summary}
 - 优先动作: ${fieldDecision.primaryAction}
 
+## 到货前基线对比
+
+- 基线状态: \`${report.baselineComparison.status}\`
+- 基线文件: \`${path.relative(reportDir, report.baselineComparison.baselinePath)}\`
+- 基线时间 UTC: \`${report.baselineComparison.baselineGeneratedAtUtc || 'unknown'}\`
+- 相对基线新增 USB 视频: \`${report.baselineComparison.signals.usbVideoIncreased ? 'yes' : 'no'}\`
+- 相对基线新增 Camera2 摄像头: \`${report.baselineComparison.signals.camera2Increased ? 'yes' : 'no'}\`
+- 相对基线新增 USB 音频: \`${report.baselineComparison.signals.usbAudioIncreased ? 'yes' : 'no'}\`
+- 相对基线音频输入变化: \`${report.baselineComparison.signals.audioInputChanged ? 'yes' : 'no'}\`
+- 对比摘要: ${report.baselineComparison.summary}
+
 ## 下一步
 
 ${nextActions.map((item) => `- ${item}`).join('\n')}
@@ -533,6 +700,8 @@ ${nextActions.map((item) => `- ${item}`).join('\n')}
 - \`reports/tv-box-hardware-profile-latest.md\`
 - \`reports/tv-box-completion-audit-latest.md\`
 - \`reports/tv-box-command-center-latest.md\`
+- \`reports/tv-box-c920-pro-baseline.md\`
+- \`reports/tv-box-c920-pro-baseline.json\`
 - \`${path.relative(reportDir, path.join(runDir, 'adb-devices.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'media-camera.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'dev-media.txt'))}\`

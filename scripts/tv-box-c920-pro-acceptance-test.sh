@@ -216,6 +216,39 @@ SH
 
 chmod +x "$FAKE_BIN/adb" "$FAKE_BIN/npm"
 
+cat >"$REPORT_DIR/tv-box-c920-pro-baseline.json" <<'JSON'
+{
+  "generatedAtUtc": "2026-05-29T00:00:00.000Z",
+  "stamp": "baseline",
+  "runDir": "/tmp/fake-baseline",
+  "boxIp": "192.168.10.122",
+  "deviceSerial": "192.168.10.122:5555",
+  "cameraModel": "Logitech C920 PRO / C920 Pro HD",
+  "status": "needs_camera_follow_up",
+  "fieldDecision": {
+    "level": "waiting_for_camera_or_usb_not_detected"
+  },
+  "cameraService": {
+    "cameraCount": "0",
+    "normalCameraCount": "0"
+  },
+  "hardwareEvidence": {
+    "kernelVideoNodeCount": 1,
+    "kernelSndCaptureNodeCount": 1,
+    "usbVideoHintCount": 0,
+    "usbAudioHintCount": 0,
+    "nativeCapabilities": {
+      "cameraCount": 0,
+      "externalCameraCount": 0,
+      "usbDeviceCount": 1,
+      "usbVideoDeviceCount": 0,
+      "audioInputDeviceCount": 1,
+      "usbAudioInputDeviceCount": 0
+    }
+  }
+}
+JSON
+
 (
   cd "$ROOT_DIR"
   TV_BOX_TOOL_PATH="$FAKE_BIN" \
@@ -248,6 +281,13 @@ assert.equal(report.fieldDecision.checklist.usbVideoDetected, true)
 assert.equal(report.fieldDecision.checklist.camera2Enumerated, false)
 assert.equal(report.fieldDecision.checklist.previewActivityOpened, false)
 assert.equal(report.fieldDecision.checklist.usbAudioDetected, true)
+assert.equal(report.baselineComparison.status, 'compared')
+assert.equal(report.baselineComparison.signals.usbVideoIncreased, true)
+assert.equal(report.baselineComparison.signals.camera2Increased, false)
+assert.equal(report.baselineComparison.signals.usbAudioIncreased, true)
+assert.equal(report.baselineComparison.signals.audioInputChanged, true)
+assert.equal(report.baselineComparison.deltas.nativeUsbVideoDeviceCount, 1)
+assert.equal(report.baselineComparison.deltas.nativeUsbAudioInputDeviceCount, 1)
 assert.deepEqual(report.hardwareEvidence.adbOfflineOrUnauthorizedDevices, ['192.0.2.10:5555'])
 assert.ok(report.hardwareEvidence.kernelVideoNodeCount >= 1)
 assert.ok(report.hardwareEvidence.kernelSndCaptureNodeCount >= 1)
