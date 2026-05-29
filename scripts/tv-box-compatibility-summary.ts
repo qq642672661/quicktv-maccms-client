@@ -32,6 +32,17 @@ const checkFields = [
   'usbHotplug',
   'supportCode'
 ]
+const phoneCameraFields = [
+  'phoneCameraPairing',
+  'phoneCameraPermission',
+  'phoneMicrophonePermission',
+  'phoneTvFirstFrame',
+  'phoneTvAudio',
+  'phoneSessionStats',
+  'phoneReconnect',
+  'phonePrivacyStop'
+]
+const summaryFields = [...checkFields, ...phoneCameraFields]
 const coreFields = ['remoteFocus', 'livePlayback', 'supportCode']
 const cameraFields = ['cameraPermission', 'cameraPreview']
 const audioFields = ['audioInput']
@@ -120,12 +131,12 @@ function anyPass(row, fields) {
   return fields.some((field) => normalizeResult(row[field]) === 'pass')
 }
 
-function anyFail(row, fields = checkFields) {
+function anyFail(row, fields = summaryFields) {
   return fields.some((field) => normalizeResult(row[field]) === 'fail')
 }
 
 function failingFields(row) {
-  return checkFields.filter((field) => normalizeResult(row[field]) === 'fail')
+  return summaryFields.filter((field) => normalizeResult(row[field]) === 'fail')
 }
 
 function unknownFields(row) {
@@ -173,6 +184,7 @@ function buildCombination(row) {
       microphoneConnection: row.microphoneConnection || ''
     },
     checks: Object.fromEntries(checkFields.map((field) => [field, normalizeResult(row[field])])),
+    phoneCameraChecks: Object.fromEntries(phoneCameraFields.map((field) => [field, normalizeResult(row[field])])),
     failingFields: failures,
     unknownFields: unknowns,
     notes: row.notes || ''
@@ -181,7 +193,7 @@ function buildCombination(row) {
 
 function summarizeRows(rows) {
   const combinations = rows.map(buildCombination)
-  const checkSummary = Object.fromEntries(checkFields.map((field) => [
+  const checkSummary = Object.fromEntries(summaryFields.map((field) => [
     field,
     countBy(rows.map((row) => row[field]))
   ]))

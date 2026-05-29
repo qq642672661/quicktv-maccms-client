@@ -100,6 +100,12 @@ function countByStatus(requirements) {
   }, {})
 }
 
+function c920NeedsFieldAction(state) {
+  const status = state.c920Arrival?.status || ''
+  if (!['c920_purchased_pending_arrival', 'c920_not_inserted_baseline', 'c920_insert_status_unconfirmed'].includes(status)) return false
+  return state.authorization?.status === 'ready_for_install' || state.deviceEvidence?.status === 'selected'
+}
+
 function escapeCell(value) {
   return String(value || '').replace(/\|/g, '/').replace(/\r?\n/g, '<br>')
 }
@@ -115,6 +121,15 @@ function requirementRow(item) {
 }
 
 function buildRoleNextActions(state) {
+  if (c920NeedsFieldAction(state)) {
+    const c920 = state.c920Arrival
+    return {
+      projectOwner: 'C920 PRO 已进入待到货/接入链路；不要把未插摄像头的 0 结果判成盒子不兼容。',
+      siteInstaller: 'C920 到货后先直插小米盒子 USB 口；直插不稳或同时接 USB 麦克风时，换带独立供电 USB Hub。',
+      engineer: c920.primaryAction || `执行 ${c920.command || 'BOX_IP=<盒子IP> C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance'}。`
+    }
+  }
+
   const authorizationStatus = state.authorization?.status || ''
   if (authorizationStatus === 'ready_for_install') {
     return {
@@ -191,8 +206,11 @@ function buildPrimaryNextAction(state) {
   const roleNextActions = buildRoleNextActions(state)
   const authorizationStatus = state.authorization?.status || ''
   const authorizationNeedsAction = authorizationStatus && !['ready_for_install', 'missing'].includes(authorizationStatus)
+  const c920Actionable = c920NeedsFieldAction(state)
   const reason = state.evidence.canClose
     ? '所有完成度要求已有证据。'
+    : c920Actionable
+      ? state.c920Arrival.summary || 'C920 到货卡显示实体摄像头仍需现场接入验收。'
     : authorizationStatus === 'ready_for_install'
       ? 'ADB/RSA 授权助手显示已经可安装。'
       : authorizationNeedsAction
@@ -206,6 +224,8 @@ function buildPrimaryNextAction(state) {
   return {
     status: state.evidence.canClose
       ? 'can_close'
+      : c920Actionable
+        ? state.c920Arrival.status
       : authorizationStatus === 'ready_for_install'
         ? 'ready_for_install'
         : authorizationNeedsAction
@@ -347,6 +367,20 @@ function buildActionCards(state) {
     }
   ]
 
+  if (c920NeedsFieldAction(state)) {
+    const c920 = state.c920Arrival
+    actions.unshift({
+      audience: '现场安装人员/工程维护人员',
+      title: 'C920 到货后只跑专用验收',
+      command: c920.command || 'BOX_IP=<盒子IP> C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance',
+      details: [
+        `采购状态: ${c920.procurement?.purchaseChannel || '未记录'} / 预计到货 ${c920.procurement?.expectedArrivalDate || '未记录'}`,
+        '先直插 C920 PRO；直插不稳或同时接 USB 麦克风时，换带独立供电 USB Hub。',
+        '电视上看到 C920 实时画面前，FIELD_CAMERA_PREVIEW 不能记 pass；麦克风和热插拔也必须单独确认。'
+      ]
+    })
+  }
+
   if (state.readiness?.level === 'complete' || state.completion?.overall === 'complete') {
     actions.unshift({
       audience: '项目负责人',
@@ -376,6 +410,7 @@ function main() {
   const fieldInbox = readJson(path.join(reportDir, 'tv-box-field-inbox-latest.json'))
   const returnInbox = readJson(path.join(reportDir, 'tv-box-return-inbox-latest.json'))
   const siteReadiness = readJson(path.join(reportDir, 'tv-box-site-readiness-latest.json'))
+  const c920Arrival = readJson(path.join(reportDir, 'tv-box-c920-arrival-card-latest.json'))
 
   const handoffDir = firstLine(path.join(reportDir, 'tv-box-handoff-latest-path.txt')) || path.join(reportDir, 'tv-box-handoff')
   const handoffArchivePath = firstLine(path.join(reportDir, 'tv-box-handoff-latest-archive.txt')) || path.join(reportDir, 'tv-box-handoff-latest.zip')
@@ -467,6 +502,18 @@ function main() {
       title: siteReadiness.stage?.title || '',
       summary: siteReadiness.stage?.summary || ''
     } : null,
+    c920Arrival: c920Arrival ? {
+      status: c920Arrival.status || 'unknown',
+      sourceStatus: c920Arrival.sourceStatus || '',
+      physicalStatus: c920Arrival.physicalStatus || '',
+      physicalStatusLabel: c920Arrival.physicalStatusLabel || '',
+      procurement: c920Arrival.procurement || {},
+      title: c920Arrival.title || '',
+      summary: c920Arrival.summary || '',
+      primaryAction: c920Arrival.primaryAction || '',
+      command: c920Arrival.command || '',
+      closeGuard: c920Arrival.closeGuard || []
+    } : null,
     artifacts: {
       apk: releaseLedger?.artifacts?.apk || inspection?.apk || fileState(''),
       handoffDirectory: fileState(handoffDir),
@@ -500,7 +547,9 @@ function main() {
       siteReadinessJson: fileState(path.join(reportDir, 'tv-box-site-readiness-latest.json')),
       siteReadinessHtml: fileState(path.join(reportDir, 'tv-box-site-readiness-card.html')),
       fieldInboxJson: fileState(path.join(reportDir, 'tv-box-field-inbox-latest.json')),
-      fieldInboxMarkdown: fileState(path.join(reportDir, 'tv-box-field-inbox-latest.md'))
+      fieldInboxMarkdown: fileState(path.join(reportDir, 'tv-box-field-inbox-latest.md')),
+      c920ArrivalMarkdown: fileState(path.join(reportDir, 'tv-box-c920-arrival-card-latest.md')),
+      c920ArrivalJson: fileState(path.join(reportDir, 'tv-box-c920-arrival-card-latest.json'))
     },
     evidence: {
       requirementCounts: countByStatus(requirements),
@@ -562,6 +611,7 @@ ${card.details.map((item) => `- ${item}`).join('\n')}`).join('\n\n')
 - next-step scenarios regression: \`${state.nextScenariosRegression?.status || 'unknown'}\` / scenarios \`${state.nextScenariosRegression?.scenarioCount ?? 0}\`
 - return inbox closure: \`${state.returnInbox?.closureStatus || 'unknown'}\`
 - site readiness: \`${state.siteReadiness?.status || 'unknown'}\`
+- C920 arrival: \`${state.c920Arrival?.status || 'unknown'}\`
 - elder/child UX audit: \`${state.uxAudit?.overall || 'unknown'}\` / failed checks \`${state.uxAudit?.failedChecks ?? 0}\`
 - ADB/RSA authorization: \`${state.authorization?.status || 'unknown'}\`
 - 设备证据: \`${state.deviceEvidence?.status || 'unknown'}\`
@@ -611,14 +661,16 @@ ${[
   artifactRow('现场回传收件箱场景回归 MD', state.artifacts.returnInboxScenariosRegressionMarkdown, '证明证据收件箱规则不漂移'),
   artifactRow('现场回传收件箱场景回归 JSON', state.artifacts.returnInboxScenariosRegressionJson, '机器读取五类回传证据场景结果'),
   artifactRow('唯一下一步场景回归 MD', state.artifacts.nextScenariosRegressionMarkdown, '证明 tv-box:next 不会误安装、误跳过授权或漏补交付包'),
-  artifactRow('唯一下一步场景回归 JSON', state.artifacts.nextScenariosRegressionJson, '机器读取 tv-box:next 六类分支结果'),
+  artifactRow('唯一下一步场景回归 JSON', state.artifacts.nextScenariosRegressionJson, '机器读取 tv-box:next 七类分支结果'),
   artifactRow('现场回传收件箱 MD', state.artifacts.returnInboxMarkdown, '质检 JSON/照片/日志/排障包是否齐全'),
   artifactRow('现场回传收件箱 JSON', state.artifacts.returnInboxJson, '机器读取现场回传完整度'),
   artifactRow('现场开工判定卡 MD', state.artifacts.siteReadinessMarkdown, '给负责人/现场/工程判断先授权、安装、补证据还是修复'),
   artifactRow('现场开工判定卡 HTML', state.artifacts.siteReadinessHtml, '可双击打开或打印的一页开工卡'),
   artifactRow('现场开工判定卡 JSON', state.artifacts.siteReadinessJson, '机器读取现场开工状态'),
   artifactRow('现场 JSON 收件箱 MD', state.artifacts.fieldInboxMarkdown, '批量导入多盒多人的现场反馈'),
-  artifactRow('现场 JSON 收件箱 JSON', state.artifacts.fieldInboxJson, '机器读取批量导入统计')
+  artifactRow('现场 JSON 收件箱 JSON', state.artifacts.fieldInboxJson, '机器读取批量导入统计'),
+  artifactRow('C920 到货接入卡 MD', state.artifacts.c920ArrivalMarkdown, '明天到货后按这张卡只做实体摄像头验收'),
+  artifactRow('C920 到货接入卡 JSON', state.artifacts.c920ArrivalJson, '机器读取采购状态、插入状态和关闭边界')
 ].join('\n')}
 
 ## 未闭环证据

@@ -27,6 +27,11 @@ AUTH_STATUS=""
 PREFLIGHT_VERDICT=""
 COMMAND_CENTER_STATUS=""
 SITE_READINESS_STATUS=""
+C920_STATUS=""
+C920_PRIMARY_ACTION=""
+C920_COMMAND=""
+C920_PURCHASE_CHANNEL=""
+C920_EXPECTED_ARRIVAL_DATE=""
 
 print_step() {
   echo
@@ -102,6 +107,7 @@ write_report() {
   local preflight_json="$REPORT_DIR/tv-box-preflight-latest.json"
   local command_center_json="$REPORT_DIR/tv-box-command-center-latest.json"
   local site_readiness_json="$REPORT_DIR/tv-box-site-readiness-latest.json"
+  local c920_json="$REPORT_DIR/tv-box-c920-arrival-card-latest.json"
   local handoff_archive_txt="$REPORT_DIR/tv-box-handoff-latest-archive.txt"
   local support_archive_txt="$REPORT_DIR/tv-box-support-latest-archive.txt"
   local handoff_archive=""
@@ -114,11 +120,17 @@ write_report() {
   PREFLIGHT_VERDICT="${PREFLIGHT_VERDICT:-$(json_value_or_empty "$preflight_json" "verdict")}"
   COMMAND_CENTER_STATUS="${COMMAND_CENTER_STATUS:-$(json_value_or_empty "$command_center_json" "primaryNextAction.status")}"
   SITE_READINESS_STATUS="${SITE_READINESS_STATUS:-$(json_value_or_empty "$site_readiness_json" "stage.status")}"
+  C920_STATUS="${C920_STATUS:-$(json_value_or_empty "$c920_json" "status")}"
+  C920_PRIMARY_ACTION="${C920_PRIMARY_ACTION:-$(json_value_or_empty "$c920_json" "primaryAction")}"
+  C920_COMMAND="${C920_COMMAND:-$(json_value_or_empty "$c920_json" "command")}"
+  C920_PURCHASE_CHANNEL="${C920_PURCHASE_CHANNEL:-$(json_value_or_empty "$c920_json" "procurement.purchaseChannel")}"
+  C920_EXPECTED_ARRIVAL_DATE="${C920_EXPECTED_ARRIVAL_DATE:-$(json_value_or_empty "$c920_json" "procurement.expectedArrivalDate")}"
 
   export STARTED_AT_UTC finished_at_utc ROOT_DIR PACKAGE_NAME BOX_IP DEVICE_SERIAL REPORT_DIR
   export RUN_CAMERA_SMOKE NEXT_ALLOW_INSTALL NEXT_BUILD_DELIVERY REQUIRE_NEXT_READY
   export RESULT_STATUS RESULT_REASON COMMANDS_TEXT NEXT_ACTIONS_TEXT
   export AUTH_STATUS PREFLIGHT_VERDICT COMMAND_CENTER_STATUS SITE_READINESS_STATUS
+  export C920_STATUS C920_PRIMARY_ACTION C920_COMMAND C920_PURCHASE_CHANNEL C920_EXPECTED_ARRIVAL_DATE
   export OUTPUT_MD OUTPUT_JSON handoff_archive support_archive
 
   node <<'NODE' > "$OUTPUT_JSON"
@@ -156,7 +168,14 @@ const data = {
     authorizationStatus: emptyToNull(env.AUTH_STATUS),
     preflightVerdict: emptyToNull(env.PREFLIGHT_VERDICT),
     commandCenterStatus: emptyToNull(env.COMMAND_CENTER_STATUS),
-    siteReadinessStatus: emptyToNull(env.SITE_READINESS_STATUS)
+    siteReadinessStatus: emptyToNull(env.SITE_READINESS_STATUS),
+    c920Status: emptyToNull(env.C920_STATUS),
+    c920PrimaryAction: emptyToNull(env.C920_PRIMARY_ACTION),
+    c920Command: emptyToNull(env.C920_COMMAND),
+    c920Procurement: {
+      purchaseChannel: emptyToNull(env.C920_PURCHASE_CHANNEL),
+      expectedArrivalDate: emptyToNull(env.C920_EXPECTED_ARRIVAL_DATE)
+    }
   },
   commands: lines(env.COMMANDS_TEXT),
   nextActions: lines(env.NEXT_ACTIONS_TEXT),
@@ -191,6 +210,8 @@ const md = `# HelloTV 电视盒子唯一下一步
 - preflight: \`${data.observed.preflightVerdict || 'unknown'}\`
 - 交付总控: \`${data.observed.commandCenterStatus || 'unknown'}\`
 - 现场开工卡: \`${data.observed.siteReadinessStatus || 'unknown'}\`
+- C920 到货接入: \`${data.observed.c920Status || 'unknown'}\`
+- C920 采购/到货: \`${data.observed.c920Procurement.purchaseChannel || '未记录'} / ${data.observed.c920Procurement.expectedArrivalDate || '未记录'}\`
 
 ## 已执行命令
 
@@ -241,15 +262,30 @@ run_npm_step "ADB/RSA 授权助手" "tv-box:authorize"
 AUTH_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-authorization-latest.json" "status")"
 
 if [[ "$AUTH_STATUS" == "ready_for_install" ]]; then
+  C920_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "status")"
+  C920_PRIMARY_ACTION="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "primaryAction")"
+  C920_COMMAND="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "command")"
+  C920_PURCHASE_CHANNEL="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "procurement.purchaseChannel")"
+  C920_EXPECTED_ARRIVAL_DATE="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "procurement.expectedArrivalDate")"
   if [[ "$NEXT_ALLOW_INSTALL" == "false" ]]; then
-    RESULT_STATUS="ready_for_install"
-    RESULT_REASON="盒子已授权；当前禁用了自动安装。"
-    append_action "执行 BOX_IP=${BOX_IP:-<盒子IP>} RUN_CAMERA_SMOKE=$RUN_CAMERA_SMOKE npm run tv-box:easy。"
+    if [[ "$C920_STATUS" == "c920_purchased_pending_arrival" || "$C920_STATUS" == "c920_not_inserted_baseline" || "$C920_STATUS" == "c920_insert_status_unconfirmed" ]]; then
+      RESULT_STATUS="$C920_STATUS"
+      RESULT_REASON="盒子已授权；当前禁用了自动安装，C920 到货卡显示实体摄像头仍需现场接入验收。"
+      append_action "${C920_PRIMARY_ACTION:-到货后先直插小米盒子 USB 口，再执行 ${C920_COMMAND:-BOX_IP=${BOX_IP:-<盒子IP>} C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance}。}"
+      append_action "直插不稳或同时接 USB 麦克风时，换带独立供电 USB Hub；看到真实电视画面前不要把 FIELD_CAMERA_PREVIEW 记 pass。"
+    else
+      RESULT_STATUS="ready_for_install"
+      RESULT_REASON="盒子已授权；当前禁用了自动安装。"
+      append_action "执行 BOX_IP=${BOX_IP:-<盒子IP>} RUN_CAMERA_SMOKE=$RUN_CAMERA_SMOKE npm run tv-box:easy。"
+    fi
   else
     run_npm_step "一键安装、遥控器和摄像头/麦克风验收" "tv-box:easy"
     RESULT_STATUS="installed_and_reported"
     RESULT_REASON="盒子已授权，并已执行一键安装验收链路。"
     append_action "查看电视屏幕是否停在 HelloTV 简易首页。"
+    if [[ "$C920_STATUS" == "c920_purchased_pending_arrival" || "$C920_STATUS" == "c920_not_inserted_baseline" || "$C920_STATUS" == "c920_insert_status_unconfirmed" ]]; then
+      append_action "${C920_PRIMARY_ACTION:-到货后执行 ${C920_COMMAND:-BOX_IP=${BOX_IP:-<盒子IP>} C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance}。}"
+    fi
     append_action "现场打开 FIELD_WIZARD_OFFLINE.html，填写遥控器、直播、摄像头、麦克风和维护码结果后下载 JSON。"
     append_action "工程人员收到现场回传 zip 后先执行 npm run tv-box:return-inbox -- <zip>。"
   fi

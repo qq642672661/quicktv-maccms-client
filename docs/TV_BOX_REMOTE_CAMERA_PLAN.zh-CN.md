@@ -116,9 +116,11 @@
 
 本项目默认推荐路线 A：电视端新增“手机摄像头配对”能力时，先实现局域网信令 + 原生 WebRTC 接收端，前端只做遥控器友好的配对、状态、重试和降级，不在 QuickTVUI 前端手写媒体传输。原因是 WebRTC 已经包含实时音视频必需的 jitter buffer、带宽自适应、NACK/PLI、音视频同步和回声处理，适合长辈小孩使用时“少等待、少配置、断了能重连”的目标。
 
+2026-05-29 已把电视端 Android 接收端推进到可选媒体引擎：默认 APK 仍不打包 WebRTC AAR，`ENABLE_PHONE_CAMERA_WEBRTC=true` 实验构建才加入 `PhoneCameraNativeWebRtcEngine`，用 `org.webrtc` 消费手机 offer、创建 answer、发送 ICE、渲染远端视频、接收音频轨并上报 stats。Maven 实测显示 `io.github.webrtc-sdk:android:114.5735.11` 是 Java 11 class，可匹配当前 Android Gradle/JDK 11 构建；`125+` AAR 是 Java 17 class，不能在当前 JDK 11 编译链下直接作为默认候选。后续如果要升级到 `125+`，应作为 JDK/AGP 升级任务单独验证。
+
 路线 A 的最小闭环建议：
 
-1. 电视端显示一个大二维码，内容为 `https://<局域网服务>/pair?room=<一次性房间码>`；遥控器只有“重新生成”“返回”“帮助”三个动作。
+1. 电视端显示一个大二维码，内容为 `https://<局域网服务>/phone-camera?room=<一次性房间码>`；遥控器只有“打开接收端”“重新生成”“返回”“帮助”四个动作。打开接收端时必须把同一个 `roomCode`、手机入口、`/phone-camera/signaling` 信令地址和媒体档位传给 Android 原生 Activity，方便现场用电视画面核对参数一致。
 2. 手机扫码打开网页或 App，用户只点“允许摄像头/麦克风”和“开始连接”。
 3. 局域网信令服务用 WebSocket 交换 offer/answer/ICE；同 Wi-Fi 优先 host candidate，跨网或复杂路由再配置 STUN/TURN。
 4. 手机端默认 720p/15fps，低端盒子自动降到 480p/15fps；电视端只渲染远端流，不默认采集电视摄像头。

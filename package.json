@@ -57,6 +57,7 @@
     "tv-box:site-readiness": "node ./scripts/tv-box-site-readiness.js",
     "tv-box:smoke": "./scripts/tv-box-smoke.sh",
     "tv-box:ux-audit": "node ./scripts/tv-box-ux-audit.js",
+    "tv-box:webrtc-sdk-gate": "node ./scripts/tv-box-webrtc-sdk-gate.js",
     "tv-box:support": "./scripts/tv-box-support-bundle.sh"
   },
   "dependencies": {

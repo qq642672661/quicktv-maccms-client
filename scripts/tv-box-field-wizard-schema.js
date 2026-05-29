@@ -35,6 +35,19 @@ const resultPrompts = [
   ['FIELD_SUPPORT_CODE', '维护码是否能读给维护人员']
 ]
 
+const phoneCameraResultPrompts = [
+  ['FIELD_PHONE_CAMERA_PAIRING', '手机摄像头扫码/房间码配对'],
+  ['FIELD_PHONE_CAMERA_PERMISSION', '手机端摄像头权限授权'],
+  ['FIELD_PHONE_MICROPHONE_PERMISSION', '手机端麦克风权限授权'],
+  ['FIELD_PHONE_TV_FIRST_FRAME', '电视端手机摄像头首帧画面'],
+  ['FIELD_PHONE_TV_AUDIO', '电视端手机麦克风声音'],
+  ['FIELD_PHONE_SESSION_STATS', '手机摄像头 session.stats 证据'],
+  ['FIELD_PHONE_RECONNECT', '手机摄像头断线重连'],
+  ['FIELD_PHONE_PRIVACY_STOP', '手机停止按钮关闭采集']
+]
+
+const allResultPrompts = [...resultPrompts, ...phoneCameraResultPrompts]
+
 const resultText = {
   pass: '通过',
   fail: '失败',
@@ -79,6 +92,14 @@ const quickPresets = [
       FIELD_AUDIO_INPUT: 'na',
       FIELD_RECORD_AUDIO_PERMISSION: 'na',
       FIELD_USB_HOTPLUG: 'na',
+      FIELD_PHONE_CAMERA_PAIRING: 'na',
+      FIELD_PHONE_CAMERA_PERMISSION: 'na',
+      FIELD_PHONE_MICROPHONE_PERMISSION: 'na',
+      FIELD_PHONE_TV_FIRST_FRAME: 'na',
+      FIELD_PHONE_TV_AUDIO: 'na',
+      FIELD_PHONE_SESSION_STATS: 'na',
+      FIELD_PHONE_RECONNECT: 'na',
+      FIELD_PHONE_PRIVACY_STOP: 'na',
       FIELD_SUPPORT_CODE: 'pass'
     }
   },
@@ -111,8 +132,26 @@ const quickPresets = [
       FIELD_CAMERA_PREVIEW: 'na',
       FIELD_AUDIO_INPUT: 'na',
       FIELD_RECORD_AUDIO_PERMISSION: 'na',
-      FIELD_USB_HOTPLUG: 'na'
+      FIELD_USB_HOTPLUG: 'na',
+      FIELD_PHONE_CAMERA_PAIRING: 'na',
+      FIELD_PHONE_CAMERA_PERMISSION: 'na',
+      FIELD_PHONE_MICROPHONE_PERMISSION: 'na',
+      FIELD_PHONE_TV_FIRST_FRAME: 'na',
+      FIELD_PHONE_TV_AUDIO: 'na',
+      FIELD_PHONE_SESSION_STATS: 'na',
+      FIELD_PHONE_RECONNECT: 'na',
+      FIELD_PHONE_PRIVACY_STOP: 'na'
     }
+  },
+  {
+    key: 'phone_camera_pass',
+    title: '手机摄像头通过',
+    description: '只快速补齐手机扫码、权限、电视首帧、声音、stats、重连和停止证据。',
+    textDefaults: {
+      FIELD_CAMERA_CONNECTION: 'phone_webrtc',
+      FIELD_MICROPHONE_CONNECTION: 'phone_webrtc'
+    },
+    results: Object.fromEntries(phoneCameraResultPrompts.map(([key]) => [key, 'pass']))
   },
   {
     key: 'all_pass',
@@ -122,15 +161,17 @@ const quickPresets = [
       FIELD_CAMERA_CONNECTION: 'usb',
       FIELD_MICROPHONE_CONNECTION: 'usb'
     },
-    results: Object.fromEntries(resultPrompts.map(([key]) => [key, 'pass']))
+    results: Object.fromEntries(allResultPrompts.map(([key]) => [key, 'pass']))
   }
 ]
 
-const schemaVersion = '2026-05-29.live-media-keys'
+const schemaVersion = '2026-05-29.phone-camera-field-acceptance'
 
 module.exports = {
   textPrompts,
   resultPrompts,
+  phoneCameraResultPrompts,
+  allResultPrompts,
   resultText,
   resultOptions,
   quickPresets,

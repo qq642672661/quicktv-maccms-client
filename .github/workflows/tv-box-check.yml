@@ -98,6 +98,7 @@ jobs:
             reports/tv-box-phone-camera-capture-test-latest.*
             reports/tv-box-phone-camera-signaling-test-latest.*
             reports/tv-box-phone-camera-scenarios-test-latest.*
+            reports/tv-box-webrtc-sdk-gate-latest.*
             reports/tv-box-easy-run-latest.*
             reports/tv-box-authorization-latest.*
             reports/tv-box-handoff-html-smoke-latest.*

@@ -281,6 +281,7 @@ run_scenario() {
   local expected_status="$9"
   local should_call_easy="${10}"
   local should_call_check="${11}"
+  local c920_status="${12:-}"
 
   local scenario_dir="$TMP_ROOT/$scenario_id"
   local scenario_report_dir="$scenario_dir/reports"
@@ -294,6 +295,19 @@ run_scenario() {
   printf 'fake support archive\n' > "$scenario_report_dir/fake-support.zip"
   printf '%s\n' "$scenario_report_dir/fake-handoff.zip" > "$scenario_report_dir/tv-box-handoff-latest-archive.txt"
   printf '%s\n' "$scenario_report_dir/fake-support.zip" > "$scenario_report_dir/tv-box-support-latest-archive.txt"
+  if [[ -n "$c920_status" ]]; then
+    cat > "$scenario_report_dir/tv-box-c920-arrival-card-latest.json" <<JSON
+{
+  "status": "$c920_status",
+  "primaryAction": "到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance。",
+  "command": "BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance",
+  "procurement": {
+    "purchaseChannel": "京东自营",
+    "expectedArrivalDate": "2026-05-30"
+  }
+}
+JSON
+  fi
 
   set +e
   PATH="$FAKE_BIN:$PATH" \
@@ -374,6 +388,7 @@ ${rows}
 
 - 未授权时只能生成授权/预检/总控/开工报告，不能误触发安装。
 - 已授权但禁用安装时只能报告 \`ready_for_install\`，不能自动安装。
+- 已授权且 C920 到货卡待接入时，唯一下一步必须切到 C920 专用验收，不能只停留在安装提示。
 - 已授权且允许安装时必须调用 \`tv-box:easy\`。
 - 交付包缺失且允许自动补齐时必须调用 \`tv-box:check\`。
 - 工具链阻断时必须保留为工程修复状态。
@@ -414,6 +429,20 @@ run_scenario \
   "ready_for_install" \
   "false" \
   "false"
+
+run_scenario \
+  "ready_install_disabled_c920_pending" \
+  "已授权且 C920 待到货：唯一下一步转为 C920 专用验收" \
+  "ready_for_install" \
+  "handoff_ready_needs_box" \
+  "c920_purchased_pending_arrival" \
+  "ready_for_install" \
+  "false" \
+  "false" \
+  "c920_purchased_pending_arrival" \
+  "false" \
+  "false" \
+  "c920_purchased_pending_arrival"
 
 run_scenario \
   "ready_auto_install" \

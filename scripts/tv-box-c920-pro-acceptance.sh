@@ -15,11 +15,15 @@ BOX_IP="${BOX_IP:-192.168.10.122}"
 DEVICE_SERIAL="${DEVICE_SERIAL:-}"
 CAMERA_MODEL="${FIELD_CAMERA_MODEL:-Logitech C920 PRO / C920 Pro HD}"
 MICROPHONE_MODEL="${FIELD_MICROPHONE_MODEL:-Logitech C920 PRO built-in microphone}"
+C920_PHYSICAL_STATUS="${C920_PHYSICAL_STATUS:-unknown}"
+C920_PURCHASE_CHANNEL="${C920_PURCHASE_CHANNEL:-}"
+C920_EXPECTED_ARRIVAL_DATE="${C920_EXPECTED_ARRIVAL_DATE:-}"
+C920_PURCHASE_NOTE="${C920_PURCHASE_NOTE:-}"
 RUN_REMOTE_SMOKE="${RUN_REMOTE_SMOKE:-true}"
 STRICT="${STRICT:-false}"
 INTERACTIVE="${INTERACTIVE:-auto}"
 
-export REPORT_DIR
+export REPORT_DIR C920_PHYSICAL_STATUS C920_PURCHASE_CHANNEL C920_EXPECTED_ARRIVAL_DATE C920_PURCHASE_NOTE
 
 mkdir -p "$REPORT_DIR/tv-box-c920-pro-acceptance"
 
@@ -119,6 +123,10 @@ echo "== Logitech C920 PRO TV-box acceptance =="
 echo "Box IP: $BOX_IP"
 echo "Device serial: ${DEVICE_SERIAL:-auto}"
 echo "Camera: $CAMERA_MODEL"
+echo "Physical status: $C920_PHYSICAL_STATUS"
+if [[ -n "$C920_PURCHASE_CHANNEL" || -n "$C920_EXPECTED_ARRIVAL_DATE" ]]; then
+  echo "Purchase: ${C920_PURCHASE_CHANNEL:-unknown}; expected arrival: ${C920_EXPECTED_ARRIVAL_DATE:-unknown}"
+fi
 echo
 echo "接线建议：先让 C920 PRO 直接接小米盒子 USB 口；如果 CameraService 仍是 0 或反复掉线，再改成 C920 PRO -> 带独立供电 USB Hub -> 小米盒子。"
 echo "注意：脚本能证明 Activity、权限、日志和系统枚举；真实画面和麦克风效果仍需要你看电视屏幕后确认。"
@@ -200,7 +208,7 @@ else
   FIELD_HISTORY_RESCUE_VALUE="${FIELD_HISTORY_RESCUE:-unknown}"
 fi
 
-field_notes="C920 PRO 到货接入验收；remote_smoke_exit=${remote_smoke_status}，camera_smoke_exit=${camera_smoke_status}，CameraService Number of camera devices=${camera_count:-unknown}，normal=${normal_camera_count:-unknown}。日志目录：${RUN_DIR}。真实画面、音频输入和 USB 热插拔按本次 FIELD_* 结果判定；unknown 不可关闭。"
+field_notes="C920 PRO 到货接入验收；purchase=${C920_PURCHASE_CHANNEL:-unknown}，expected_arrival=${C920_EXPECTED_ARRIVAL_DATE:-unknown}，remote_smoke_exit=${remote_smoke_status}，camera_smoke_exit=${camera_smoke_status}，CameraService Number of camera devices=${camera_count:-unknown}，normal=${normal_camera_count:-unknown}。日志目录：${RUN_DIR}。真实画面、音频输入和 USB 热插拔按本次 FIELD_* 结果判定；unknown 不可关闭。"
 
 run_capture "Write C920 field record" "$RUN_DIR/field-record.log" \
   env \
@@ -308,6 +316,77 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0
 }
 
+function normalizePhysicalStatus(value) {
+  const normalized = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  if ([
+    'purchased',
+    'ordered',
+    'paid',
+    'purchased_pending_arrival',
+    'not_arrived',
+    'pending_arrival',
+    '已购买',
+    '已采购',
+    '已下单',
+    '已付款',
+    '未到货',
+    '待到货',
+    '已购买待到货',
+    '已采购待到货'
+  ].includes(normalized)) {
+    return 'purchased_pending_arrival'
+  }
+  if ([
+    'not_inserted',
+    'unplugged',
+    'baseline',
+    'not_connected',
+    'arrived',
+    'arrived_not_inserted',
+    'delivered_not_inserted',
+    '到货',
+    '已到货',
+    '未插入',
+    '未接入',
+    '没插',
+    '没有插',
+    '到货未插',
+    '到货未插入',
+    '已到货未插',
+    '已到货未插入'
+  ].includes(normalized)) {
+    return 'not_inserted'
+  }
+  if ([
+    'inserted',
+    'plugged',
+    'connected',
+    'arrived_inserted',
+    'delivered_inserted',
+    '已插入',
+    '已接入',
+    '已连接',
+    '插入',
+    '接入',
+    '连接',
+    '插上',
+    '插上了',
+    '到货已插',
+    '到货已插入',
+    '已到货已插入'
+  ].includes(normalized)) {
+    return 'inserted'
+  }
+  return 'unknown'
+}
+
+function physicalStatusLabel(value) {
+  if (value === 'purchased_pending_arrival') return '已采购，待到货/接入'
+  if (value === 'not_inserted') return '已到手或待测，但当前未插入'
+  if (value === 'inserted') return '已插入 C920，按识别结果排障'
+  return '未确认是否已插入'
+}
+
 const fieldRecord = readJson(path.join(reportDir, 'tv-box-field-record-latest.json'))
 const summary = readJson(path.join(reportDir, 'tv-box-compatibility-summary-latest.json'))
 const audit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
@@ -357,6 +436,12 @@ const previewActivityOpened = cameraSmokeStatus === '0'
 const realPreviewConfirmed = cameraPreviewResult === 'pass'
 const audioConfirmed = audioInputResult === 'pass'
 const hotplugConfirmed = usbHotplugResult === 'pass'
+const physicalStatus = normalizePhysicalStatus(process.env.C920_PHYSICAL_STATUS)
+const procurement = {
+  purchaseChannel: process.env.C920_PURCHASE_CHANNEL || '',
+  expectedArrivalDate: process.env.C920_EXPECTED_ARRIVAL_DATE || '',
+  note: process.env.C920_PURCHASE_NOTE || ''
+}
 const baselineJsonPath = path.join(reportDir, 'tv-box-c920-pro-baseline.json')
 const baselineMarkdownPath = path.join(reportDir, 'tv-box-c920-pro-baseline.md')
 
@@ -418,6 +503,12 @@ const report = {
   boxIp,
   deviceSerial,
   cameraModel,
+  physicalStatus: {
+    status: physicalStatus,
+    label: physicalStatusLabel(physicalStatus),
+    raw: process.env.C920_PHYSICAL_STATUS || ''
+  },
+  procurement,
   remoteSmokeExitCode: Number(remoteSmokeStatus),
   cameraSmokeExitCode: Number(cameraSmokeStatus),
   cameraService: {
@@ -475,6 +566,7 @@ function baselineSnapshotFromReport(sourceReport) {
     boxIp: sourceReport.boxIp,
     deviceSerial: sourceReport.deviceSerial,
     cameraModel: sourceReport.cameraModel,
+    physicalStatus: sourceReport.physicalStatus,
     status: sourceReport.status,
     fieldDecision: sourceReport.fieldDecision,
     cameraService: sourceReport.cameraService,
@@ -496,6 +588,7 @@ function writeBaseline(snapshot, reason) {
 - 保存时间 UTC: \`${snapshot.generatedAtUtc}\`
 - 原因: \`${reason}\`
 - 盒子: \`${snapshot.boxIp || snapshot.deviceSerial || 'unknown'}\`
+- 物理状态: \`${snapshot.physicalStatus?.label || 'unknown'}\`
 - 到货判定: \`${snapshot.fieldDecision?.level || 'unknown'}\`
 - CameraService cameraCount: \`${snapshot.cameraService?.cameraCount ?? 'unknown'}\`
 - USB 视频线索数: \`${snapshot.hardwareEvidence?.usbVideoHintCount ?? 'unknown'}\`
@@ -612,7 +705,17 @@ if (report.baselineComparison.status === 'baseline_missing') {
 if (report.baselineComparison.status === 'compared') {
   nextActions.push(`基线对比：${report.baselineComparison.summary}。`)
 }
-nextActions.push(fieldDecision.primaryAction)
+const noNewHardwareSignal = report.baselineComparison.status === 'compared' &&
+  !report.baselineComparison.signals.usbVideoIncreased &&
+  !report.baselineComparison.signals.camera2Increased &&
+  !report.baselineComparison.signals.usbAudioIncreased &&
+  !report.baselineComparison.signals.audioInputChanged
+if (fieldDecision.level === 'waiting_for_camera_or_usb_not_detected' && physicalStatus !== 'inserted' && noNewHardwareSignal) {
+  nextActions.push('如果 C920 还未到货或当前未插入，这是正常到货前基线，不是兼容失败。到货插入后重跑本命令。')
+  nextActions.push('如果现场确认 C920 已经插入，再按插紧、带独立供电 USB Hub、电脑复测、C270 备机顺序排障。')
+} else {
+  nextActions.push(fieldDecision.primaryAction)
+}
 if (cameraSmokeStatus !== '0') {
   nextActions.push('摄像头冒烟未通过：先确认 C920 PRO 插紧；仍失败时改用带独立供电 USB Hub，重启盒子后重跑本命令。')
 }
@@ -644,6 +747,7 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - 盒子 IP: \`${boxIp || '未填写'}\`
 - 设备序列号: \`${deviceSerial || '未选择'}\`
 - 摄像头: \`${cameraModel}\`
+- 物理状态: \`${report.physicalStatus.label}\`
 - remote smoke exit: \`${remoteSmokeStatus}\`
 - camera smoke exit: \`${cameraSmokeStatus}\`
 - CameraService cameraCount: \`${cameraCount}\`
@@ -675,6 +779,7 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - USB 音频线索: \`${usbAudioDetected ? 'seen' : 'not_seen'}\`
 - 麦克风业务输入: \`${audioConfirmed ? 'confirmed' : 'not_confirmed'}\`
 - USB 热插拔: \`${hotplugConfirmed ? 'confirmed' : 'not_confirmed'}\`
+- 物理状态: \`${report.physicalStatus.label}\`
 - 结论: ${fieldDecision.summary}
 - 优先动作: ${fieldDecision.primaryAction}
 

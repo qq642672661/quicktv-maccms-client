@@ -49,17 +49,176 @@ function resultLabel(value) {
   return '未确认'
 }
 
-function buildDecision(report) {
-  if (report?.fieldDecision) return report.fieldDecision
+function normalizePhysicalStatus(value) {
+  const normalized = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  if ([
+    'purchased',
+    'ordered',
+    'paid',
+    'purchased_pending_arrival',
+    'not_arrived',
+    'pending_arrival',
+    '已购买',
+    '已采购',
+    '已下单',
+    '已付款',
+    '未到货',
+    '待到货',
+    '已购买待到货',
+    '已采购待到货'
+  ].includes(normalized)) {
+    return 'purchased_pending_arrival'
+  }
+  if ([
+    'not_inserted',
+    'unplugged',
+    'baseline',
+    'not_connected',
+    'arrived',
+    'arrived_not_inserted',
+    'delivered_not_inserted',
+    '到货',
+    '已到货',
+    '未插入',
+    '未接入',
+    '没插',
+    '没有插',
+    '到货未插',
+    '到货未插入',
+    '已到货未插',
+    '已到货未插入'
+  ].includes(normalized)) {
+    return 'not_inserted'
+  }
+  if ([
+    'inserted',
+    'plugged',
+    'connected',
+    'arrived_inserted',
+    'delivered_inserted',
+    '已插入',
+    '已接入',
+    '已连接',
+    '插入',
+    '接入',
+    '连接',
+    '插上',
+    '插上了',
+    '到货已插',
+    '到货已插入',
+    '已到货已插入'
+  ].includes(normalized)) {
+    return 'inserted'
+  }
+  return 'unknown'
+}
+
+function physicalStatusLabel(value) {
+  if (value === 'purchased_pending_arrival') return '已采购，待到货/接入'
+  if (value === 'not_inserted') return '已到手或待测，但当前未插入'
+  if (value === 'inserted') return '已插入 C920，按识别结果排障'
+  return '未确认是否已插入'
+}
+
+function readProcurement(report) {
+  const procurement = report?.procurement || {}
+  return {
+    purchaseChannel: process.env.C920_PURCHASE_CHANNEL || procurement.purchaseChannel || procurement.channel || '',
+    expectedArrivalDate: process.env.C920_EXPECTED_ARRIVAL_DATE || procurement.expectedArrivalDate || '',
+    note: process.env.C920_PURCHASE_NOTE || procurement.note || ''
+  }
+}
+
+function noNewHardwareSignal(report) {
+  const signals = report?.baselineComparison?.signals || {}
+  return report?.baselineComparison?.status === 'compared' &&
+    !signals.usbVideoIncreased &&
+    !signals.camera2Increased &&
+    !signals.usbAudioIncreased &&
+    !signals.audioInputChanged
+}
+
+function buildDecision(report, physicalStatus) {
+  const sourceDecision = report?.fieldDecision
+  if (sourceDecision?.level === 'waiting_for_camera_or_usb_not_detected') {
+    if (physicalStatus === 'purchased_pending_arrival') {
+      return {
+        ...sourceDecision,
+        sourceLevel: sourceDecision.level,
+        level: 'c920_purchased_pending_arrival',
+        title: 'C920 PRO 已购买，待到货接入',
+        summary: '当前报告只是到货前或未插入基线，不能判定为盒子不兼容；等 C920 到货并插入 USB 后再跑验收。',
+        primaryAction: '到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance。'
+      }
+    }
+    if (physicalStatus === 'not_inserted') {
+      return {
+        ...sourceDecision,
+        sourceLevel: sourceDecision.level,
+        level: 'c920_not_inserted_baseline',
+        title: 'C920 PRO 当前未插入，仅保留基线',
+        summary: '未插入摄像头时看到 USB 视频和 Camera2 为 0 是正常基线，不算兼容失败。',
+        primaryAction: '插入 C920 PRO 后重跑验收；只有相对基线新增 USB/Camera2/音频线索，才进入真实设备判断。'
+      }
+    }
+    if (physicalStatus !== 'inserted' && noNewHardwareSignal(report)) {
+      return {
+        ...sourceDecision,
+        sourceLevel: sourceDecision.level,
+        level: 'c920_insert_status_unconfirmed',
+        title: 'C920 PRO 插入状态待确认',
+        summary: '当前与到货前基线一致，不能直接说设备不兼容；如果还未到货或未插入，这是正常状态。',
+        primaryAction: '先确认 C920 是否已经插到盒子 USB 口；未插入就等到货，已插入仍无新增线索再按供电 Hub/电脑复测排障。'
+      }
+    }
+    if (physicalStatus === 'inserted') {
+      return {
+        ...sourceDecision,
+        sourceLevel: sourceDecision.level,
+        title: '已插入 C920，但未看到 USB 视频设备',
+        summary: '物理状态已标记为已插入，但盒子 USB/Camera2 仍没有新增视频线索，才进入硬件识别排障。',
+        primaryAction: '重新插紧 C920；直插不行就改用带独立供电 USB Hub，仍不行再接电脑确认摄像头本体。'
+      }
+    }
+  }
+
+  if (sourceDecision) {
+    return {
+      ...sourceDecision,
+      sourceLevel: sourceDecision.level
+    }
+  }
   return {
     level: 'not_run_yet',
+    sourceLevel: 'not_run_yet',
     title: '还未运行 C920 到货验收',
     summary: '先把 C920 PRO 插到小米盒子 USB 口，再运行一条验收命令生成真实证据。',
-    primaryAction: '执行 BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance；脚本完成后看电视屏幕确认真实画面。'
+    primaryAction: '执行 BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance；脚本完成后看电视屏幕确认真实画面。'
   }
 }
 
 function buildBranch(level) {
+  if (level === 'c920_purchased_pending_arrival') {
+    return [
+      '当前只保留“已采购、待接入”状态，不把 Camera2/USB 为 0 记成失败。',
+      '到货后先直插小米盒子唯一 USB 口；如果同时要接独立麦克风，再换带独立供电 USB Hub。',
+      '插上后运行验收命令，电视看到 C920 实时画面前，摄像头仍保持 unknown。'
+    ]
+  }
+  if (level === 'c920_not_inserted_baseline') {
+    return [
+      '这是未插摄像头基线，作用是到货接入后对比是否新增 USB 视频、Camera2 和 USB 音频线索。',
+      '不要根据当前 0 结果退货或判定盒子不兼容。',
+      '插入 C920 后重跑同一条验收命令。'
+    ]
+  }
+  if (level === 'c920_insert_status_unconfirmed') {
+    return [
+      '先问现场一句：C920 是否已经插到小米盒子 USB 口。',
+      '如果还未到货/未插入，保持待接入，不进入故障排查。',
+      '如果确认已插入但仍没有新增 USB/Camera2 线索，再按插紧、供电 Hub、电脑复测、C270 备机的顺序排查。'
+    ]
+  }
   if (level === 'waiting_for_camera_or_usb_not_detected') {
     return [
       '重新插紧 C920 PRO，确认摄像头指示灯或硬件状态正常。',
@@ -109,11 +268,17 @@ function buildBranch(level) {
   ]
 }
 
+function buildAcceptanceCommand(boxIp) {
+  return `BOX_IP=${boxIp} C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`
+}
+
 function buildCard(report) {
-  const decision = buildDecision(report)
+  const physicalStatus = normalizePhysicalStatus(process.env.C920_PHYSICAL_STATUS || report?.physicalStatus?.status || report?.physicalStatus)
+  const decision = buildDecision(report, physicalStatus)
+  const procurement = readProcurement(report)
   const checklist = decision.checklist || {}
   const boxIp = report?.boxIp || process.env.BOX_IP || '192.168.10.122'
-  const command = `BOX_IP=${boxIp} npm run tv-box:c920-acceptance`
+  const command = buildAcceptanceCommand(boxIp)
   const acceptanceExists = fs.existsSync(acceptanceJsonPath)
   const fieldResults = report?.fieldResults || {}
   const hardware = report?.hardwareEvidence || {}
@@ -127,6 +292,15 @@ function buildCard(report) {
     boxIp,
     command,
     status: decision.level,
+    sourceStatus: decision.sourceLevel || decision.level,
+    physicalStatus,
+    physicalStatusLabel: physicalStatusLabel(physicalStatus),
+    physicalStatusInputHints: {
+      purchasedPendingArrival: ['purchased_pending_arrival', '已采购待到货', '待到货'],
+      notInserted: ['not_inserted', '已到货未插入', '未插入'],
+      inserted: ['inserted', '已插入', '已接入']
+    },
+    procurement,
     title: decision.title,
     summary: decision.summary,
     primaryAction: decision.primaryAction,
@@ -154,6 +328,14 @@ function buildCard(report) {
       nativeUsbVideoDeviceCount: native.usbVideoDeviceCount ?? 'unknown',
       nativeAudioInputDeviceCount: native.audioInputDeviceCount ?? 'unknown',
       nativeUsbAudioInputDeviceCount: native.usbAudioInputDeviceCount ?? 'unknown'
+    },
+    baselineComparison: {
+      status: report?.baselineComparison?.status || 'unknown',
+      summary: report?.baselineComparison?.summary || '',
+      usbVideoIncreased: report?.baselineComparison?.signals?.usbVideoIncreased,
+      camera2Increased: report?.baselineComparison?.signals?.camera2Increased,
+      usbAudioIncreased: report?.baselineComparison?.signals?.usbAudioIncreased,
+      audioInputChanged: report?.baselineComparison?.signals?.audioInputChanged
     },
     closeGuard: [
       '只有电视上看到 C920 PRO 真实画面，FIELD_CAMERA_PREVIEW 才能记 pass。',
@@ -191,12 +373,18 @@ function buildMarkdown(card) {
 - 生成时间 UTC: \`${card.generatedAtUtc}\`
 - 验收报告: \`${card.acceptanceReportExists ? card.acceptanceReportPath : '尚未生成'}\`
 - 当前判定: \`${card.status}\`
+- 原始判定: \`${card.sourceStatus}\`
+- 物理状态: ${card.physicalStatusLabel}
+- 最简状态输入: 待到货用 \`C920_PHYSICAL_STATUS=已采购待到货\`；到货未插用 \`C920_PHYSICAL_STATUS=已到货未插入\`；已插好用 \`C920_PHYSICAL_STATUS=已插入\`
+- 采购渠道: ${card.procurement.purchaseChannel || '未记录'}
+- 预计到货: ${card.procurement.expectedArrivalDate || '未记录'}
 - 标题: ${card.title}
+- 说明: ${card.summary}
 - 一键命令: \`${card.command}\`
 
 ## 先做三步
 
-1. 先直插 C920 PRO 到小米盒子 USB 口，电视盒子和电脑保持同一网络。
+1. 先直插 C920 PRO 到小米盒子 USB 口，电视盒子和电脑保持同一网络；直插不稳或要同时接 USB 麦克风时，换带独立供电 USB Hub。
 2. 运行 \`${card.command}\`，不要跳过自动采集。
 3. 看电视屏幕：只有电视上看到 C920 PRO 真实画面，\`FIELD_CAMERA_PREVIEW\` 才能记 \`pass\`。
 
@@ -213,6 +401,15 @@ ${makeTable(checklistRows, ['项目', '结果', '说明'])}
 ## 证据摘要
 
 ${makeTable(evidenceRows, ['证据', '值'])}
+
+## 基线对比
+
+- 状态: \`${card.baselineComparison.status}\`
+- 摘要: ${card.baselineComparison.summary || '暂无'}
+- 新增 USB 视频: \`${yesNo(card.baselineComparison.usbVideoIncreased)}\`
+- 新增 Camera2 摄像头: \`${yesNo(card.baselineComparison.camera2Increased)}\`
+- 新增 USB 音频: \`${yesNo(card.baselineComparison.usbAudioIncreased)}\`
+- 音频输入数量变化: \`${yesNo(card.baselineComparison.audioInputChanged)}\`
 
 ## 不能关闭的边界
 
@@ -266,10 +463,14 @@ function buildHtml(card) {
     <h1>C920 PRO 到货现场操作卡</h1>
     <p><span class="status">${htmlEscape(card.status)}</span></p>
     <p>${htmlEscape(card.title)}</p>
+    <p>${htmlEscape(card.summary)}</p>
+    <p>物理状态：${htmlEscape(card.physicalStatusLabel)}；原始判定：${htmlEscape(card.sourceStatus)}</p>
+    <p>最简状态输入：待到货用 <code>C920_PHYSICAL_STATUS=已采购待到货</code>；到货未插用 <code>C920_PHYSICAL_STATUS=已到货未插入</code>；已插好用 <code>C920_PHYSICAL_STATUS=已插入</code>。</p>
+    <p>采购渠道：${htmlEscape(card.procurement.purchaseChannel || '未记录')}；预计到货：${htmlEscape(card.procurement.expectedArrivalDate || '未记录')}</p>
     <div class="action">
       <strong>先做三步</strong>
       <ol>
-        <li>先直插 C920 PRO 到小米盒子 USB 口。</li>
+        <li>先直插 C920 PRO 到小米盒子 USB 口；直插不稳或要同时接 USB 麦克风时，换带独立供电 USB Hub。</li>
         <li>运行 <code>${htmlEscape(card.command)}</code>。</li>
         <li>只有电视上看到 C920 PRO 真实画面，<code>FIELD_CAMERA_PREVIEW</code> 才能记 <code>pass</code>。</li>
       </ol>

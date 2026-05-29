@@ -255,6 +255,9 @@ JSON
   REPORT_DIR="$REPORT_DIR" \
   BOX_IP=192.168.10.122 \
   DEVICE_SERIAL=192.168.10.122:5555 \
+  C920_PHYSICAL_STATUS=已插入 \
+  C920_PURCHASE_CHANNEL="京东自营" \
+  C920_EXPECTED_ARRIVAL_DATE=2026-05-30 \
   INTERACTIVE=false \
   FIELD_APPEND_MATRIX=false \
   ./scripts/tv-box-c920-pro-acceptance.sh >"$TMP_ROOT/c920-acceptance.log" 2>&1
@@ -277,6 +280,10 @@ const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-c
 const cardHtml = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card.html'), 'utf8')
 
 assert.equal(report.status, 'needs_camera_follow_up')
+assert.equal(report.procurement.purchaseChannel, '京东自营')
+assert.equal(report.procurement.expectedArrivalDate, '2026-05-30')
+assert.equal(report.physicalStatus.status, 'inserted')
+assert.match(report.physicalStatus.label, /已插入 C920/)
 assert.equal(report.cameraSmokeExitCode, 42)
 assert.equal(report.cameraService.cameraCount, '0')
 assert.equal(report.fieldDecision.level, 'usb_seen_camera_hal_missing')
@@ -305,10 +312,122 @@ assert.equal(record.checks.recordAudioPermission, 'pass')
 assert.equal(record.matrix.appendRow, false)
 assert.match(record.notes, /CameraService Number of camera devices=0/)
 assert.equal(card.status, 'usb_seen_camera_hal_missing')
+assert.equal(card.procurement.purchaseChannel, '京东自营')
+assert.equal(card.procurement.expectedArrivalDate, '2026-05-30')
 assert.equal(card.checklist.usbVideoDetected, true)
+assert.match(card.command, /C920_PHYSICAL_STATUS=inserted/)
 assert.match(cardMarkdown, /只有电视上看到 C920 PRO 真实画面/)
+assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=inserted/)
 assert.match(cardMarkdown, /带独立供电 USB Hub/)
 assert.match(cardHtml, /打印 C920 到货操作卡/)
+NODE
+
+PENDING_REPORT_DIR="$TMP_ROOT/pending-reports"
+mkdir -p "$PENDING_REPORT_DIR"
+cat >"$PENDING_REPORT_DIR/tv-box-c920-pro-acceptance-latest.json" <<'JSON'
+{
+  "generatedAtUtc": "2026-05-29T10:00:00.000Z",
+  "boxIp": "192.168.10.122",
+  "deviceSerial": "192.168.10.122:5555",
+  "cameraModel": "Logitech C920 PRO / C920 Pro HD",
+  "fieldDecision": {
+    "level": "waiting_for_camera_or_usb_not_detected",
+    "title": "未看到 C920 视频设备",
+    "summary": "no signal",
+    "primaryAction": "check cable",
+    "checklist": {
+      "usbVideoDetected": false,
+      "camera2Enumerated": false,
+      "previewActivityOpened": true,
+      "realPreviewConfirmed": false,
+      "usbAudioDetected": false,
+      "audioConfirmed": false,
+      "hotplugConfirmed": false
+    }
+  },
+  "cameraService": {
+    "cameraCount": "0",
+    "normalCameraCount": "0"
+  },
+  "hardwareEvidence": {
+    "usbVideoHintCount": 0,
+    "usbAudioHintCount": 0,
+    "nativeCapabilities": {
+      "cameraCount": 0,
+      "externalCameraCount": 0,
+      "usbVideoDeviceCount": 0,
+      "audioInputDeviceCount": 2,
+      "usbAudioInputDeviceCount": 0
+    }
+  },
+  "fieldResults": {
+    "cameraPreview": "unknown",
+    "audioInput": "unknown",
+    "usbHotplug": "unknown"
+  },
+  "baselineComparison": {
+    "status": "compared",
+    "summary": "相对基线没有看到新增 USB 视频、Camera2 或 USB 音频变化",
+    "signals": {
+      "usbVideoIncreased": false,
+      "camera2Increased": false,
+      "usbAudioIncreased": false,
+      "audioInputChanged": false
+    }
+  }
+}
+JSON
+
+(
+  cd "$ROOT_DIR"
+  REPORT_DIR="$PENDING_REPORT_DIR" node ./scripts/tv-box-c920-arrival-card.js >/dev/null
+  C920_PHYSICAL_STATUS=已采购待到货 C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-30 REPORT_DIR="$PENDING_REPORT_DIR" node ./scripts/tv-box-c920-arrival-card.js >/dev/null
+)
+
+node - "$PENDING_REPORT_DIR" <<'NODE'
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const reportDir = process.argv[2]
+const card = JSON.parse(fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.json'), 'utf8'))
+const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.md'), 'utf8')
+
+assert.equal(card.status, 'c920_purchased_pending_arrival')
+assert.equal(card.sourceStatus, 'waiting_for_camera_or_usb_not_detected')
+assert.equal(card.physicalStatus, 'purchased_pending_arrival')
+assert.deepEqual(card.physicalStatusInputHints.inserted, ['inserted', '已插入', '已接入'])
+assert.equal(card.procurement.purchaseChannel, '京东自营')
+assert.equal(card.procurement.expectedArrivalDate, '2026-05-30')
+assert.match(card.command, /C920_PHYSICAL_STATUS=inserted/)
+assert.match(card.title, /已购买/)
+assert.match(card.summary, /不能判定为盒子不兼容/)
+assert.match(cardMarkdown, /物理状态: 已采购，待到货\/接入/)
+assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已采购待到货/)
+assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已插入/)
+assert.match(cardMarkdown, /采购渠道: 京东自营/)
+assert.match(cardMarkdown, /预计到货: 2026-05-30/)
+assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=inserted/)
+assert.match(cardMarkdown, /新增 USB 视频: `no`/)
+NODE
+
+(
+  cd "$ROOT_DIR"
+  C920_PHYSICAL_STATUS=已到货未插入 REPORT_DIR="$PENDING_REPORT_DIR" node ./scripts/tv-box-c920-arrival-card.js >/dev/null
+)
+
+node - "$PENDING_REPORT_DIR" <<'NODE'
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const reportDir = process.argv[2]
+const card = JSON.parse(fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.json'), 'utf8'))
+const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.md'), 'utf8')
+
+assert.equal(card.status, 'c920_not_inserted_baseline')
+assert.equal(card.physicalStatus, 'not_inserted')
+assert.match(card.physicalStatusLabel, /未插入/)
+assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已到货未插入/)
+assert.match(cardMarkdown, /未插入摄像头时看到 USB 视频和 Camera2 为 0 是正常基线/)
 NODE
 
 echo "C920 PRO acceptance failure self-test passed."

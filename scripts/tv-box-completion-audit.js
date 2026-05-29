@@ -317,9 +317,9 @@ function main() {
   requirements.push(makeRequirement(
     'phone_camera_pairing_ui',
     '手机当电视摄像头配对、采集入口和验收边界',
-    allTruthy(sourceContracts, ['phoneCameraPairRoute', 'cameraPagePhoneCameraShortcut', 'phoneCameraPairPage', 'phoneCameraPairQrCode', 'phoneCameraPairRoomCode', 'phoneCameraPairRemoteActions', 'phoneCameraPairHelpKeys', 'phoneCameraPairPrivacyBoundary', 'phoneCameraPairNativeWebRtcBoundary', 'phoneCameraCapturePage', 'phoneCameraCaptureStopButton', 'phoneCameraCaptureSecureContextGuard']) ? 'proven' : 'missing',
-    'inspection.sourceContracts 覆盖 camera-setup 入口、phone_camera_pair 路由、二维码、6 位房间码、打开接收端/重新生成/返回/帮助四个遥控动作、帮助救援、隐私边界、WebRTC/Camera2 边界，以及手机 getUserMedia/RTCPeerConnection/停止按钮/HTTPS-WSS 保护。',
-    '后续接入 Android 原生 WebRTC 接收端后，再用真实手机权限截图、电视端首帧、session.stats 和断线重连证据关闭验收。'
+    allTruthy(sourceContracts, ['phoneCameraPairRoute', 'cameraPagePhoneCameraShortcut', 'phoneCameraPairPage', 'phoneCameraPairQrCode', 'phoneCameraPairRoomCode', 'phoneCameraPairConfigurableBaseUrl', 'phoneCameraPairSignalingUrl', 'phoneCameraPairReceiverOptions', 'nativePhoneCameraReceiverOptions', 'nativePhoneCameraSignalingClient', 'nativePhoneCameraMediaEngine', 'phoneCameraSignalingCreatesTvRoomCode', 'phoneCameraPairReceiverReadiness', 'phoneCameraPairRemoteActions', 'phoneCameraPairHelpKeys', 'phoneCameraPairPrivacyBoundary', 'phoneCameraPairNativeWebRtcBoundary', 'phoneCameraCapturePage', 'phoneCameraCaptureStopButton', 'phoneCameraCaptureSecureContextGuard']) ? 'proven' : 'missing',
+    'inspection.sourceContracts 覆盖 camera-setup 入口、phone_camera_pair 路由、二维码、6 位房间码、可配置手机入口、信令 URL 派生、房间码/信令/手机入口/媒体档位传给原生接收端、电视端按同一房间码创建信令房间、可选 Android WebRTC 媒体引擎、接收端准备度、打开接收端/重新生成/返回/帮助四个遥控动作、帮助救援、隐私边界、WebRTC/Camera2 边界，以及手机 getUserMedia/RTCPeerConnection/停止按钮/HTTPS-WSS 保护。',
+    '后续用 ENABLE_PHONE_CAMERA_WEBRTC=true 实验包在真实盒子上补手机权限截图、电视端首帧、音频接收、session.stats 和断线重连证据后才能关闭验收。'
   ))
   requirements.push(makeRequirement(
     'real_camera_acceptance',

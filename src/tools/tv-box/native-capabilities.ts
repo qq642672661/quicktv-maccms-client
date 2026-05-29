@@ -13,7 +13,14 @@ export interface TvBoxCapabilities {
   hasRecordAudioPermission: boolean | null
   hasPhoneCameraReceiver: boolean | null
   hasNativeWebRtcSdk: boolean | null
+  hasNativeWebRtcEngine: boolean | null
   phoneCameraReceiverReady: boolean | null
+  phoneCameraMediaReady: boolean | null
+  canProveRealMedia: boolean | null
+  sdkStatus: string
+  phoneCameraReceiverStage: string
+  mediaAcceptanceStatus: string
+  acceptanceBoundary: string
   cameraCount: number | null
   externalCameraCount: number | null
   usbDeviceCount: number | null
@@ -31,6 +38,36 @@ export interface TvBoxCapabilities {
 export interface TvBoxNativeResult {
   success: boolean
   message: string
+  hasPhoneCameraReceiver?: boolean | null
+  hasNativeWebRtcSdk?: boolean | null
+  hasNativeWebRtcEngine?: boolean | null
+  phoneCameraReceiverReady?: boolean | null
+  phoneCameraMediaReady?: boolean | null
+  canProveRealMedia?: boolean | null
+  sdkStatus?: string
+  phoneCameraReceiverStage?: string
+  mediaAcceptanceStatus?: string
+  acceptanceBoundary?: string
+}
+
+export interface PhoneCameraReceiverStatus extends TvBoxNativeResult {
+  hasPhoneCameraReceiver: boolean | null
+  hasNativeWebRtcSdk: boolean | null
+  hasNativeWebRtcEngine: boolean | null
+  phoneCameraReceiverReady: boolean | null
+  phoneCameraMediaReady: boolean | null
+  canProveRealMedia: boolean | null
+  sdkStatus: string
+  phoneCameraReceiverStage: string
+  mediaAcceptanceStatus: string
+  acceptanceBoundary: string
+}
+
+export interface PhoneCameraReceiverOptions {
+  roomCode: string
+  signalingUrl: string
+  pairUrl: string
+  profileId: string
 }
 
 const fallbackCapabilities: TvBoxCapabilities = {
@@ -46,7 +83,14 @@ const fallbackCapabilities: TvBoxCapabilities = {
   hasRecordAudioPermission: null,
   hasPhoneCameraReceiver: null,
   hasNativeWebRtcSdk: null,
+  hasNativeWebRtcEngine: null,
   phoneCameraReceiverReady: null,
+  phoneCameraMediaReady: null,
+  canProveRealMedia: null,
+  sdkStatus: '',
+  phoneCameraReceiverStage: 'fallback_unavailable',
+  mediaAcceptanceStatus: 'unknown',
+  acceptanceBoundary: '',
   cameraCount: null,
   externalCameraCount: null,
   usbDeviceCount: null,
@@ -88,7 +132,14 @@ function normalizeCapabilities(result: any): TvBoxCapabilities {
     hasRecordAudioPermission: toNullableBoolean(data.hasRecordAudioPermission),
     hasPhoneCameraReceiver: toNullableBoolean(data.hasPhoneCameraReceiver),
     hasNativeWebRtcSdk: toNullableBoolean(data.hasNativeWebRtcSdk),
+    hasNativeWebRtcEngine: toNullableBoolean(data.hasNativeWebRtcEngine),
     phoneCameraReceiverReady: toNullableBoolean(data.phoneCameraReceiverReady),
+    phoneCameraMediaReady: toNullableBoolean(data.phoneCameraMediaReady),
+    canProveRealMedia: toNullableBoolean(data.canProveRealMedia),
+    sdkStatus: data.sdkStatus || '',
+    phoneCameraReceiverStage: data.phoneCameraReceiverStage || '',
+    mediaAcceptanceStatus: data.mediaAcceptanceStatus || '',
+    acceptanceBoundary: data.acceptanceBoundary || '',
     cameraCount: toNullableNumber(data.cameraCount),
     externalCameraCount: toNullableNumber(data.externalCameraCount),
     usbDeviceCount: toNullableNumber(data.usbDeviceCount),
@@ -104,15 +155,36 @@ function normalizeCapabilities(result: any): TvBoxCapabilities {
   }
 }
 
-async function callTvBoxModule(methodName: string): Promise<any> {
+function normalizeNativeResult(result: any): TvBoxNativeResult {
+  const data = result?.data || result || {}
+  return {
+    success: data.success !== false,
+    message: data.message || '',
+    hasPhoneCameraReceiver: toNullableBoolean(data.hasPhoneCameraReceiver),
+    hasNativeWebRtcSdk: toNullableBoolean(data.hasNativeWebRtcSdk),
+    hasNativeWebRtcEngine: toNullableBoolean(data.hasNativeWebRtcEngine),
+    phoneCameraReceiverReady: toNullableBoolean(data.phoneCameraReceiverReady),
+    phoneCameraMediaReady: toNullableBoolean(data.phoneCameraMediaReady),
+    canProveRealMedia: toNullableBoolean(data.canProveRealMedia),
+    sdkStatus: data.sdkStatus || '',
+    phoneCameraReceiverStage: data.phoneCameraReceiverStage || '',
+    mediaAcceptanceStatus: data.mediaAcceptanceStatus || '',
+    acceptanceBoundary: data.acceptanceBoundary || ''
+  }
+}
+
+async function callTvBoxModule(methodName: string, args: unknown[] = []): Promise<any> {
   const nativeBridge = Native as any
   if (!nativeBridge?.callNativeWithPromise) {
     throw new Error('callNativeWithPromise is unavailable')
   }
 
   try {
-    return await nativeBridge.callNativeWithPromise('TvBoxModule', methodName, [])
-  } catch {
+    return await nativeBridge.callNativeWithPromise('TvBoxModule', methodName, ...args)
+  } catch (error) {
+    if (args.length > 0) {
+      throw error
+    }
     return nativeBridge.callNativeWithPromise('TvBoxModule', methodName)
   }
 }
@@ -150,18 +222,76 @@ export async function openTvBoxSystemCamera(): Promise<TvBoxNativeResult> {
   }
 }
 
-export async function openPhoneCameraReceiver(): Promise<TvBoxNativeResult> {
+export async function openPhoneCameraReceiver(options?: Partial<PhoneCameraReceiverOptions>): Promise<TvBoxNativeResult> {
   try {
-    const result = await callTvBoxModule('openPhoneCameraReceiver')
-    const data = result?.data || result || {}
+    const result = options
+      ? await callTvBoxModule('openPhoneCameraReceiverWithValues', [
+        options.roomCode || '',
+        options.signalingUrl || '',
+        options.pairUrl || '',
+        options.profileId || ''
+      ])
+      : await callTvBoxModule('openPhoneCameraReceiver')
+    return normalizeNativeResult(result)
+  } catch {
+    if (options) {
+      try {
+        const result = await callTvBoxModule('openPhoneCameraReceiver')
+        const normalized = normalizeNativeResult(result)
+        return {
+          ...normalized,
+          message: normalized.message || '已打开电视接收端，但当前 APK 暂未接收房间码参数'
+        }
+      } catch {
+        return {
+          success: false,
+          message: '当前设备暂不支持打开手机摄像头电视接收端',
+          hasNativeWebRtcEngine: null,
+          phoneCameraReceiverStage: 'fallback_unavailable',
+          mediaAcceptanceStatus: 'unknown'
+        }
+      }
+    }
     return {
-      success: data.success !== false,
-      message: data.message || ''
+      success: false,
+      message: '当前设备暂不支持打开手机摄像头电视接收端',
+      hasNativeWebRtcEngine: null,
+      phoneCameraReceiverStage: 'fallback_unavailable',
+      mediaAcceptanceStatus: 'unknown'
+    }
+  }
+}
+
+export async function getPhoneCameraReceiverStatus(): Promise<PhoneCameraReceiverStatus> {
+  try {
+    const normalized = normalizeNativeResult(await callTvBoxModule('getPhoneCameraReceiverStatus'))
+    return {
+      ...normalized,
+      hasPhoneCameraReceiver: normalized.hasPhoneCameraReceiver ?? null,
+      hasNativeWebRtcSdk: normalized.hasNativeWebRtcSdk ?? null,
+      hasNativeWebRtcEngine: normalized.hasNativeWebRtcEngine ?? null,
+      phoneCameraReceiverReady: normalized.phoneCameraReceiverReady ?? null,
+      phoneCameraMediaReady: normalized.phoneCameraMediaReady ?? null,
+      canProveRealMedia: normalized.canProveRealMedia ?? null,
+      sdkStatus: normalized.sdkStatus || '',
+      phoneCameraReceiverStage: normalized.phoneCameraReceiverStage || 'unknown',
+      mediaAcceptanceStatus: normalized.mediaAcceptanceStatus || 'unknown',
+      acceptanceBoundary: normalized.acceptanceBoundary || ''
     }
   } catch {
     return {
       success: false,
-      message: '当前设备暂不支持打开手机摄像头电视接收端'
+      message: '当前运行环境暂无法检测手机摄像头电视接收端状态',
+      hasPhoneCameraReceiver: null,
+      hasNativeWebRtcSdk: null,
+      hasNativeWebRtcEngine: null,
+      phoneCameraReceiverReady: null,
+      phoneCameraMediaReady: null,
+      canProveRealMedia: null,
+      sdkStatus: '',
+      phoneCameraReceiverStage: 'fallback_unavailable',
+      mediaAcceptanceStatus: 'unknown',
+      acceptanceBoundary: ''
     }
   }
 }

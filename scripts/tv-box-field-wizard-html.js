@@ -4,6 +4,8 @@ const path = require('path')
 const {
   textPrompts,
   resultPrompts,
+  phoneCameraResultPrompts,
+  allResultPrompts,
   resultText,
   resultOptions,
   quickPresets,
@@ -25,6 +27,8 @@ function buildHtml() {
   const schemaJson = safeScriptJson({
     textPrompts,
     resultPrompts,
+    phoneCameraResultPrompts,
+    allResultPrompts,
     resultText,
     resultOptions,
     quickPresets,
@@ -543,7 +547,7 @@ function buildHtml() {
     function renderResultFields() {
       const container = byId('resultFields');
       container.innerHTML = '';
-      SCHEMA.resultPrompts.forEach(function(item) {
+      SCHEMA.allResultPrompts.forEach(function(item) {
         const key = item[0];
         const label = item[1];
         state.results[key] = state.results[key] || 'unknown';
@@ -580,7 +584,7 @@ function buildHtml() {
         const key = item[0];
         env[key] = byId(key).value.trim();
       });
-      SCHEMA.resultPrompts.forEach(function(item) {
+      SCHEMA.allResultPrompts.forEach(function(item) {
         const key = item[0];
         env[key] = normalizeResult(state.results[key]);
       });
@@ -597,6 +601,11 @@ function buildHtml() {
         const value = normalizeResult(env[key]);
         if (value === 'fail') failures.push(item[1]);
         if (value === 'unknown') unknowns.push(item[1]);
+      });
+      SCHEMA.phoneCameraResultPrompts.forEach(function(item) {
+        const key = item[0];
+        const value = normalizeResult(env[key]);
+        if (value === 'fail') failures.push(item[1]);
       });
       const corePass = env.FIELD_REMOTE_FOCUS === 'pass'
         && env.FIELD_LIVE_PLAYBACK === 'pass'
@@ -683,7 +692,7 @@ function buildHtml() {
       lines.push('');
       lines.push('| 项目 | 结果 |');
       lines.push('| --- | --- |');
-      SCHEMA.resultPrompts.forEach(function(item) {
+      SCHEMA.allResultPrompts.forEach(function(item) {
         lines.push('| ' + item[1] + ' | ' + resultLabel(env[item[0]]) + ' |');
       });
       lines.push('');
@@ -825,7 +834,7 @@ function buildHtml() {
       SCHEMA.textPrompts.forEach(function(item) {
         byId(item[0]).value = item[2] || '';
       });
-      SCHEMA.resultPrompts.forEach(function(item) {
+      SCHEMA.allResultPrompts.forEach(function(item) {
         setResult(item[0], 'unknown');
       });
       byId('FIELD_NOTES').value = '';
@@ -849,7 +858,7 @@ function buildHtml() {
             const key = item[0];
             if (env[key] !== undefined) byId(key).value = env[key];
           });
-          SCHEMA.resultPrompts.forEach(function(item) {
+          SCHEMA.allResultPrompts.forEach(function(item) {
             const key = item[0];
             setResult(key, env[key] || 'unknown');
           });

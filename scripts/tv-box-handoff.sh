@@ -2144,7 +2144,7 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.zh-CN.md" <<'HARDWARECARD'
 ## C920 到货后先跑
 
 ```bash
-BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance
+BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance
 ```
 
 这条命令会跑遥控器基础冒烟、C920 摄像头冒烟、CameraService/USB/音频线索采集、兼容性记录、硬件画像和完成度审计。只有电视上看到 C920 真实画面，才把 `FIELD_CAMERA_PREVIEW` 记为 `pass`；麦克风和 USB 热插拔未确认时保持 `unknown`，不要关闭。
@@ -2362,7 +2362,7 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.html" <<'HARDWAREHTML'
 
       <div class="panel must">
         <h2>C920 到货后先跑</h2>
-        <p><code>BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance</code></p>
+        <p><code>BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance</code></p>
         <ul>
           <li>会自动跑遥控器基础冒烟、C920 摄像头冒烟、CameraService/USB/音频线索采集和兼容性记录。</li>
           <li>只有电视上看到 C920 真实画面，才把 <code>FIELD_CAMERA_PREVIEW</code> 记为 <code>pass</code>。</li>

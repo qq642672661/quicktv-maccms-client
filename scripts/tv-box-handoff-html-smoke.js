@@ -6,6 +6,8 @@ const vm = require('vm')
 const {
   textPrompts,
   resultPrompts,
+  phoneCameraResultPrompts,
+  allResultPrompts,
   resultText,
   resultOptions,
   quickPresets,
@@ -458,6 +460,8 @@ function checkOfflineFieldWizard() {
   assert.deepEqual(embeddedSchema, {
     textPrompts,
     resultPrompts,
+    phoneCameraResultPrompts,
+    allResultPrompts,
     resultText,
     resultOptions,
     quickPresets,
@@ -475,7 +479,7 @@ function checkOfflineFieldWizard() {
   for (const [key] of textPrompts) {
     assert.ok(document.getElementById(key), `offline field wizard did not render text field: ${key}`)
   }
-  for (const [key] of resultPrompts) {
+  for (const [key] of allResultPrompts) {
     for (const [value] of resultOptions) {
       assert.ok(document.getElementById(`${key}__${value}`), `offline field wizard did not render result button: ${key}/${value}`)
     }
@@ -483,7 +487,7 @@ function checkOfflineFieldWizard() {
   for (const preset of quickPresets) {
     assert.ok(document.getElementById(`preset__${preset.key}`), `offline field wizard did not render preset button: ${preset.key}`)
   }
-  note('离线现场验收表动态渲染字段、模板和按钮', `${textPrompts.length} text fields, ${quickPresets.length} presets, ${resultPrompts.length * resultOptions.length} result buttons`)
+  note('离线现场验收表动态渲染字段、模板和按钮', `${textPrompts.length} text fields, ${quickPresets.length} presets, ${allResultPrompts.length * resultOptions.length} result buttons`)
 
   document.getElementById('preset__tv_core_pass').click()
   document.getElementById('generateButton').click()
@@ -495,7 +499,7 @@ function checkOfflineFieldWizard() {
   document.getElementById('FIELD_BOX_MODEL').value = 'Offline HTML'
   document.getElementById('FIELD_ANDROID_SDK').value = '31'
   document.getElementById('FIELD_APPEND_MATRIX').checked = true
-  for (const [key] of resultPrompts) {
+  for (const [key] of allResultPrompts) {
     document.getElementById(`${key}__pass`).click()
   }
   document.getElementById('generateButton').click()

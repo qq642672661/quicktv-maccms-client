@@ -34,6 +34,7 @@ const [
   latestMarkdownPath,
   matrixCsvPath
 ] = process.argv.slice(2)
+const { phoneCameraResultPrompts } = require(path.join(rootDir, 'scripts/tv-box-field-wizard-schema'))
 
 function readJson(filePath) {
   try {
@@ -82,10 +83,12 @@ function boolText(value) {
   return ''
 }
 
-function deriveVerdict(checks, inspection) {
+function deriveVerdict(checks, inspection, phoneCameraChecks) {
   if (env('FIELD_VERDICT')) return env('FIELD_VERDICT')
   const values = Object.values(checks)
+  const phoneValues = Object.values(phoneCameraChecks || {})
   if (values.includes('fail')) return 'needs_fix'
+  if (phoneValues.includes('fail')) return 'needs_fix'
   if ((inspection.deviceEvidence || {}).status !== 'selected') return 'needs_box'
   if (values.includes('unknown')) return 'needs_manual_acceptance'
   return 'pass'
@@ -123,6 +126,7 @@ const manualFieldNames = [
   'FIELD_RECORD_AUDIO_PERMISSION',
   'FIELD_USB_HOTPLUG',
   'FIELD_SUPPORT_CODE',
+  ...phoneCameraResultPrompts.map(([name]) => name),
   'FIELD_VERDICT',
   'FIELD_NOTES'
 ]
@@ -168,6 +172,17 @@ const checks = {
   supportCode: normalizeResult(env('FIELD_SUPPORT_CODE'))
 }
 
+const phoneCameraChecks = {
+  pairing: normalizeResult(env('FIELD_PHONE_CAMERA_PAIRING')),
+  phoneCameraPermission: normalizeResult(env('FIELD_PHONE_CAMERA_PERMISSION')),
+  phoneMicrophonePermission: normalizeResult(env('FIELD_PHONE_MICROPHONE_PERMISSION')),
+  tvFirstFrame: normalizeResult(env('FIELD_PHONE_TV_FIRST_FRAME')),
+  tvAudioReceiving: normalizeResult(env('FIELD_PHONE_TV_AUDIO')),
+  sessionStats: normalizeResult(env('FIELD_PHONE_SESSION_STATS')),
+  reconnect: normalizeResult(env('FIELD_PHONE_RECONNECT')),
+  privacyStop: normalizeResult(env('FIELD_PHONE_PRIVACY_STOP'))
+}
+
 const record = {
   recordId,
   generatedAtUtc,
@@ -201,8 +216,21 @@ const record = {
     inputResult: checks.audioInput,
     recordAudioPermissionResult: checks.recordAudioPermission
   },
+  phoneCamera: {
+    route: 'phone_webrtc',
+    pairingResult: phoneCameraChecks.pairing,
+    phoneCameraPermissionResult: phoneCameraChecks.phoneCameraPermission,
+    phoneMicrophonePermissionResult: phoneCameraChecks.phoneMicrophonePermission,
+    tvFirstFrameResult: phoneCameraChecks.tvFirstFrame,
+    tvAudioReceivingResult: phoneCameraChecks.tvAudioReceiving,
+    sessionStatsResult: phoneCameraChecks.sessionStats,
+    reconnectResult: phoneCameraChecks.reconnect,
+    privacyStopResult: phoneCameraChecks.privacyStop,
+    closeRule: '手机摄像头真实通过必须同时具备手机摄像头/麦克风权限、电视首帧、电视音频、session.stats、断线重连和停止按钮证据；unknown/na 不算通过。'
+  },
   checks,
-  verdict: deriveVerdict(checks, inspection),
+  phoneCameraChecks,
+  verdict: deriveVerdict(checks, inspection, phoneCameraChecks),
   matrix: {
     csvPath: matrixCsvPath,
     appendRow: appendMatrixRow,
@@ -283,6 +311,21 @@ const markdown = `# HelloTV 电视盒子实机兼容性记录
 | 录音权限 | ${resultText(record.checks.recordAudioPermission)} |
 | USB 摄像头热插拔 | ${resultText(record.checks.usbHotplug)} |
 | 维护码可读 | ${resultText(record.checks.supportCode)} |
+
+## 手机当电视摄像头真实验收
+
+| 项目 | 结果 |
+| --- | --- |
+| 扫码/房间码配对 | ${resultText(record.phoneCameraChecks.pairing)} |
+| 手机摄像头权限 | ${resultText(record.phoneCameraChecks.phoneCameraPermission)} |
+| 手机麦克风权限 | ${resultText(record.phoneCameraChecks.phoneMicrophonePermission)} |
+| 电视端首帧画面 | ${resultText(record.phoneCameraChecks.tvFirstFrame)} |
+| 电视端手机音频 | ${resultText(record.phoneCameraChecks.tvAudioReceiving)} |
+| session.stats 证据 | ${resultText(record.phoneCameraChecks.sessionStats)} |
+| 断线重连 | ${resultText(record.phoneCameraChecks.reconnect)} |
+| 停止按钮关闭采集 | ${resultText(record.phoneCameraChecks.privacyStop)} |
+
+${record.phoneCamera.closeRule}
 
 ## 自动证据
 
@@ -386,6 +429,14 @@ const header = [
   'recordAudioPermission',
   'usbHotplug',
   'supportCode',
+  'phoneCameraPairing',
+  'phoneCameraPermission',
+  'phoneMicrophonePermission',
+  'phoneTvFirstFrame',
+  'phoneTvAudio',
+  'phoneSessionStats',
+  'phoneReconnect',
+  'phonePrivacyStop',
   'readinessLevel',
   'apkSha256',
   'notes'
@@ -425,6 +476,14 @@ const row = [
   record.checks.recordAudioPermission,
   record.checks.usbHotplug,
   record.checks.supportCode,
+  record.phoneCameraChecks.pairing,
+  record.phoneCameraChecks.phoneCameraPermission,
+  record.phoneCameraChecks.phoneMicrophonePermission,
+  record.phoneCameraChecks.tvFirstFrame,
+  record.phoneCameraChecks.tvAudioReceiving,
+  record.phoneCameraChecks.sessionStats,
+  record.phoneCameraChecks.reconnect,
+  record.phoneCameraChecks.privacyStop,
   record.evidence.readinessLevel,
   record.evidence.apkSha256,
   record.notes

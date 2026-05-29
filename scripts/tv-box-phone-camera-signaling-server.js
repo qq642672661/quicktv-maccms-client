@@ -570,9 +570,15 @@ function createSignalingServer(options = {}) {
       return
     }
 
-    let roomCode = codeGenerator()
+    const requestedRoomCode = payload.roomCode || ''
+    let roomCode = requestedRoomCode || codeGenerator()
+    if (requestedRoomCode && rooms.has(requestedRoomCode)) {
+      send(peer, makeError('room_code_unavailable', 'Requested room code is already active.', true))
+      return
+    }
+
     let guard = 0
-    while (rooms.has(roomCode) && guard < 20) {
+    while (!requestedRoomCode && rooms.has(roomCode) && guard < 20) {
       roomCode = codeGenerator()
       guard += 1
     }
@@ -601,6 +607,7 @@ function createSignalingServer(options = {}) {
     send(peer, {
       type: 'room.created',
       roomCode,
+      roomCodeSource: requestedRoomCode ? 'tv_requested' : 'server_generated',
       expiresAtUtc: room.expiresAtUtc,
       pairUrl: room.pairUrl,
       signalingUrl: `ws://${request.headers.host || '127.0.0.1'}/phone-camera/signaling`,

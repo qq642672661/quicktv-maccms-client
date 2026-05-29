@@ -32,7 +32,9 @@ const importMetaEnv = {
   VITE_DEBUG_MODE: envConfig.VITE_DEBUG_MODE || 'false',
   VITE_DEV_SERVER_HOST: envConfig.VITE_DEV_SERVER_HOST || '0.0.0.0',
   VITE_DEV_SERVER_PORT: envConfig.VITE_DEV_SERVER_PORT || '38989',
-  VITE_TV_BOX_SIMPLE_MODE: envConfig.VITE_TV_BOX_SIMPLE_MODE || 'true'
+  VITE_TV_BOX_SIMPLE_MODE: envConfig.VITE_TV_BOX_SIMPLE_MODE || 'true',
+  VITE_PHONE_CAMERA_PAIR_BASE_URL: envConfig.VITE_PHONE_CAMERA_PAIR_BASE_URL || 'https://quicktv.local/phone-camera',
+  VITE_PHONE_CAMERA_PROFILE_ID: envConfig.VITE_PHONE_CAMERA_PROFILE_ID || 'default_720p_15'
 }
 
 const envVars = {
@@ -46,7 +48,9 @@ const envVars = {
   'import.meta.env.VITE_DEBUG_MODE': JSON.stringify(importMetaEnv.VITE_DEBUG_MODE),
   'import.meta.env.VITE_DEV_SERVER_HOST': JSON.stringify(importMetaEnv.VITE_DEV_SERVER_HOST),
   'import.meta.env.VITE_DEV_SERVER_PORT': JSON.stringify(importMetaEnv.VITE_DEV_SERVER_PORT),
-  'import.meta.env.VITE_TV_BOX_SIMPLE_MODE': JSON.stringify(importMetaEnv.VITE_TV_BOX_SIMPLE_MODE)
+  'import.meta.env.VITE_TV_BOX_SIMPLE_MODE': JSON.stringify(importMetaEnv.VITE_TV_BOX_SIMPLE_MODE),
+  'import.meta.env.VITE_PHONE_CAMERA_PAIR_BASE_URL': JSON.stringify(importMetaEnv.VITE_PHONE_CAMERA_PAIR_BASE_URL),
+  'import.meta.env.VITE_PHONE_CAMERA_PROFILE_ID': JSON.stringify(importMetaEnv.VITE_PHONE_CAMERA_PROFILE_ID)
 }
 
 module.exports = {

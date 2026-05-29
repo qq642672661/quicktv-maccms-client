@@ -8,6 +8,7 @@ package com.quicktvui.hellotv.tvbox;
 public final class PhoneCameraWebRtcSupport {
 
     private static final String WEBRTC_FACTORY_CLASS = "org.webrtc.PeerConnectionFactory";
+    private static final String WEBRTC_ENGINE_CLASS = "com.quicktvui.hellotv.tvbox.PhoneCameraNativeWebRtcEngine";
 
     private PhoneCameraWebRtcSupport() {
     }
@@ -21,7 +22,21 @@ public final class PhoneCameraWebRtcSupport {
         }
     }
 
+    public static boolean hasNativeMediaEngine() {
+        try {
+            Class.forName(WEBRTC_ENGINE_CLASS);
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     public static String sdkStatus() {
-        return hasNativeWebRtcSdk() ? "native_webrtc_sdk_present" : "native_webrtc_sdk_missing";
+        if (!hasNativeWebRtcSdk()) {
+            return "native_webrtc_sdk_missing";
+        }
+        return hasNativeMediaEngine()
+                ? "native_webrtc_sdk_present_engine_present"
+                : "native_webrtc_sdk_present_engine_missing";
     }
 }

@@ -202,12 +202,17 @@ function buildAreas(inspection) {
         makeCheck('phone_pair_page', '配对页源码存在', sourceOk(contracts, 'phoneCameraPairPage'), 'src/pages/phone-camera-pair/index.vue'),
         makeCheck('phone_pair_qr', '配对页显示二维码内容和扫码入口', sourceOk(contracts, 'phoneCameraPairQrCode'), 'qt-qr-code / pairUrl'),
         makeCheck('phone_pair_room_code', '配对页生成 6 位房间码并提示过期时间', sourceOk(contracts, 'phoneCameraPairRoomCode'), 'generateRoomCode / ttlMinutes'),
+        makeCheck('phone_pair_config', '配对页手机入口和信令地址可配置、可从同一个房间码派生', sourceOk(contracts, 'phoneCameraPairConfigurableBaseUrl') && sourceOk(contracts, 'phoneCameraPairSignalingUrl'), 'VITE_PHONE_CAMERA_PAIR_BASE_URL / buildSignalingUrl'),
+        makeCheck('phone_pair_receiver_options', '打开电视接收端时传入房间码、信令地址、手机入口和媒体档位', sourceOk(contracts, 'phoneCameraPairReceiverOptions') && sourceOk(contracts, 'nativePhoneCameraReceiverOptions'), 'openPhoneCameraReceiverWithValues / roomCode / signalingUrl'),
+        makeCheck('phone_pair_signaling_room', '信令服务和电视接收端使用同一个 6 位房间码创建 TV 房间', sourceOk(contracts, 'phoneCameraSignalingCreatesTvRoomCode') && sourceOk(contracts, 'nativePhoneCameraSignalingClient'), 'room.create roomCode / PhoneCameraSignalingClient'),
+        makeCheck('phone_pair_native_media_engine', '实验包可选接入原生 WebRTC 媒体引擎并发送 answer/ICE/stats', sourceOk(contracts, 'nativePhoneCameraMediaEngine'), 'PhoneCameraMediaEngine / PhoneCameraNativeWebRtcEngine'),
         makeCheck('phone_pair_four_actions', '配对页只暴露打开接收端、重新生成、返回摄像头、帮助自检四个遥控动作', sourceOk(contracts, 'phoneCameraPairRemoteActions'), '打开接收端 / 重新生成 / 返回摄像头 / 帮助自检'),
         makeCheck('phone_pair_help_keys', '配对页支持 0/6/帮助键救援', sourceOk(contracts, 'phoneCameraPairHelpKeys'), 'remoteNumber === 6 / isRemoteHelpKey'),
         makeCheck('phone_pair_privacy', '配对页明示默认不录制和小程序资质门禁', sourceOk(contracts, 'phoneCameraPairPrivacyBoundary'), '默认不录制 / 微信小程序推流'),
+        makeCheck('phone_pair_receiver_readiness', '配对页显示接收端准备度并从原生状态区分 SDK/媒体验收', sourceOk(contracts, 'phoneCameraPairReceiverReadiness'), '接收端准备度 / phoneCameraReceiverStage'),
         makeCheck('phone_pair_boundary', '配对页不把手机摄像头误说成系统 Camera2，并明确 WebRTC SDK/首帧未闭环边界', sourceOk(contracts, 'phoneCameraPairNativeWebRtcBoundary'), '接收入口已接入 APK / WebRTC SDK / 不伪装')
       ],
-      '后续接入 Android WebRTC SDK 并拿到真实首帧、音频和 stats 前，本页只证明入口、接收端骨架和验收边界。'
+      '后续需要用 ENABLE_PHONE_CAMERA_WEBRTC=true 实验包在真实盒子上拿到首帧、音频和 stats；本页仍不替代现场音视频证据。'
     ),
     makeArea(
       'field_acceptance',

@@ -63,6 +63,7 @@ function validateMessage(contract, messages, step) {
   if (step.type === 'room.created') {
     if (!validateRoomCode(contract, payload.roomCode)) fail('room.created roomCode must be six digits')
     if (!String(payload.pairUrl || '').includes(payload.roomCode)) fail('room.created pairUrl must carry roomCode')
+    if (!/^wss?:\/\//.test(String(payload.signalingUrl || ''))) fail('room.created signalingUrl must be ws/wss')
   }
 
   if (step.type === 'session.stats') {
@@ -161,9 +162,9 @@ function runRouteGateScenario(contract, scenario) {
 }
 
 const baseConnectSteps = [
-  { kind: 'message', type: 'room.create', payload: { role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5' } },
+  { kind: 'message', type: 'room.create', payload: { role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5', roomCode: '482913' } },
   { kind: 'event', event: 'tv_generate_room' },
-  { kind: 'message', type: 'room.created', payload: { roomCode: '482913', expiresAtUtc: '2026-05-29T08:10:00Z', pairUrl: 'https://hello-tv.local/pair?room=482913' } },
+  { kind: 'message', type: 'room.created', payload: { roomCode: '482913', expiresAtUtc: '2026-05-29T08:10:00Z', pairUrl: 'https://hello-tv.local/phone-camera?room=482913', signalingUrl: 'wss://hello-tv.local/phone-camera/signaling' } },
   { kind: 'message', type: 'peer.hello', payload: { roomCode: '482913', role: 'phone', userAgent: 'Phone PWA', mediaCapabilities: { camera: true, microphone: true } } },
   { kind: 'event', event: 'phone_hello' },
   { kind: 'message', type: 'webrtc.offer', payload: { sdp: 'v=0 fake offer', profileId: 'default_720p_15' } },
@@ -193,9 +194,9 @@ const scenarios = [
     id: 'room_expired_before_phone',
     label: '手机未扫码时房间码过期，不进入媒体协商',
     steps: [
-      { kind: 'message', type: 'room.create', payload: { role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5' } },
+      { kind: 'message', type: 'room.create', payload: { role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5', roomCode: '482913' } },
       { kind: 'event', event: 'tv_generate_room' },
-      { kind: 'message', type: 'room.created', payload: { roomCode: '482913', expiresAtUtc: '2026-05-29T08:10:00Z', pairUrl: 'https://hello-tv.local/pair?room=482913' } },
+      { kind: 'message', type: 'room.created', payload: { roomCode: '482913', expiresAtUtc: '2026-05-29T08:10:00Z', pairUrl: 'https://hello-tv.local/phone-camera?room=482913', signalingUrl: 'wss://hello-tv.local/phone-camera/signaling' } },
       { kind: 'event', event: 'room_expired_or_user_back' },
       { kind: 'message', type: 'session.hangup', payload: { reason: 'room_expired' } }
     ],
@@ -208,9 +209,9 @@ const scenarios = [
     id: 'phone_permission_failed',
     label: '手机摄像头或麦克风权限失败，进入可恢复错误',
     steps: [
-      { kind: 'message', type: 'room.create', payload: { role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5' } },
+      { kind: 'message', type: 'room.create', payload: { role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5', roomCode: '482913' } },
       { kind: 'event', event: 'tv_generate_room' },
-      { kind: 'message', type: 'room.created', payload: { roomCode: '482913', expiresAtUtc: '2026-05-29T08:10:00Z', pairUrl: 'https://hello-tv.local/pair?room=482913' } },
+      { kind: 'message', type: 'room.created', payload: { roomCode: '482913', expiresAtUtc: '2026-05-29T08:10:00Z', pairUrl: 'https://hello-tv.local/phone-camera?room=482913', signalingUrl: 'wss://hello-tv.local/phone-camera/signaling' } },
       { kind: 'message', type: 'peer.hello', payload: { roomCode: '482913', role: 'phone', userAgent: 'Phone PWA', mediaCapabilities: { camera: false, microphone: false } } },
       { kind: 'event', event: 'phone_hello' },
       { kind: 'message', type: 'webrtc.offer', payload: { sdp: 'v=0 fake offer missing tracks', profileId: 'mvp_480p_15' } },

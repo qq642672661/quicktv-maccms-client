@@ -155,6 +155,15 @@ function sourceContracts() {
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'pairUrl'),
     phoneCameraPairRoomCode: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'generateRoomCode') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'ttlMinutes'),
+    phoneCameraPairConfigurableBaseUrl: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'VITE_PHONE_CAMERA_PAIR_BASE_URL') &&
+      hasText(path.join(rootDir, 'scripts/quicktvui-webpack.android.ts'), 'VITE_PHONE_CAMERA_PAIR_BASE_URL'),
+    phoneCameraPairSignalingUrl: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'buildSignalingUrl') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '/phone-camera/signaling'),
+    phoneCameraPairReceiverOptions: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'openPhoneCameraReceiver({') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'roomCode: roomCode.value') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'signalingUrl: signalingUrl.value') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'pairUrl: pairUrl.value') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'profileId: defaultProfileId'),
     phoneCameraPairRemoteActions: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '打开接收端') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '重新生成') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '返回摄像头') &&
@@ -163,9 +172,17 @@ function sourceContracts() {
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'isRemoteHelpKey'),
     phoneCameraPairPrivacyBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '默认不录制') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '微信小程序推流'),
-    phoneCameraPairNativeWebRtcBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '电视端接收入口已接入 APK') &&
-      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'WebRTC SDK 和真实首帧未闭环') &&
+    phoneCameraPairNativeWebRtcBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '同一房间码创建信令房间') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'WebRTC 媒体首帧未闭环') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '不会把手机伪装成系统摄像头'),
+    phoneCameraPairReceiverReadiness: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '接收端准备度') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'getPhoneCameraReceiverStatus') &&
+      hasText(path.join(rootDir, 'src/tools/tv-box/native-capabilities.ts'), 'phoneCameraReceiverStage') &&
+      hasText(path.join(rootDir, 'src/tools/tv-box/native-capabilities.ts'), 'hasNativeWebRtcEngine') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/TvBoxModule.java'), 'mediaAcceptanceStatus'),
+    phoneCameraSignalingCreatesTvRoomCode: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'roomCodeSource') &&
+      hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-test.js'), 'room_create_with_tv_room_code') &&
+      hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-contract.js'), "optional: ['roomCode']"),
     phoneCameraCapturePage: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'navigator.mediaDevices.getUserMedia') &&
       hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'new RTCPeerConnection'),
     phoneCameraCaptureStopButton: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'id="stopButton"') &&
@@ -226,6 +243,23 @@ function sourceContracts() {
       hasText(path.join(rootDir, 'src/pages/search/three-columns.vue'), 'launch.launchTvBoxHome()'),
     nativeTvBoxModule: fs.existsSync(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/TvBoxModule.java')),
     nativeCameraPreviewActivity: fs.existsSync(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/CameraPreviewActivity.java')),
+    nativePhoneCameraReceiverOptions: hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/TvBoxModule.java'), 'openPhoneCameraReceiverWithValues') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/TvBoxModule.java'), 'EXTRA_ROOM_CODE') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/TvBoxModule.java'), 'EXTRA_SIGNALING_URL') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraReceiverActivity.java'), '手机入口'),
+    nativePhoneCameraSignalingClient: fs.existsSync(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraSignalingClient.java')) &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraReceiverActivity.java'), 'startSignalingIfReady') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraSignalingClient.java'), '"room.create"') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraSignalingClient.java'), '"webrtc.offer"') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraSignalingClient.java'), '"webrtc.answer"') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraSignalingClient.java'), 'sendStats'),
+    nativePhoneCameraMediaEngine: fs.existsSync(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraMediaEngine.java')) &&
+      fs.existsSync(path.join(rootDir, 'android/app/src/phoneCameraWebRtc/java/com/quicktvui/hellotv/tvbox/PhoneCameraNativeWebRtcEngine.java')) &&
+      hasText(path.join(rootDir, 'android/app/build.gradle'), 'src/phoneCameraWebRtc/java') &&
+      hasText(path.join(rootDir, 'android/app/src/main/java/com/quicktvui/hellotv/tvbox/PhoneCameraReceiverActivity.java'), 'handlePhoneOffer') &&
+      hasText(path.join(rootDir, 'android/app/src/phoneCameraWebRtc/java/com/quicktvui/hellotv/tvbox/PhoneCameraNativeWebRtcEngine.java'), 'createAnswer') &&
+      hasText(path.join(rootDir, 'android/app/src/phoneCameraWebRtc/java/com/quicktvui/hellotv/tvbox/PhoneCameraNativeWebRtcEngine.java'), 'SurfaceViewRenderer') &&
+      hasText(path.join(rootDir, 'android/app/src/phoneCameraWebRtc/java/com/quicktvui/hellotv/tvbox/PhoneCameraNativeWebRtcEngine.java'), 'onStatsDelivered'),
     leanbackLauncher: hasText(path.join(rootDir, 'android/app/src/main/AndroidManifest.xml'), 'android.intent.category.LEANBACK_LAUNCHER'),
     internalCameraPreviewActivity: hasText(path.join(rootDir, 'android/app/src/main/AndroidManifest.xml'), 'CameraPreviewActivity'),
     tvBanner: hasText(path.join(rootDir, 'android/app/src/main/AndroidManifest.xml'), 'android:banner="@drawable/tv_banner"'),

@@ -5,6 +5,8 @@ const { spawnSync } = require('child_process')
 const {
   textPrompts,
   resultPrompts,
+  phoneCameraResultPrompts,
+  allResultPrompts,
   resultText,
   schemaVersion
 } = require('./tv-box-field-wizard-schema')
@@ -84,7 +86,7 @@ function buildEnv(record) {
     importedEnv[key] = sourceEnv[key] === undefined || sourceEnv[key] === null ? fallback : String(sourceEnv[key])
   }
 
-  for (const [key] of resultPrompts) {
+  for (const [key] of allResultPrompts) {
     importedEnv[key] = normalizeResult(sourceEnv[key])
   }
 
@@ -108,6 +110,9 @@ function classify(importedEnv) {
   const failures = resultPrompts
     .filter(([key]) => importedEnv[key] === 'fail')
     .map(([, label]) => label)
+  const phoneCameraFailures = phoneCameraResultPrompts
+    .filter(([key]) => importedEnv[key] === 'fail')
+    .map(([, label]) => label)
   const unknowns = resultPrompts
     .filter(([key]) => importedEnv[key] === 'unknown')
     .map(([, label]) => label)
@@ -126,7 +131,9 @@ function classify(importedEnv) {
   const cameraReady = importedEnv.FIELD_CAMERA_PERMISSION === 'pass'
     && importedEnv.FIELD_CAMERA_PREVIEW === 'pass'
 
-  if (failures.length > 0) return { level: 'needs_fix', failures, unknowns }
+  if (failures.length > 0 || phoneCameraFailures.length > 0) {
+    return { level: 'needs_fix', failures: [...failures, ...phoneCameraFailures], unknowns }
+  }
   if (coreReady && helpReady && practiceReady && exitReady && rescueReady && cameraReady) return { level: 'recommended_candidate', failures, unknowns }
   if (coreReady && helpReady && practiceReady && exitReady && rescueReady) return { level: 'tv_core_ready_candidate', failures, unknowns }
   return { level: unknowns.length > 0 ? 'needs_manual_acceptance' : 'watch', failures, unknowns }
@@ -163,7 +170,7 @@ ${textPrompts.map(([key, label]) => `| ${label} | ${markdownCell(importReport.en
 
 | 项目 | 结果 |
 | --- | --- |
-${resultPrompts.map(([key, label]) => `| ${label} | ${resultText[importReport.env[key]] || importReport.env[key] || '未知'} |`).join('\n')}
+${allResultPrompts.map(([key, label]) => `| ${label} | ${resultText[importReport.env[key]] || importReport.env[key] || '未知'} |`).join('\n')}
 
 ## 导入结果
 

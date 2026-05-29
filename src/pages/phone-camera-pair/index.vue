@@ -26,8 +26,9 @@
 
     <qt-view class="phone-camera-boundary" :focusable="false">
       <qt-text class="phone-camera-boundary-title" text="验收边界" :focusable="false" />
-      <qt-text class="phone-camera-boundary-text" text="电视端接收入口已接入 APK；WebRTC SDK 和真实首帧未闭环前，仍不能记为通过。" :focusable="false" />
+      <qt-text class="phone-camera-boundary-text" text="电视端会用同一房间码创建信令房间；WebRTC 媒体首帧未闭环前，仍不能记为通过。" :focusable="false" />
       <qt-text class="phone-camera-boundary-text" text="手机端必须有明显停止按钮，默认不录制；微信小程序推流要等资质和权限通过。" :focusable="false" />
+      <qt-text class="phone-camera-boundary-text compact" :text="receiverReadinessText" :focusable="false" />
     </qt-view>
 
     <qt-view class="phone-camera-actions" :focusable="false">
@@ -89,24 +90,46 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ESKeyCode, ESKeyEvent, useESToast } from '@extscreen/es3-core'
 import launch from '../../tools/launch'
-import { openPhoneCameraReceiver } from '../../tools/tv-box/native-capabilities'
+import { getPhoneCameraReceiverStatus, openPhoneCameraReceiver } from '../../tools/tv-box/native-capabilities'
 import { isRemoteConfirmKey, isRemoteHelpKey, moveLinearSelection, remoteNumberFromKeyCode } from '../../tools/tv-box/remote-control'
 
 const toast = useESToast()
 const activeActionIndex = ref(0)
 const roomCode = ref(generateRoomCode())
+const receiverReadinessText = ref('接收端准备度：检测中')
 const ttlMinutes = 10
-const pairBaseUrl = 'https://quicktv.local/phone-camera'
+const defaultProfileId = import.meta.env.VITE_PHONE_CAMERA_PROFILE_ID || 'default_720p_15'
+const pairBaseUrl = normalizePhoneCameraBaseUrl(import.meta.env.VITE_PHONE_CAMERA_PAIR_BASE_URL || 'https://quicktv.local/phone-camera')
 
 const pairUrl = computed(() => `${pairBaseUrl}?room=${roomCode.value}&role=phone`)
+const signalingUrl = computed(() => buildSignalingUrl(pairBaseUrl))
 const roomHintText = computed(() => `一次性房间码，约 ${ttlMinutes} 分钟内有效`)
 const actionHandlers = [openReceiver, regenerateRoom, launch.launchCameraSetup.bind(launch), launch.launchTvBoxHelp.bind(launch)]
 
+onMounted(refreshReceiverReadiness)
+
 function generateRoomCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000))
+}
+
+function normalizePhoneCameraBaseUrl(value: string): string {
+  return String(value || '').replace(/\/$/, '') || 'https://quicktv.local/phone-camera'
+}
+
+function buildSignalingUrl(phoneCameraUrl: string): string {
+  try {
+    const url = new URL(phoneCameraUrl)
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    url.pathname = '/phone-camera/signaling'
+    url.search = ''
+    url.hash = ''
+    return url.toString()
+  } catch {
+    return 'wss://quicktv.local/phone-camera/signaling'
+  }
 }
 
 function regenerateRoom() {
@@ -115,8 +138,35 @@ function regenerateRoom() {
 }
 
 async function openReceiver() {
-  const result = await openPhoneCameraReceiver()
+  const result = await openPhoneCameraReceiver({
+    roomCode: roomCode.value,
+    signalingUrl: signalingUrl.value,
+    pairUrl: pairUrl.value,
+    profileId: defaultProfileId
+  })
+  await refreshReceiverReadiness()
   toast.showToast(result.message || (result.success ? '已打开电视接收端' : '暂无法打开电视接收端'))
+}
+
+async function refreshReceiverReadiness() {
+  const status = await getPhoneCameraReceiverStatus()
+  if (status.hasPhoneCameraReceiver === false) {
+    receiverReadinessText.value = '接收端准备度：未检测到电视接收端'
+    return
+  }
+  if (status.hasNativeWebRtcSdk === true && status.hasNativeWebRtcEngine === true) {
+    receiverReadinessText.value = '接收端准备度：媒体引擎已接入，仍需首帧/音频/stats'
+    return
+  }
+  if (status.hasNativeWebRtcSdk === true) {
+    receiverReadinessText.value = '接收端准备度：SDK 已接入，等待媒体引擎'
+    return
+  }
+  if (status.hasPhoneCameraReceiver === true) {
+    receiverReadinessText.value = '接收端准备度：骨架已接入，等待 WebRTC SDK'
+    return
+  }
+  receiverReadinessText.value = '接收端准备度：当前环境无法检测'
 }
 
 function setActiveAction(index: number) {
@@ -333,6 +383,13 @@ defineExpose({ onKeyDown, onBackPressed })
   color: rgba(255, 255, 255, 0.8);
   font-size: 26px;
   background-color: transparent;
+}
+
+.phone-camera-boundary-text.compact {
+  height: 46px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 23px;
 }
 
 .phone-camera-actions {

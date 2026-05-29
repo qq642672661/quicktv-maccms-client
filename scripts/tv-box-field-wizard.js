@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
 const { spawnSync } = require('child_process')
-const { textPrompts, resultPrompts, resultText, schemaVersion } = require('./tv-box-field-wizard-schema')
+const { textPrompts, resultPrompts, phoneCameraResultPrompts, allResultPrompts, resultText, schemaVersion } = require('./tv-box-field-wizard-schema')
 
 const rootDir = path.resolve(__dirname, '..')
 const reportDir = process.env.REPORT_DIR || path.join(rootDir, 'reports')
@@ -110,7 +110,7 @@ ${textPrompts.map(([key, label]) => `| ${label} | ${markdownCell(record.env[key]
 
 | 项目 | 结果 |
 | --- | --- |
-${resultPrompts.map(([key, label]) => `| ${label} | ${resultText[record.env[key]] || record.env[key] || '未知'} |`).join('\n')}
+${allResultPrompts.map(([key, label]) => `| ${label} | ${resultText[record.env[key]] || record.env[key] || '未知'} |`).join('\n')}
 
 ## 下一步
 
@@ -173,6 +173,13 @@ async function main() {
       answers[key] = await askText(rl, key, label, fallback)
     }
     for (const [key, label] of resultPrompts) {
+      answers[key] = await askResult(rl, key, label)
+    }
+    if (!assumeDefaults) {
+      console.log('')
+      console.log('手机当电视摄像头属于可选实测项；没测就选不适用或未知，不影响只看电视核心验收。')
+    }
+    for (const [key, label] of phoneCameraResultPrompts) {
       answers[key] = await askResult(rl, key, label)
     }
     answers.FIELD_NOTES = await askText(rl, 'FIELD_NOTES', '备注，例如 摄像头重插后可识别', '')

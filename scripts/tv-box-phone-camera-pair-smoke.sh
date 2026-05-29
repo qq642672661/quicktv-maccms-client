@@ -20,6 +20,13 @@ BOX_TARGET=""
 adb_cmd=(adb)
 
 mkdir -p "$REPORT_DIR"
+rm -f \
+  "$OUTPUT_MD" \
+  "$OUTPUT_JSON" \
+  "$SCREENSHOT_PATH" \
+  "$UI_XML_PATH" \
+  "$RECEIVER_SCREENSHOT_PATH" \
+  "$RECEIVER_UI_XML_PATH"
 
 normalize_box_target() {
   local target="$1"
@@ -86,6 +93,80 @@ current_activity_snapshot() {
     | head -30 || true
 }
 
+start_route() {
+  local route_name="$1"
+  local from_name="$2"
+  local start_uri="esapp://action/start?es_pkg=${PACKAGE_NAME}&from=${from_name}&splash=-1&args={\"url\":\"${route_name}\"}"
+  run_adb shell am force-stop "$PACKAGE_NAME"
+  run_adb shell am start -n "$MAIN_ACTIVITY" -d "$start_uri"
+}
+
+capture_pair_ui_xml() {
+  local output_path="$1"
+  run_adb shell uiautomator dump /sdcard/hellotv-phone-camera-pair.xml >/dev/null
+  run_adb exec-out cat /sdcard/hellotv-phone-camera-pair.xml > "$output_path"
+}
+
+ui_has_text() {
+  local file_path="$1"
+  local needle="$2"
+  [[ -s "$file_path" ]] && grep -Fq "$needle" "$file_path"
+}
+
+wait_for_pair_page() {
+  local output_path="$1"
+  local attempts="${2:-8}"
+  local attempt
+  for ((attempt = 1; attempt <= attempts; attempt += 1)); do
+    capture_pair_ui_xml "$output_path"
+    if ui_has_text "$output_path" "扫码连接手机摄像头" && ui_has_text "$output_path" "打开接收端"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+navigate_to_pair_page() {
+  echo
+  echo "== Navigate directly to phone camera pairing page =="
+  start_route "phone_camera_pair" "tv_box_phone_camera_pair_smoke_direct"
+  sleep 6
+  if wait_for_pair_page "$UI_XML_PATH" 6; then
+    PAIR_NAVIGATION_ROUTE="direct_route"
+    return 0
+  fi
+
+  echo "Direct route did not settle on pairing page; falling back to remote numeric path."
+  echo
+  echo "== Navigate home -> camera setup -> phone camera pairing =="
+  start_route "tv_box_home" "tv_box_phone_camera_pair_smoke"
+  sleep 6
+
+  # Simple home: digit 4 opens "摄像头"; camera setup: digit 4 opens "手机摄像头".
+  run_adb shell input keyevent KEYCODE_4
+  sleep 3
+  run_adb shell input keyevent KEYCODE_4
+  sleep 3
+
+  if wait_for_pair_page "$UI_XML_PATH" 5; then
+    PAIR_NAVIGATION_ROUTE="home_digit_4_to_camera_setup_digit_4_to_phone_camera_pair"
+    return 0
+  fi
+
+  if ui_has_text "$UI_XML_PATH" "电视盒子摄像头" && ui_has_text "$UI_XML_PATH" "手机摄像头"; then
+    echo "Still on camera setup page; sending one extra KEYCODE_4 for route timing recovery."
+    run_adb shell input keyevent KEYCODE_4
+    sleep 3
+    if wait_for_pair_page "$UI_XML_PATH" 5; then
+      PAIR_NAVIGATION_ROUTE="home_digit_4_to_camera_setup_digit_4_retry_to_phone_camera_pair"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
 require_text() {
   require_file_text "$UI_XML_PATH" "$1" "$2"
 }
@@ -118,23 +199,20 @@ if ! run_adb shell pm path "$PACKAGE_NAME" >/dev/null; then
   exit 1
 fi
 
-echo
-echo "== Navigate home -> camera setup -> phone camera pairing =="
-run_adb shell am force-stop "$PACKAGE_NAME"
-START_URI="esapp://action/start?es_pkg=${PACKAGE_NAME}&from=tv_box_phone_camera_pair_smoke&splash=-1&args={\"url\":\"tv_box_home\"}"
-run_adb shell am start -n "$MAIN_ACTIVITY" -d "$START_URI"
-sleep 6
-
-# Simple home: digit 4 opens "摄像头"; camera setup: digit 4 opens "手机摄像头".
-run_adb shell input keyevent KEYCODE_4
-sleep 3
-run_adb shell input keyevent KEYCODE_4
-sleep 3
+PAIR_NAVIGATION_ROUTE=""
+if ! navigate_to_pair_page; then
+  echo "ERROR: phone camera pairing page did not open." >&2
+  current_activity_snapshot >&2
+  if [[ -s "$UI_XML_PATH" ]]; then
+    echo "Last UI XML: $UI_XML_PATH" >&2
+  fi
+  exit 1
+fi
+PAIR_ROUTE="$PAIR_NAVIGATION_ROUTE"
 
 echo
 echo "== Capture UI evidence =="
-run_adb shell uiautomator dump /sdcard/hellotv-phone-camera-pair.xml >/dev/null
-run_adb exec-out cat /sdcard/hellotv-phone-camera-pair.xml > "$UI_XML_PATH"
+capture_pair_ui_xml "$UI_XML_PATH"
 run_adb exec-out screencap -p > "$SCREENSHOT_PATH"
 
 if [[ ! -s "$UI_XML_PATH" ]]; then
@@ -156,8 +234,9 @@ require_text "一次性房间码，约 10 分钟内有效" "room TTL hint"
 require_text "现在只做三步" "three-step guide title"
 require_text "电视出现首帧后再记为通过" "first-frame acceptance boundary"
 require_text "验收边界" "acceptance boundary panel"
-require_text "电视端接收入口已接入 APK" "receiver entry boundary"
-require_text "WebRTC SDK 和真实首帧未闭环" "not-yet-proven boundary"
+require_text "同一房间码创建信令房间" "receiver signaling-room boundary"
+require_text "WebRTC 媒体首帧未闭环" "not-yet-proven boundary"
+require_text "接收端准备度" "receiver readiness line"
 require_text "默认不录制" "privacy boundary"
 require_text "微信小程序推流" "WeChat gated boundary"
 require_text "打开接收端" "open receiver action"
@@ -191,6 +270,10 @@ if [[ ! -s "$RECEIVER_SCREENSHOT_PATH" ]]; then
 fi
 
 require_file_text "$RECEIVER_UI_XML_PATH" "手机摄像头电视接收端" "receiver activity title"
+require_file_text "$RECEIVER_UI_XML_PATH" "$ROOM_CODE" "receiver room code handoff"
+require_file_text "$RECEIVER_UI_XML_PATH" "quicktv.local" "receiver signaling host"
+require_file_text "$RECEIVER_UI_XML_PATH" "手机入口" "receiver phone entry URL"
+require_file_text "$RECEIVER_UI_XML_PATH" "信令事件" "receiver signaling state"
 require_file_text "$RECEIVER_UI_XML_PATH" "WebRTC SDK" "receiver WebRTC SDK status"
 require_file_text "$RECEIVER_UI_XML_PATH" "验收边界" "receiver acceptance boundary"
 require_file_text "$RECEIVER_UI_XML_PATH" "仍不能证明真实音视频通过" "receiver not-yet-proven boundary"
@@ -202,7 +285,7 @@ RECEIVER_UI_XML_BYTES="$(wc -c < "$RECEIVER_UI_XML_PATH" | tr -d ' ')"
 FOCUS_SNAPSHOT="$(current_activity_snapshot)"
 GENERATED_AT_UTC="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
-node - "$OUTPUT_JSON" "$GENERATED_AT_UTC" "$DEVICE_SERIAL" "$ROOM_CODE" "$SCREENSHOT_PATH" "$SCREENSHOT_BYTES" "$UI_XML_PATH" "$UI_XML_BYTES" "$RECEIVER_SCREENSHOT_PATH" "$RECEIVER_SCREENSHOT_BYTES" "$RECEIVER_UI_XML_PATH" "$RECEIVER_UI_XML_BYTES" "$FOCUS_SNAPSHOT" <<'NODE'
+PAIR_ROUTE="$PAIR_ROUTE" node - "$OUTPUT_JSON" "$GENERATED_AT_UTC" "$DEVICE_SERIAL" "$ROOM_CODE" "$SCREENSHOT_PATH" "$SCREENSHOT_BYTES" "$UI_XML_PATH" "$UI_XML_BYTES" "$RECEIVER_SCREENSHOT_PATH" "$RECEIVER_SCREENSHOT_BYTES" "$RECEIVER_UI_XML_PATH" "$RECEIVER_UI_XML_BYTES" "$FOCUS_SNAPSHOT" <<'NODE'
 const fs = require('fs')
 const [
   outputPath,
@@ -220,24 +303,106 @@ const [
   focusSnapshot
 ] = process.argv.slice(2)
 
+function decodeXml(value) {
+  return String(value || '')
+    .replace(/&#10;/g, '\n')
+    .replace(/&#13;/g, '\r')
+    .replace(/&#xA;/gi, '\n')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+}
+
+function xmlText(filePath) {
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8')
+    const values = []
+    const pattern = /text="([^"]*)"/g
+    let match
+    while ((match = pattern.exec(raw)) !== null) {
+      const value = decodeXml(match[1]).trim()
+      if (value) values.push(value)
+    }
+    return values.join('\n')
+  } catch {
+    return ''
+  }
+}
+
+function extractLabelValue(text, label) {
+  const pattern = new RegExp(`${label}:\\s*([^\\n]+)`)
+  const match = String(text || '').match(pattern)
+  return match ? match[1].trim() : ''
+}
+
+const pairText = xmlText(uiXmlPath)
+const receiverText = xmlText(receiverUiXmlPath)
+const receiverState = extractLabelValue(receiverText, '状态')
+const receiverRoomCode = extractLabelValue(receiverText, '房间码')
+const receiverSignalingUrl = extractLabelValue(receiverText, '信令')
+const receiverPairUrl = extractLabelValue(receiverText, '手机入口')
+const receiverProfileId = extractLabelValue(receiverText, '媒体档位')
+const receiverSdkStatus = extractLabelValue(receiverText, 'WebRTC SDK')
+const receiverMediaEngineStatus = extractLabelValue(receiverText, '媒体引擎')
+const receiverHasNativeWebRtcSdk = receiverSdkStatus.indexOf('native_webrtc_sdk_present') === 0
+const receiverHasNativeMediaEngine = receiverSdkStatus.indexOf('engine_present') >= 0 || receiverMediaEngineStatus.indexOf('native_webrtc_engine') === 0
+const receiverRoomMatchesPairPage = receiverRoomCode === roomCode || receiverText.includes(roomCode)
+const receiverSignalingLooksUsable = /^wss?:\/\//i.test(receiverSignalingUrl)
+const receiverPairUrlLooksUsable = /^https?:\/\//i.test(receiverPairUrl) && receiverPairUrl.includes(roomCode)
+const receiverMediaAcceptance = {
+  status: receiverHasNativeWebRtcSdk
+    ? (receiverHasNativeMediaEngine ? 'native_media_engine_needs_field_evidence' : 'native_sdk_needs_media_engine_or_field_evidence')
+    : 'blocked_until_native_webrtc_sdk',
+  realMediaProven: false,
+  blockers: [
+    ...(!receiverHasNativeWebRtcSdk ? ['native_webrtc_sdk_missing'] : []),
+    ...(receiverHasNativeWebRtcSdk && !receiverHasNativeMediaEngine ? ['native_webrtc_media_engine_not_started_or_missing'] : []),
+    'tv_first_frame_not_proven',
+    'tv_audio_receiving_not_proven',
+    'session_stats_not_proven',
+    'privacy_stop_not_proven'
+  ],
+  closeRule: 'Only mark phone camera media pass after real phone permissions, TV first frame, audio receiving, session.stats, reconnect and privacy-stop evidence are captured.'
+}
+
 const report = {
   generatedAtUtc,
   status: 'pass',
   deviceSerial,
-  route: 'home_digit_4_to_camera_setup_digit_4_to_phone_camera_pair',
+  route: process.env.PAIR_ROUTE || 'unknown',
   roomCode,
   evidence: {
     pairPage: {
       screenshotPath,
       screenshotBytes: Number(screenshotBytes),
       uiXmlPath,
-      uiXmlBytes: Number(uiXmlBytes)
+      uiXmlBytes: Number(uiXmlBytes),
+      textDigest: {
+        hasRoomCode: pairText.includes(roomCode),
+        hasFirstFrameBoundary: pairText.includes('电视出现首帧后再记为通过'),
+        hasPrivacyBoundary: pairText.includes('默认不录制')
+      }
     },
     receiverShell: {
       screenshotPath: receiverScreenshotPath,
       screenshotBytes: Number(receiverScreenshotBytes),
       uiXmlPath: receiverUiXmlPath,
-      uiXmlBytes: Number(receiverUiXmlBytes)
+      uiXmlBytes: Number(receiverUiXmlBytes),
+      state: receiverState || 'unknown',
+      roomCode: receiverRoomCode || '',
+      roomCodeMatchesPairPage: receiverRoomMatchesPairPage,
+      signalingUrl: receiverSignalingUrl || '',
+      signalingLooksUsable: receiverSignalingLooksUsable,
+      pairUrl: receiverPairUrl || '',
+      pairUrlLooksUsable: receiverPairUrlLooksUsable,
+      profileId: receiverProfileId || '',
+      sdkStatus: receiverSdkStatus || 'unknown',
+      mediaEngineStatus: receiverMediaEngineStatus || 'unknown',
+      hasNativeWebRtcSdk: receiverHasNativeWebRtcSdk,
+      hasNativeMediaEngine: receiverHasNativeMediaEngine,
+      mediaAcceptance: receiverMediaAcceptance
     },
     focusSnapshot
   },
@@ -248,6 +413,7 @@ const report = {
     '电视出现首帧后再记为通过',
     '电视端接收入口已接入 APK',
     'WebRTC SDK 和真实首帧未闭环',
+    '接收端准备度',
     '默认不录制',
     '微信小程序推流',
     '打开接收端',
@@ -255,9 +421,14 @@ const report = {
     '返回摄像头',
     '帮助自检',
     '手机摄像头电视接收端',
-    'WebRTC SDK'
+    'receiver room code matches pair page',
+    'receiver signaling URL is visible',
+    '手机入口',
+    'WebRTC SDK',
+    'receiver state is machine-readable',
+    'receiver media acceptance is blocked until first-frame/audio/stats evidence'
   ],
-  boundary: 'This proves the TV pairing entry, remote operation path and native receiver shell only. Real phone media acceptance still requires WebRTC SDK integration, signaling, phone capture, first frame, audio, stats, reconnect, and privacy-stop evidence.'
+  boundary: 'This proves the TV pairing entry, remote operation path, room/signaling parameter handoff and native receiver shell only. Real phone media acceptance still requires WebRTC SDK integration, signaling, phone capture, first frame, audio, stats, reconnect, and privacy-stop evidence.'
 }
 
 fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`)
@@ -269,7 +440,7 @@ cat > "$OUTPUT_MD" <<MD
 - 生成时间 UTC: \`$GENERATED_AT_UTC\`
 - 状态: \`pass\`
 - 设备: \`$DEVICE_SERIAL\`
-- 路径: 首页按 4 -> 摄像头页按 4 -> 手机摄像头配对页 -> 按 1 打开原生接收端骨架
+- 路径: \`$PAIR_ROUTE\` -> 按 1 打开原生接收端骨架
 - 房间码: \`$ROOM_CODE\`
 - 配对页截图: \`$SCREENSHOT_PATH\` (${SCREENSHOT_BYTES} bytes)
 - 配对页 UI XML: \`$UI_XML_PATH\` (${UI_XML_BYTES} bytes)
@@ -285,6 +456,17 @@ cat > "$OUTPUT_MD" <<MD
 - 页面显示隐私边界：默认不录制，微信小程序推流要等资质和权限通过。
 - 遥控器动作只暴露打开接收端、重新生成、返回摄像头、帮助自检。
 - 按 1 后可进入“手机摄像头电视接收端”原生 Activity，并显示 WebRTC SDK 状态和首帧验收边界。
+- JSON 已结构化记录接收端 state、WebRTC SDK 状态、房间码一致性、信令 URL、手机入口 URL、媒体档位和媒体验收阻塞原因。
+
+## 接收端机器证据
+
+查看 \`$OUTPUT_JSON\` 的 \`evidence.receiverShell\`：
+
+- \`state\`：接收端当前状态。
+- \`sdkStatus\`：\`native_webrtc_sdk_present_engine_present\`、\`native_webrtc_sdk_present_engine_missing\` 或 \`native_webrtc_sdk_missing\`。
+- \`roomCodeMatchesPairPage\`：接收端房间码是否和配对页一致。
+- \`signalingLooksUsable\` / \`pairUrlLooksUsable\`：信令和手机入口是否具备基本 URL 形态。
+- \`mediaAcceptance.status\`：未看到真实首帧、音频、stats 和停止按钮前，不能标记为媒体通过。
 
 ## 当前前台
 

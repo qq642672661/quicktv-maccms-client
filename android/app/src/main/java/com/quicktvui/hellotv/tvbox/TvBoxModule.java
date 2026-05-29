@@ -23,6 +23,7 @@ import com.quicktvui.hellotv.MainActivity;
 
 import eskit.sdk.support.EsPromise;
 import eskit.sdk.support.PromiseHolder;
+import eskit.sdk.support.args.EsMap;
 import eskit.sdk.support.module.IEsModule;
 
 import java.util.HashMap;
@@ -33,6 +34,8 @@ import java.util.HashMap;
 public class TvBoxModule implements IEsModule {
 
     private static final String TAG = "TvBoxModule";
+    private static final String PHONE_CAMERA_MEDIA_ACCEPTANCE_STATUS = "blocked_until_first_frame_audio_stats_reconnect_privacy_stop";
+    private static final String PHONE_CAMERA_ACCEPTANCE_BOUNDARY = "Real phone-camera pass requires phone camera/microphone permission, TV first frame, TV audio receiving, session.stats, reconnect and privacy-stop evidence.";
 
     private static MainActivity currentActivity;
     private static PromiseHolder pendingMediaPermissionCallback;
@@ -92,6 +95,7 @@ public class TvBoxModule implements IEsModule {
             boolean hasRecordAudioPermission = hasRecordAudioPermission();
             boolean hasPhoneCameraReceiver = hasPhoneCameraReceiverActivity();
             boolean hasNativeWebRtcSdk = PhoneCameraWebRtcSupport.hasNativeWebRtcSdk();
+            boolean hasNativeWebRtcEngine = PhoneCameraWebRtcSupport.hasNativeMediaEngine();
             callback.put("success", true);
             callback.put("message", "");
             callback.put("hasAnyCamera", hasAnyCameraFeature || cameraInventory.cameraCount > 0);
@@ -109,7 +113,9 @@ public class TvBoxModule implements IEsModule {
             callback.put("hasRecordAudioPermission", hasRecordAudioPermission);
             callback.put("hasPhoneCameraReceiver", hasPhoneCameraReceiver);
             callback.put("hasNativeWebRtcSdk", hasNativeWebRtcSdk);
-            callback.put("phoneCameraReceiverReady", hasPhoneCameraReceiver && hasNativeWebRtcSdk);
+            callback.put("hasNativeWebRtcEngine", hasNativeWebRtcEngine);
+            callback.put("phoneCameraReceiverReady", hasPhoneCameraReceiver && hasNativeWebRtcSdk && hasNativeWebRtcEngine);
+            putPhoneCameraReceiverReadiness(callback, hasPhoneCameraReceiver, hasNativeWebRtcSdk, hasNativeWebRtcEngine);
             callback.put("isTvDevice", isLeanbackDevice);
             callback.put("isLeanbackLauncher", isLeanbackDevice);
             callback.put("androidSdk", Build.VERSION.SDK_INT);
@@ -129,6 +135,7 @@ public class TvBoxModule implements IEsModule {
                     + " hasRecordAudioPermission=" + hasRecordAudioPermission
                     + " hasPhoneCameraReceiver=" + hasPhoneCameraReceiver
                     + " hasNativeWebRtcSdk=" + hasNativeWebRtcSdk
+                    + " hasNativeWebRtcEngine=" + hasNativeWebRtcEngine
                     + " isLeanbackDevice=" + isLeanbackDevice
                     + " appVersion=" + (packageInfo == null ? "" : packageInfo.versionName));
         } catch (Throwable error) {
@@ -219,24 +226,79 @@ public class TvBoxModule implements IEsModule {
     }
 
     public void openPhoneCameraReceiver(EsPromise promise) {
+        openPhoneCameraReceiverInternal(null, promise);
+    }
+
+    public void openPhoneCameraReceiverWithOptions(EsMap options, EsPromise promise) {
+        openPhoneCameraReceiverInternal(options, promise);
+    }
+
+    public void openPhoneCameraReceiverWithValues(String roomCode, String signalingUrl, String pairUrl, String profileId, EsPromise promise) {
+        openPhoneCameraReceiverInternal(
+                safeString(roomCode),
+                safeString(signalingUrl),
+                safeString(pairUrl),
+                safeString(profileId),
+                promise
+        );
+    }
+
+    private void openPhoneCameraReceiverInternal(EsMap options, EsPromise promise) {
+        openPhoneCameraReceiverInternal(
+                optionString(options, PhoneCameraReceiverActivity.EXTRA_ROOM_CODE),
+                optionString(options, PhoneCameraReceiverActivity.EXTRA_SIGNALING_URL),
+                optionString(options, PhoneCameraReceiverActivity.EXTRA_PAIR_URL),
+                optionString(options, PhoneCameraReceiverActivity.EXTRA_PROFILE_ID),
+                promise
+        );
+    }
+
+    private void openPhoneCameraReceiverInternal(String roomCode, String signalingUrl, String pairUrl, String profileId, EsPromise promise) {
         PromiseHolder callback = PromiseHolder.create(promise);
+        String safeProfileId = profileId.length() == 0 ? "default_720p_15" : profileId;
         try {
             Intent intent = new Intent(context, PhoneCameraReceiverActivity.class);
-            intent.putExtra(PhoneCameraReceiverActivity.EXTRA_PROFILE_ID, "default_720p_15");
+            intent.putExtra(PhoneCameraReceiverActivity.EXTRA_ROOM_CODE, roomCode);
+            intent.putExtra(PhoneCameraReceiverActivity.EXTRA_SIGNALING_URL, signalingUrl);
+            intent.putExtra(PhoneCameraReceiverActivity.EXTRA_PAIR_URL, pairUrl);
+            intent.putExtra(PhoneCameraReceiverActivity.EXTRA_PROFILE_ID, safeProfileId);
             startActivity(intent);
             callback.put("success", true);
-            callback.put("message", PhoneCameraWebRtcSupport.hasNativeWebRtcSdk()
-                    ? "已打开手机摄像头电视接收端"
+            callback.put("message", PhoneCameraWebRtcSupport.hasNativeMediaEngine()
+                    ? "已打开手机摄像头电视接收端；实验媒体引擎会尝试创建 answer"
                     : "已打开手机摄像头电视接收端骨架；WebRTC SDK 和首帧验收仍未闭环");
-            callback.put("hasNativeWebRtcSdk", PhoneCameraWebRtcSupport.hasNativeWebRtcSdk());
-            callback.put("phoneCameraReceiverReady", hasPhoneCameraReceiverActivity() && PhoneCameraWebRtcSupport.hasNativeWebRtcSdk());
+            callback.put("roomCode", roomCode);
+            callback.put("signalingUrl", signalingUrl);
+            callback.put("pairUrl", pairUrl);
+            callback.put("profileId", safeProfileId);
+            putPhoneCameraReceiverReadiness(callback, hasPhoneCameraReceiverActivity(), PhoneCameraWebRtcSupport.hasNativeWebRtcSdk(), PhoneCameraWebRtcSupport.hasNativeMediaEngine());
         } catch (Throwable error) {
             callback.put("success", false);
             callback.put("message", error.getMessage() == null ? "无法打开手机摄像头电视接收端" : error.getMessage());
-            callback.put("hasNativeWebRtcSdk", PhoneCameraWebRtcSupport.hasNativeWebRtcSdk());
-            callback.put("phoneCameraReceiverReady", false);
+            callback.put("roomCode", roomCode);
+            callback.put("signalingUrl", signalingUrl);
+            callback.put("pairUrl", pairUrl);
+            callback.put("profileId", safeProfileId);
+            putPhoneCameraReceiverReadiness(callback, hasPhoneCameraReceiverActivity(), PhoneCameraWebRtcSupport.hasNativeWebRtcSdk(), PhoneCameraWebRtcSupport.hasNativeMediaEngine());
         }
         callback.sendSuccess();
+    }
+
+    private String safeString(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String optionString(EsMap options, String key) {
+        if (options == null || !options.containsKey(key) || options.isNull(key)) {
+            return "";
+        }
+
+        try {
+            String value = options.getString(key);
+            return value == null ? "" : value.trim();
+        } catch (Throwable ignored) {
+            return "";
+        }
     }
 
     public void getPhoneCameraReceiverStatus(EsPromise promise) {
@@ -244,18 +306,43 @@ public class TvBoxModule implements IEsModule {
         try {
             boolean hasReceiver = hasPhoneCameraReceiverActivity();
             boolean hasSdk = PhoneCameraWebRtcSupport.hasNativeWebRtcSdk();
+            boolean hasEngine = PhoneCameraWebRtcSupport.hasNativeMediaEngine();
             callback.put("success", true);
-            callback.put("message", hasReceiver && hasSdk
-                    ? "手机摄像头接收端具备 SDK，仍需实机首帧验收"
+            callback.put("message", hasReceiver && hasSdk && hasEngine
+                    ? "手机摄像头接收端具备 SDK 和媒体引擎，仍需实机首帧验收"
                     : "手机摄像头接收端骨架已存在，WebRTC SDK/首帧未闭环");
-            callback.put("hasPhoneCameraReceiver", hasReceiver);
-            callback.put("hasNativeWebRtcSdk", hasSdk);
-            callback.put("phoneCameraReceiverReady", hasReceiver && hasSdk);
+            putPhoneCameraReceiverReadiness(callback, hasReceiver, hasSdk, hasEngine);
         } catch (Throwable error) {
             callback.put("success", false);
             callback.put("message", error.getMessage() == null ? "手机摄像头接收端状态检测失败" : error.getMessage());
         }
         callback.sendSuccess();
+    }
+
+    private void putPhoneCameraReceiverReadiness(PromiseHolder callback, boolean hasReceiver, boolean hasSdk, boolean hasEngine) {
+        callback.put("hasPhoneCameraReceiver", hasReceiver);
+        callback.put("hasNativeWebRtcSdk", hasSdk);
+        callback.put("hasNativeWebRtcEngine", hasEngine);
+        callback.put("phoneCameraReceiverReady", hasReceiver && hasSdk && hasEngine);
+        callback.put("phoneCameraMediaReady", false);
+        callback.put("canProveRealMedia", false);
+        callback.put("sdkStatus", PhoneCameraWebRtcSupport.sdkStatus());
+        callback.put("phoneCameraReceiverStage", phoneCameraReceiverStage(hasReceiver, hasSdk, hasEngine));
+        callback.put("mediaAcceptanceStatus", PHONE_CAMERA_MEDIA_ACCEPTANCE_STATUS);
+        callback.put("acceptanceBoundary", PHONE_CAMERA_ACCEPTANCE_BOUNDARY);
+    }
+
+    private String phoneCameraReceiverStage(boolean hasReceiver, boolean hasSdk, boolean hasEngine) {
+        if (!hasReceiver) {
+            return "receiver_activity_missing";
+        }
+        if (!hasSdk) {
+            return "receiver_shell_only_waiting_for_native_webrtc_sdk";
+        }
+        if (!hasEngine) {
+            return "native_webrtc_sdk_present_waiting_for_optional_media_engine";
+        }
+        return "native_webrtc_media_engine_present_needs_field_evidence";
     }
 
     private boolean hasFeature(PackageManager packageManager, String featureName) {

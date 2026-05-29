@@ -123,7 +123,7 @@ async function main() {
 
   const service = createSignalingServer({
     roomTtlSeconds: 600,
-    codeGenerator: () => '482913',
+    codeGenerator: () => '999999',
     logger: { log() {}, info() {}, warn() {}, error() {} }
   })
 
@@ -141,15 +141,23 @@ async function main() {
 
     const tv = await new WsProbe('tv', wsUrl).open()
     probes.push(tv)
-    tv.send({ type: 'room.create', role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5' })
+    tv.send({ type: 'room.create', role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5', roomCode: '482913' })
     const created = await tv.waitFor('room.created')
     if (created.roomCode !== '482913') fail(`unexpected room code: ${created.roomCode}`)
+    if (created.roomCodeSource !== 'tv_requested') fail(`room code source should be tv_requested: ${created.roomCodeSource}`)
     if (!created.pairUrl.includes('482913')) fail('pairUrl must carry the room code')
-    steps.push(['room_create', 'pass', created.pairUrl])
+    if (created.signalingUrl !== wsUrl) fail(`signalingUrl mismatch: ${created.signalingUrl}`)
+    steps.push(['room_create_with_tv_room_code', 'pass', `${created.roomCodeSource} / ${created.pairUrl}`])
 
     const health = await httpJson(healthUrl)
     if (health.rooms.length !== 1 || !health.rooms[0].tvConnected) fail('healthz did not expose the TV room')
     steps.push(['healthz_room_snapshot', 'pass', `${health.rooms.length} room`])
+
+    const duplicateTv = await new WsProbe('duplicate_tv', wsUrl).open()
+    probes.push(duplicateTv)
+    duplicateTv.send({ type: 'room.create', role: 'tv', deviceId: 'mitv-duplicate', appVersion: '1.0.5', roomCode: '482913' })
+    await duplicateTv.waitFor('session.error', (message) => message.code === 'room_code_unavailable')
+    steps.push(['duplicate_tv_room_code_rejected', 'pass', 'room_code_unavailable'])
 
     const badPhone = await new WsProbe('bad_phone', wsUrl).open()
     probes.push(badPhone)
