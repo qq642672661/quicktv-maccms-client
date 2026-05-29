@@ -78,7 +78,7 @@
         ></qt-image>
         <qt-text
           style="width: 36px; height: 184px; color: #ffffff; font-size: 36px; position: absolute; top: 448px; left: 28px"
-          text="节目信息"
+          text="节目单"
           :focusable="false"
         ></qt-text>
       </qt-view>
@@ -88,7 +88,7 @@
     <qt-view class="menu-back">
       <span>按</span>
       <img class="menu-back-icon" :src="icBack" :focusable="false" />
-      <span>键可全屏观看</span>
+      <span>返回全屏，OK 播放，7 收藏，8 只看收藏，0 帮助</span>
     </qt-view>
   </qt-view>
 </template>
@@ -105,6 +105,7 @@ import thirdListItem from './third-list-item.vue'
 import icMenuExt from '../../../../assets/live/ic-menu-ext.png'
 import icMenuExtArrow from '../../../../assets/live/ic-menu-ext-arrow.png'
 import icBack from '../../../../assets/live/ic-back.png'
+import { liveChannelId } from '../../../../tools/tv-box/live-favorites'
 
 const emits = defineEmits(['loadPrograms', 'playMediaByIndex', 'closeMenu'])
 
@@ -142,7 +143,16 @@ const showThirdList = ref(false)
 let secondListData: QTListViewItem[] = []
 let thirdListData: QTListViewItem[] = []
 
-function init(params: { categories: QTListViewItem[]; channels: QTListViewItem[] }) {
+function init(params: { categories: QTListViewItem[]; channels: QTListViewItem[]; playIndex?: number }) {
+  const playIndex = Math.min(Math.max(Number(params.playIndex || 0), 0), Math.max(params.channels.length - 1, 0))
+  const playCategoryIndex = Number(params.channels[playIndex]?.categoryIndex ?? params.categories.findIndex((item: any) => item.type === 2))
+  autoselectPosition.value = playCategoryIndex >= 0 ? playCategoryIndex : 0
+  autofocusPosition.value = playIndex
+  secondListSelectPos.value = playIndex
+  secondListScrollPos.value = params.categories[autoselectPosition.value]?.startIndex || 0
+  curChannel = params.channels[playIndex] || ({} as QTListViewItem)
+  showSecondList.value = true
+  showThirdList.value = false
   firstListRef.value?.init(params.categories)
   secondListData = secondListRef.value?.init(params.channels) as QTListViewItem[]
 }
@@ -224,7 +234,11 @@ function onBackPressed() {
   showThirdList.value = false
 }
 
-defineExpose({ init, onKeyDown, onBackPressed })
+function getFocusedChannelId(): string {
+  return liveChannelId(curChannel as any)
+}
+
+defineExpose({ init, onKeyDown, onBackPressed, getFocusedChannelId })
 </script>
 
 <style scoped src="../../css/menu.css"></style>

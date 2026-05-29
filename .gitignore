@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
 /dist
+/reports/
 
 # local env files
 .env.local
@@ -12,6 +13,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 package-lock.json*
+!package-lock.json
 pnpm-debug.log*
 
 # Editor directories and files
@@ -23,7 +25,8 @@ pnpm-debug.log*
 *.sln
 *.sw?
 *.sh
-/package-lock.json
+!scripts/android-*.sh
+!scripts/tv-box-*.sh
 yarn.lock
 
 # Android

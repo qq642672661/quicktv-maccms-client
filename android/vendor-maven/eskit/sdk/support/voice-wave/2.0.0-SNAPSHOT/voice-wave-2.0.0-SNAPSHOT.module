@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "voice-wave",
+    "version": "2.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "voice-wave-2.0.0-SNAPSHOT.aar",
+          "url": "voice-wave-2.0.0-SNAPSHOT.aar",
+          "size": 138819,
+          "sha512": "a7e7339623410e71cf72fd9bb46e7d9fd63a8d693c83c9ad09a2e4a47082e95ecdc9e4be7e031e939acba7ddd31cec57584cf3669a5bef9d47da03d19c45ffbc",
+          "sha256": "072a5abb6b2eab0dc2b32e87713dea5757b60dda37114eca5172a9b5e4e2983a",
+          "sha1": "b95aafd981d87afa79f5a2b4c5ee0fea7de8fc3f",
+          "md5": "55e2bebd410e57c7cb3f420867307f2b"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "voice-wave-2.0.0-SNAPSHOT.aar",
+          "url": "voice-wave-2.0.0-SNAPSHOT.aar",
+          "size": 138819,
+          "sha512": "a7e7339623410e71cf72fd9bb46e7d9fd63a8d693c83c9ad09a2e4a47082e95ecdc9e4be7e031e939acba7ddd31cec57584cf3669a5bef9d47da03d19c45ffbc",
+          "sha256": "072a5abb6b2eab0dc2b32e87713dea5757b60dda37114eca5172a9b5e4e2983a",
+          "sha1": "b95aafd981d87afa79f5a2b4c5ee0fea7de8fc3f",
+          "md5": "55e2bebd410e57c7cb3f420867307f2b"
+        }
+      ]
+    }
+  ]
+}

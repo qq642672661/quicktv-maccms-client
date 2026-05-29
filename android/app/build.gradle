@@ -40,13 +40,22 @@ ext {
     assetsDir = new File(project.buildDir, 'assets')
 }
 
+def phoneCameraWebRtcEnabled = ((project.findProperty('enablePhoneCameraWebRtc')
+        ?: System.getenv('ENABLE_PHONE_CAMERA_WEBRTC')
+        ?: 'false') as String).toBoolean()
+def phoneCameraWebRtcCoordinate = (project.findProperty('phoneCameraWebRtcCoordinate')
+        ?: System.getenv('PHONE_CAMERA_WEBRTC_COORDINATE')
+        ?: 'io.github.webrtc-sdk:android:114.5735.11') as String
+def baseMinSdk = Integer.parseInt(String.valueOf(sdk_minSdk))
+def phoneCameraWebRtcMinSdk = phoneCameraWebRtcEnabled ? Math.max(baseMinSdk, 21) : baseMinSdk
+
 android {
     namespace 'com.quicktvui.hellotv'
     compileSdk sdk_compileSdk
 
     defaultConfig {
         applicationId APP_PACKAGE
-        minSdk sdk_minSdk
+        minSdk phoneCameraWebRtcMinSdk
         targetSdk sdk_targetSdk
         versionCode APP_VERSION_CODE
         versionName APP_VERSION_NAME
@@ -88,6 +97,9 @@ android {
     }
 
     android.sourceSets.findByName('main').assets.srcDirs += assetsDir
+    if (phoneCameraWebRtcEnabled) {
+        android.sourceSets.findByName('main').java.srcDirs += 'src/phoneCameraWebRtc/java'
+    }
 
     packagingOptions {
         pickFirst 'lib/**/libc++_shared.so'
@@ -114,6 +126,9 @@ dependencies {
     implementation 'eskit.sdk.support:player-manager:3.1.4-beta3'
     implementation "com.extscreen:hippy4tv-support:1.11.185-beta"
     implementation 'eskit.sdk.support:ui-support:2.1.85'
+    if (phoneCameraWebRtcEnabled) {
+        implementation phoneCameraWebRtcCoordinate
+    }
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
 }
 

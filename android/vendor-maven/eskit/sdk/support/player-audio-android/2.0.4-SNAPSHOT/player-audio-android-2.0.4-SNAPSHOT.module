@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "player-audio-android",
+    "version": "2.0.4-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "player-audio-android-2.0.4-SNAPSHOT.aar",
+          "url": "player-audio-android-2.0.4-SNAPSHOT.aar",
+          "size": 41876,
+          "sha512": "dec3810dbef5e600a60c9cff1649e5e21c60f29aae53e7d07d6ab1ab05bff0e7819a6e9c27f98061c2f18cef0d87c183d99f1712b11c26bf3badf20282852ab3",
+          "sha256": "fd29af4d7d213b6ef04a3a2618fe0f74ef24b625f1031d648ecc1a2a856d0332",
+          "sha1": "536c1d89fdae5f330e61d703af12469b50dcc6bb",
+          "md5": "1a3bf0a77d927c2a6c3f03815ce15393"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "player-audio-android-2.0.4-SNAPSHOT.aar",
+          "url": "player-audio-android-2.0.4-SNAPSHOT.aar",
+          "size": 41876,
+          "sha512": "dec3810dbef5e600a60c9cff1649e5e21c60f29aae53e7d07d6ab1ab05bff0e7819a6e9c27f98061c2f18cef0d87c183d99f1712b11c26bf3badf20282852ab3",
+          "sha256": "fd29af4d7d213b6ef04a3a2618fe0f74ef24b625f1031d648ecc1a2a856d0332",
+          "sha1": "536c1d89fdae5f330e61d703af12469b50dcc6bb",
+          "md5": "1a3bf0a77d927c2a6c3f03815ce15393"
+        }
+      ]
+    }
+  ]
+}

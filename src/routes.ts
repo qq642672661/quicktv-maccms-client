@@ -1,6 +1,7 @@
 import { ESRouteType } from '@extscreen/es3-router'
 import home from './pages/home/index.vue'
 import live from './pages/live/index.vue'
+import tvBoxHome from './pages/tv-box-home/index.vue'
 import test from './pages/m-test.vue'
 import playTest from './pages/play-test.vue'
 import tabsTest from './pages/tabs-test.vue'
@@ -31,6 +32,32 @@ const search = () => {
 }
 
 const routes = [
+  {
+    path: '/tv-box-home',
+    name: 'tv_box_home',
+    component: tvBoxHome
+  },
+  {
+    path: '/tv-box-help',
+    name: 'tv_box_help',
+    component: () => import('./pages/tv-box-help/index.vue')
+  },
+  {
+    path: '/tv-box-remote-practice',
+    name: 'tv_box_remote_practice',
+    component: () => import('./pages/tv-box-remote-practice/index.vue')
+  },
+  {
+    path: '/tv-box-field-guide',
+    name: 'tv_box_field_guide',
+    component: () => import('./pages/tv-box-field-guide/index.vue')
+  },
+  {
+    path: '/tv-box-exit',
+    name: 'tv_box_exit',
+    component: () => import('./pages/tv-box-exit/index.vue'),
+    type: ESRouteType.ES_ROUTE_TYPE_DIALOG
+  },
   {
     path: '/home',
     name: 'home',
@@ -127,6 +154,16 @@ const routes = [
     path: '/live',
     name: 'live',
     component: live
+  },
+  {
+    path: '/camera-setup',
+    name: 'camera_setup',
+    component: () => import('./pages/camera-setup/index.vue')
+  },
+  {
+    path: '/phone-camera-pair',
+    name: 'phone_camera_pair',
+    component: () => import('./pages/phone-camera-pair/index.vue')
   },
   {
     path: '/fullPlay',

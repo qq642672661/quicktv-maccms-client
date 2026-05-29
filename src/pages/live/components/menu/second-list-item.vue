@@ -1,5 +1,12 @@
 <template>
-  <qt-view class="menu-body-list-item" style="width: 400px" :type="1" :focusable="true" eventFocus eventClick>
+  <qt-view
+    class="menu-body-list-item"
+    style="width: 400px"
+    :type="1"
+    :focusable="true"
+    eventFocus
+    eventClick
+  >
     <!-- 角标 -->
     <qt-image showIf="${isVip}" class="menu-body-list-item-corner" :src="icCornerVip" :postDelay="100" :focusable="false"></qt-image>
     <!-- 主体 -->
@@ -37,6 +44,14 @@
         ></qt-text>
       </qt-view>
     </qt-view>
+    <qt-text
+      showIf="${isFavorite}"
+      class="menu-body-list-item-favorite"
+      text="${favoriteLabel}"
+      gravity="center"
+      :focusable="false"
+      duplicateParentState
+    ></qt-text>
     <!-- 播放图标 -->
     <play-mark showIf="${isPlaying}" class="menu-body-list-item-playmark" :markColor="'#FFFFFF'" :gap="-1" :focusable="false" />
   </qt-view>

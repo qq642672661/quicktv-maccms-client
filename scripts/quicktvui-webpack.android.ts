@@ -10,23 +10,51 @@ const fs = require('fs')
 const platform = 'android'
 const pkg = require('../package.json')
 let cssLoader = '@extscreen/es3-vue-css-loader'
+const buildMode = process.env.NODE_ENV || 'production'
 
-const envPath = path.resolve(__dirname, '../.env')
-const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {}
+function loadEnvFile(fileName) {
+  const filePath = path.resolve(__dirname, '..', fileName)
+  return fs.existsSync(filePath) ? dotenv.parse(fs.readFileSync(filePath)) : {}
+}
+
+const envConfig = {
+  ...loadEnvFile(`.env.${buildMode}`),
+  ...loadEnvFile('.env')
+}
+
+const importMetaEnv = {
+  MODE: buildMode,
+  VITE_MACCMS_API_URL: envConfig.VITE_MACCMS_API_URL || 'http://192.168.10.133:3000',
+  VITE_MACCMS_TIMEOUT: envConfig.VITE_MACCMS_TIMEOUT || '10000',
+  VITE_APP_PACKAGE_NAME: envConfig.VITE_APP_PACKAGE_NAME || 'es.tv.huan.hellotv',
+  VITE_APP_VERSION: envConfig.VITE_APP_VERSION || '1.0.5',
+  VITE_USE_MOCK_DATA: envConfig.VITE_USE_MOCK_DATA || 'false',
+  VITE_DEBUG_MODE: envConfig.VITE_DEBUG_MODE || 'false',
+  VITE_DEV_SERVER_HOST: envConfig.VITE_DEV_SERVER_HOST || '0.0.0.0',
+  VITE_DEV_SERVER_PORT: envConfig.VITE_DEV_SERVER_PORT || '38989',
+  VITE_TV_BOX_SIMPLE_MODE: envConfig.VITE_TV_BOX_SIMPLE_MODE || 'true',
+  VITE_PHONE_CAMERA_PAIR_BASE_URL: envConfig.VITE_PHONE_CAMERA_PAIR_BASE_URL || 'https://quicktv.local/phone-camera',
+  VITE_PHONE_CAMERA_PROFILE_ID: envConfig.VITE_PHONE_CAMERA_PROFILE_ID || 'default_720p_15'
+}
 
 const envVars = {
-  'import.meta.env.VITE_MACCMS_API_URL': JSON.stringify(envConfig.VITE_MACCMS_API_URL || 'http://192.168.10.133:3000'),
-  'import.meta.env.VITE_MACCMS_TIMEOUT': JSON.stringify(envConfig.VITE_MACCMS_TIMEOUT || '10000'),
-  'import.meta.env.VITE_APP_PACKAGE_NAME': JSON.stringify(envConfig.VITE_APP_PACKAGE_NAME || 'es.tv.huan.hellotv'),
-  'import.meta.env.VITE_APP_VERSION': JSON.stringify(envConfig.VITE_APP_VERSION || '1.0.5'),
-  'import.meta.env.VITE_USE_MOCK_DATA': JSON.stringify(envConfig.VITE_USE_MOCK_DATA || 'false'),
-  'import.meta.env.VITE_DEBUG_MODE': JSON.stringify(envConfig.VITE_DEBUG_MODE || 'false'),
-  'import.meta.env.VITE_DEV_SERVER_HOST': JSON.stringify(envConfig.VITE_DEV_SERVER_HOST || '0.0.0.0'),
-  'import.meta.env.VITE_DEV_SERVER_PORT': JSON.stringify(envConfig.VITE_DEV_SERVER_PORT || '38989')
+  'import.meta.env': JSON.stringify(importMetaEnv),
+  'import.meta.env.MODE': JSON.stringify(importMetaEnv.MODE),
+  'import.meta.env.VITE_MACCMS_API_URL': JSON.stringify(importMetaEnv.VITE_MACCMS_API_URL),
+  'import.meta.env.VITE_MACCMS_TIMEOUT': JSON.stringify(importMetaEnv.VITE_MACCMS_TIMEOUT),
+  'import.meta.env.VITE_APP_PACKAGE_NAME': JSON.stringify(importMetaEnv.VITE_APP_PACKAGE_NAME),
+  'import.meta.env.VITE_APP_VERSION': JSON.stringify(importMetaEnv.VITE_APP_VERSION),
+  'import.meta.env.VITE_USE_MOCK_DATA': JSON.stringify(importMetaEnv.VITE_USE_MOCK_DATA),
+  'import.meta.env.VITE_DEBUG_MODE': JSON.stringify(importMetaEnv.VITE_DEBUG_MODE),
+  'import.meta.env.VITE_DEV_SERVER_HOST': JSON.stringify(importMetaEnv.VITE_DEV_SERVER_HOST),
+  'import.meta.env.VITE_DEV_SERVER_PORT': JSON.stringify(importMetaEnv.VITE_DEV_SERVER_PORT),
+  'import.meta.env.VITE_TV_BOX_SIMPLE_MODE': JSON.stringify(importMetaEnv.VITE_TV_BOX_SIMPLE_MODE),
+  'import.meta.env.VITE_PHONE_CAMERA_PAIR_BASE_URL': JSON.stringify(importMetaEnv.VITE_PHONE_CAMERA_PAIR_BASE_URL),
+  'import.meta.env.VITE_PHONE_CAMERA_PROFILE_ID': JSON.stringify(importMetaEnv.VITE_PHONE_CAMERA_PROFILE_ID)
 }
 
 module.exports = {
-  mode: 'production',
+  mode: buildMode,
   bail: true,
   entry: {
     index: [path.resolve(pkg.main)]

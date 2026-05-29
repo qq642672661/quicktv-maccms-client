@@ -89,7 +89,6 @@
 
 import { ESKeyCode, ESKeyEvent, ESLogLevel, useESLog, useESToast } from '@extscreen/es3-core'
 import {
-  ESPlayerDefinition,
   ESPlayerPlayMode,
   ESPlayerRate,
   ESPlayerWindowType
@@ -306,9 +305,8 @@ const onPlayerDurationChanged = (d: number): void => {
 
 /**
  * 进度条快进快退开始 回调
- * @param progress
  */
-const onSeekBarSeekStart = (progress) => {
+const onSeekBarSeekStart = () => {
   isSeeking = true
   viewState = IMediaViewState.STATE_SEEK_BAR_START
   resetShowViewState()
@@ -357,17 +355,15 @@ const onPlayerPlayRateChanged = (r: ESPlayerRate): void => {
 }
 /**
  * 播放清晰度 回调 需要播放数据中设置播放清晰度{{uri:"",definition:1}}
- * @param list 播放清晰度列表
  */
-const onPlayerDefinitionListChanged = (list: Array<ESPlayerDefinition>): void => {
+const onPlayerDefinitionListChanged = (): void => {
   // definitionList = list
   // mediaControlDefinitionRef.value.setList(buildDefinitions(definitionList))
 }
 /**
  * 当前清晰度 回调
- * @param d
  */
-const onPlayerDefinitionChanged = (d: ESPlayerDefinition): void => {
+const onPlayerDefinitionChanged = (): void => {
   // definition = d
   // initDefinitionItemSelected()
 }

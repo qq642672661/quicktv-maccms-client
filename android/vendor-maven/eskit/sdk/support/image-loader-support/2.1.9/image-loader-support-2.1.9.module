@@ -1,0 +1,67 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "image-loader-support",
+    "version": "2.1.9",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "image-loader-support-2.1.9.aar",
+          "url": "image-loader-support-2.1.9.aar",
+          "size": 17184,
+          "sha512": "515482b80b55ccc6e629b9e15baf89db00b23a4691c4ed873e09a5c68f82465003c01fd88a7936af140c966c596e952befbf32c2c1ccbf4adcb28c82d77e2ed0",
+          "sha256": "76f6855f36e9e7726ccbc91cc2865200a04ba7f9b72b5e17d56b07a5b8dffccf",
+          "sha1": "170b783f67b153db77ccc943756cad2f2cd6043f",
+          "md5": "c281ca0e7a48ce4a81fbdf73a301f415"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "4.9.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "image-loader-support-2.1.9.aar",
+          "url": "image-loader-support-2.1.9.aar",
+          "size": 17184,
+          "sha512": "515482b80b55ccc6e629b9e15baf89db00b23a4691c4ed873e09a5c68f82465003c01fd88a7936af140c966c596e952befbf32c2c1ccbf4adcb28c82d77e2ed0",
+          "sha256": "76f6855f36e9e7726ccbc91cc2865200a04ba7f9b72b5e17d56b07a5b8dffccf",
+          "sha1": "170b783f67b153db77ccc943756cad2f2cd6043f",
+          "md5": "c281ca0e7a48ce4a81fbdf73a301f415"
+        }
+      ]
+    }
+  ]
+}

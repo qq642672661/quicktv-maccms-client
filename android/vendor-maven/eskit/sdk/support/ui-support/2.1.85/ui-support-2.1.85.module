@@ -1,0 +1,111 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "ui-support",
+    "version": "2.1.85",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.support",
+          "module": "recyclerview-v7",
+          "version": {
+            "requires": "28.0.0"
+          }
+        },
+        {
+          "group": "jp.wasabeef",
+          "module": "glide-transformations",
+          "version": {
+            "requires": "4.0.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.6.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "ui-support-2.1.85.aar",
+          "url": "ui-support-2.1.85.aar",
+          "size": 1381353,
+          "sha512": "38b57fd2cfe1f5c5c0ad9909ba4c4471f9f51e09fab55d7c67b48bf7f3078707af61e30336c0c755b2270ea1747525d3d6ae94d042cf8f865dc775b43737d267",
+          "sha256": "447b5eee04bd76b720dd535d108b3fdf60695e30a059b28457909be29e03f946",
+          "sha1": "871b92b9c4345cfadac366bf51633e435f29bfde",
+          "md5": "b312942592a5d941437fda0b307c202c"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.support",
+          "module": "recyclerview-v7",
+          "version": {
+            "requires": "28.0.0"
+          }
+        },
+        {
+          "group": "jp.wasabeef",
+          "module": "glide-transformations",
+          "version": {
+            "requires": "4.0.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.6.20"
+          }
+        },
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "4.9.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "ui-support-2.1.85.aar",
+          "url": "ui-support-2.1.85.aar",
+          "size": 1381353,
+          "sha512": "38b57fd2cfe1f5c5c0ad9909ba4c4471f9f51e09fab55d7c67b48bf7f3078707af61e30336c0c755b2270ea1747525d3d6ae94d042cf8f865dc775b43737d267",
+          "sha256": "447b5eee04bd76b720dd535d108b3fdf60695e30a059b28457909be29e03f946",
+          "sha1": "871b92b9c4345cfadac366bf51633e435f29bfde",
+          "md5": "b312942592a5d941437fda0b307c202c"
+        }
+      ]
+    }
+  ]
+}

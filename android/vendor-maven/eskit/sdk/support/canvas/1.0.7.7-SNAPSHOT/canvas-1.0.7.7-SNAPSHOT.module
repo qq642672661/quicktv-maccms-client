@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "canvas",
+    "version": "1.0.7.7-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "canvas-1.0.7.7-SNAPSHOT.aar",
+          "url": "canvas-1.0.7.7-SNAPSHOT.aar",
+          "size": 239386,
+          "sha512": "8b2ac8e97e6f9e4b0a35e4f1db08f83cfc30a92da958fae0156409d91758761f577c7cc4e6302652f39bd5d1d2d059c8532752afafa07be6cdb7c4bfe1dccebe",
+          "sha256": "4e90cef777db77978e90a2e936d39d13022627c3055d0ec8db7a365496c26d8d",
+          "sha1": "10a5c817620b9d0e5f0a1ac726f23ebbf58c12e1",
+          "md5": "bc122388d9f68efcfcc5a0d9e3787733"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "canvas-1.0.7.7-SNAPSHOT.aar",
+          "url": "canvas-1.0.7.7-SNAPSHOT.aar",
+          "size": 239386,
+          "sha512": "8b2ac8e97e6f9e4b0a35e4f1db08f83cfc30a92da958fae0156409d91758761f577c7cc4e6302652f39bd5d1d2d059c8532752afafa07be6cdb7c4bfe1dccebe",
+          "sha256": "4e90cef777db77978e90a2e936d39d13022627c3055d0ec8db7a365496c26d8d",
+          "sha1": "10a5c817620b9d0e5f0a1ac726f23ebbf58c12e1",
+          "md5": "bc122388d9f68efcfcc5a0d9e3787733"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "player-ad-huan",
+    "version": "1.1.8-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "player-ad-huan-1.1.8-SNAPSHOT.aar",
+          "url": "player-ad-huan-1.1.8-SNAPSHOT.aar",
+          "size": 391523,
+          "sha512": "dd4e9005e5de353e016fd8e1fa734795f8e4e686e04cf95c432b84ffeaabcee86eadf67e03bb12cb7829e0b7a0d1c3df59b65695a0be0a94b9fb750bbc7753f8",
+          "sha256": "79cb81c349e2f72b0239ba991c013a267ed9ae40416ea8d9a26850a0965a0619",
+          "sha1": "002efd8f93398e1aa140b0169424f7549a7f6c14",
+          "md5": "27f133e1d1503682b5ad553e08fdd409"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.alibaba",
+          "module": "fastjson",
+          "version": {
+            "requires": "1.2.58"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "player-ad-huan-1.1.8-SNAPSHOT.aar",
+          "url": "player-ad-huan-1.1.8-SNAPSHOT.aar",
+          "size": 391523,
+          "sha512": "dd4e9005e5de353e016fd8e1fa734795f8e4e686e04cf95c432b84ffeaabcee86eadf67e03bb12cb7829e0b7a0d1c3df59b65695a0be0a94b9fb750bbc7753f8",
+          "sha256": "79cb81c349e2f72b0239ba991c013a267ed9ae40416ea8d9a26850a0965a0619",
+          "sha1": "002efd8f93398e1aa140b0169424f7549a7f6c14",
+          "md5": "27f133e1d1503682b5ad553e08fdd409"
+        }
+      ]
+    }
+  ]
+}

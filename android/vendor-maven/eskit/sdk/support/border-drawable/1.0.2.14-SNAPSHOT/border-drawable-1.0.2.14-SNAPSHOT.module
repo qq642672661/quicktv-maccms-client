@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "border-drawable",
+    "version": "1.0.2.14-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "border-drawable-1.0.2.14-SNAPSHOT.aar",
+          "url": "border-drawable-1.0.2.14-SNAPSHOT.aar",
+          "size": 19633,
+          "sha512": "b9137dbe101bff452abf30ac5be6659883f564e2dd721f06e60b1d6308e805fbc2bf65a407cc334799a6574890c0ae3400ad0939dd26905a3a0f36740be4170e",
+          "sha256": "6783f5beefd7eaa68deb69aa4b857fb5c375db9b3ed57346df2de282a29c0da4",
+          "sha1": "1295922d0cb7ab173efff504f2801439f8e19777",
+          "md5": "9927ef841684c988c6af713261caecdd"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "border-drawable-1.0.2.14-SNAPSHOT.aar",
+          "url": "border-drawable-1.0.2.14-SNAPSHOT.aar",
+          "size": 19633,
+          "sha512": "b9137dbe101bff452abf30ac5be6659883f564e2dd721f06e60b1d6308e805fbc2bf65a407cc334799a6574890c0ae3400ad0939dd26905a3a0f36740be4170e",
+          "sha256": "6783f5beefd7eaa68deb69aa4b857fb5c375db9b3ed57346df2de282a29c0da4",
+          "sha1": "1295922d0cb7ab173efff504f2801439f8e19777",
+          "md5": "9927ef841684c988c6af713261caecdd"
+        }
+      ]
+    }
+  ]
+}

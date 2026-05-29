@@ -1,0 +1,83 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "player-ijk-support",
+    "version": "3.1.14.26",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "eskit.sdk.support",
+          "module": "video-cache-support",
+          "version": {
+            "requires": "1.0.4-SNAPSHOT"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "player-ijk-support-3.1.14.26.aar",
+          "url": "player-ijk-support-3.1.14.26.aar",
+          "size": 1626383,
+          "sha512": "5b47db3c2922d0e89e3afdfc758234594207a1d2789b2f06496ff8a1b24e5d47dbb822478343e72e02da1cc0b73c58a1e972e7ca6a978e2e9c7c87e9341d2150",
+          "sha256": "24a809155c3067b218887dc415a43c7b3d45c51bc5986bb7f5a6eed34064b269",
+          "sha1": "f2fd641b1ec46e90fdbd311740f7b3c05c7083d6",
+          "md5": "089815e584d0d52be1ccace5ef14e136"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "eskit.sdk.support",
+          "module": "ijk-base",
+          "version": {
+            "requires": "1.0.5"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "video-cache-support",
+          "version": {
+            "requires": "1.0.4-SNAPSHOT"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "player-ijk-support-3.1.14.26.aar",
+          "url": "player-ijk-support-3.1.14.26.aar",
+          "size": 1626383,
+          "sha512": "5b47db3c2922d0e89e3afdfc758234594207a1d2789b2f06496ff8a1b24e5d47dbb822478343e72e02da1cc0b73c58a1e972e7ca6a978e2e9c7c87e9341d2150",
+          "sha256": "24a809155c3067b218887dc415a43c7b3d45c51bc5986bb7f5a6eed34064b269",
+          "sha1": "f2fd641b1ec46e90fdbd311740f7b3c05c7083d6",
+          "md5": "089815e584d0d52be1ccace5ef14e136"
+        }
+      ]
+    }
+  ]
+}

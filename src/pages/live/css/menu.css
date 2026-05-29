@@ -69,6 +69,18 @@
   bottom: 26px;
 }
 
+.menu-body-list-item-favorite {
+  width: 64px;
+  height: 32px;
+  background-color: #ffd24a;
+  color: #1b1b1b;
+  font-size: 20px;
+  border-radius: 16px;
+  position: absolute;
+  right: 16px;
+  top: 12px;
+}
+
 .menu-body-list-nodata {
   width: 300px;
   height: 52px;
@@ -84,14 +96,14 @@
 }
 
 .menu-back {
-  width: 293px;
+  width: 920px;
   height: 52px;
   background-color: transparent;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 100px;
+  right: 64px;
   bottom: 80px;
 }
 

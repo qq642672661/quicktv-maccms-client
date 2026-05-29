@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "brightness",
+    "version": "1.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "brightness-1.0.1.aar",
+          "url": "brightness-1.0.1.aar",
+          "size": 3918,
+          "sha512": "4d20290bb287ff21369655526174acbeec91d2eb4c72039be1dbc9ed72734064dc7c138160339da90a52476c2bfd19056f74b70963bf47e73d7579abf1a45b6b",
+          "sha256": "ed7417fe8fd303a298ab40ff991b86d979f04ecbcfcdb170fa25a3b71c1ef4b5",
+          "sha1": "093323e31aeb5d8500e65da1955a8e8c212e49b6",
+          "md5": "a14bb2661e3120ef4647711e79b08f5c"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "brightness-1.0.1.aar",
+          "url": "brightness-1.0.1.aar",
+          "size": 3918,
+          "sha512": "4d20290bb287ff21369655526174acbeec91d2eb4c72039be1dbc9ed72734064dc7c138160339da90a52476c2bfd19056f74b70963bf47e73d7579abf1a45b6b",
+          "sha256": "ed7417fe8fd303a298ab40ff991b86d979f04ecbcfcdb170fa25a3b71c1ef4b5",
+          "sha1": "093323e31aeb5d8500e65da1955a8e8c212e49b6",
+          "md5": "a14bb2661e3120ef4647711e79b08f5c"
+        }
+      ]
+    }
+  ]
+}

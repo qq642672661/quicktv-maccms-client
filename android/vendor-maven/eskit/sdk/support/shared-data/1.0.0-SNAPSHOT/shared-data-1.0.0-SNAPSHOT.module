@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "shared-data",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "shared-data-1.0.0-SNAPSHOT.aar",
+          "url": "shared-data-1.0.0-SNAPSHOT.aar",
+          "size": 10018,
+          "sha512": "64c55607b824a44edb0791d1b41e18988812e6b815bd84475bdb6a6f8b8e3db1a0e29f8c274d7eabb4bac8eade2dba01879ffd6ea2fe2c4963c851a385a4086b",
+          "sha256": "ca6d7e96bed8375ad4509fb249206bbf9b7faacfb782899b0493e18b4ce5c1e5",
+          "sha1": "2b4de065b5e48ed58e96d3e39ba0c5abecfc15f7",
+          "md5": "a5faf88f938524b3415421e04ed990aa"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "shared-data-1.0.0-SNAPSHOT.aar",
+          "url": "shared-data-1.0.0-SNAPSHOT.aar",
+          "size": 10018,
+          "sha512": "64c55607b824a44edb0791d1b41e18988812e6b815bd84475bdb6a6f8b8e3db1a0e29f8c274d7eabb4bac8eade2dba01879ffd6ea2fe2c4963c851a385a4086b",
+          "sha256": "ca6d7e96bed8375ad4509fb249206bbf9b7faacfb782899b0493e18b4ce5c1e5",
+          "sha1": "2b4de065b5e48ed58e96d3e39ba0c5abecfc15f7",
+          "md5": "a5faf88f938524b3415421e04ed990aa"
+        }
+      ]
+    }
+  ]
+}

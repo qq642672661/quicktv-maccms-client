@@ -1,0 +1,387 @@
+#!/usr/bin/env node
+const fs = require('fs')
+const http = require('http')
+const net = require('net')
+const crypto = require('crypto')
+const path = require('path')
+const {
+  createSignalingServer,
+  signalingUrlFromBaseUrl,
+  phoneCameraPairUrlFromBaseUrl
+} = require('./tv-box-phone-camera-signaling-server')
+
+const rootDir = path.resolve(__dirname, '..')
+const reportDir = process.env.REPORT_DIR || path.join(rootDir, 'reports')
+const outputJsonPath = process.env.TV_BOX_PHONE_CAMERA_READINESS_JSON || path.join(reportDir, 'tv-box-phone-camera-readiness-latest.json')
+const outputMarkdownPath = process.env.TV_BOX_PHONE_CAMERA_READINESS_MD || path.join(reportDir, 'tv-box-phone-camera-readiness-latest.md')
+const defaultPairBaseUrl = process.env.TV_BOX_PHONE_CAMERA_PAIR_BASE_URL ||
+  process.env.VITE_PHONE_CAMERA_PAIR_BASE_URL ||
+  'https://quicktv.local/phone-camera'
+const defaultProfileId = process.env.TV_BOX_PHONE_CAMERA_PROFILE_ID ||
+  process.env.VITE_PHONE_CAMERA_PROFILE_ID ||
+  'default_720p_15'
+const defaultRoomCode = process.env.TV_BOX_PHONE_CAMERA_ROOM_CODE || '482913'
+const allowInsecure = process.env.TV_BOX_PHONE_CAMERA_ALLOW_INSECURE === 'true'
+
+function fail(message) {
+  throw new Error(message)
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function normalizePairBaseUrl(value) {
+  const raw = String(value || '').trim() || 'https://quicktv.local/phone-camera'
+  const url = new URL(raw)
+  const normalizedPath = url.pathname.replace(/\/$/, '')
+  if (!normalizedPath || normalizedPath === '/') {
+    url.pathname = '/phone-camera'
+  } else if (!normalizedPath.endsWith('/phone-camera')) {
+    url.pathname = `${normalizedPath}/phone-camera`
+  }
+  url.search = ''
+  url.hash = ''
+  return url.toString().replace(/\/$/, '')
+}
+
+function isLocalHost(hostname) {
+  return ['localhost', '127.0.0.1', '::1'].includes(String(hostname || '').toLowerCase())
+}
+
+function isBrowserSecureUrl(value) {
+  const url = new URL(value)
+  return url.protocol === 'https:' || isLocalHost(url.hostname)
+}
+
+function isSecureSignalingUrl(value) {
+  const url = new URL(value)
+  return url.protocol === 'wss:' || (url.protocol === 'ws:' && isLocalHost(url.hostname))
+}
+
+function httpText(url) {
+  return new Promise((resolve, reject) => {
+    const request = http.get(url, (response) => {
+      let body = ''
+      response.setEncoding('utf8')
+      response.on('data', (chunk) => {
+        body += chunk
+      })
+      response.on('end', () => resolve({ statusCode: response.statusCode || 0, body }))
+    })
+    request.on('error', reject)
+  })
+}
+
+function encodeClientFrame(data, opcode = 0x1) {
+  const payload = Buffer.from(String(data))
+  let header
+  if (payload.length < 126) {
+    header = Buffer.alloc(2)
+    header[1] = 0x80 | payload.length
+  } else if (payload.length < 65536) {
+    header = Buffer.alloc(4)
+    header[1] = 0x80 | 126
+    header.writeUInt16BE(payload.length, 2)
+  } else {
+    header = Buffer.alloc(10)
+    header[1] = 0x80 | 127
+    header.writeBigUInt64BE(BigInt(payload.length), 2)
+  }
+  header[0] = 0x80 | opcode
+  const mask = crypto.randomBytes(4)
+  const masked = Buffer.from(payload)
+  for (let index = 0; index < masked.length; index += 1) {
+    masked[index] ^= mask[index % 4]
+  }
+  return Buffer.concat([header, mask, masked])
+}
+
+function decodeServerFrames(buffer) {
+  const frames = []
+  let offset = 0
+  while (offset + 2 <= buffer.length) {
+    const byte1 = buffer[offset]
+    const byte2 = buffer[offset + 1]
+    const opcode = byte1 & 0x0f
+    const masked = (byte2 & 0x80) !== 0
+    let length = byte2 & 0x7f
+    let cursor = offset + 2
+    if (length === 126) {
+      if (cursor + 2 > buffer.length) break
+      length = buffer.readUInt16BE(cursor)
+      cursor += 2
+    } else if (length === 127) {
+      if (cursor + 8 > buffer.length) break
+      const bigLength = buffer.readBigUInt64BE(cursor)
+      if (bigLength > BigInt(Number.MAX_SAFE_INTEGER)) fail('WebSocket frame is too large')
+      length = Number(bigLength)
+      cursor += 8
+    }
+    const maskOffset = masked ? 4 : 0
+    if (cursor + maskOffset + length > buffer.length) break
+    let payload = buffer.subarray(cursor + maskOffset, cursor + maskOffset + length)
+    if (masked) {
+      const mask = buffer.subarray(cursor, cursor + 4)
+      payload = Buffer.from(payload)
+      for (let index = 0; index < payload.length; index += 1) {
+        payload[index] ^= mask[index % 4]
+      }
+    }
+    frames.push({ opcode, payload })
+    offset = cursor + maskOffset + length
+  }
+  return { frames, rest: buffer.subarray(offset) }
+}
+
+class ReadinessWsProbe {
+  constructor(url) {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'ws:') fail(`readiness probe only supports ws:// URLs: ${url}`)
+    this.parsed = parsed
+    this.messages = []
+    this.waiters = []
+    this.buffer = Buffer.alloc(0)
+    this.handshakeComplete = false
+    this.socket = net.createConnection(Number(parsed.port || 80), parsed.hostname)
+  }
+
+  open() {
+    return new Promise((resolve, reject) => {
+      const key = crypto.randomBytes(16).toString('base64')
+      const timeout = setTimeout(() => reject(new Error('readiness WebSocket open timeout')), 2000)
+      this.socket.on('connect', () => {
+        this.socket.write([
+          `GET ${this.parsed.pathname}${this.parsed.search} HTTP/1.1`,
+          `Host: ${this.parsed.host}`,
+          'Upgrade: websocket',
+          'Connection: Upgrade',
+          `Sec-WebSocket-Key: ${key}`,
+          'Sec-WebSocket-Version: 13',
+          '',
+          ''
+        ].join('\r\n'))
+      })
+      this.socket.on('data', (chunk) => this.handleData(chunk, resolve, reject, timeout))
+      this.socket.on('error', (error) => {
+        clearTimeout(timeout)
+        reject(error)
+      })
+    })
+  }
+
+  handleData(chunk, resolve, reject, timeout) {
+    this.buffer = Buffer.concat([this.buffer, chunk])
+    if (!this.handshakeComplete) {
+      const marker = this.buffer.indexOf('\r\n\r\n')
+      if (marker < 0) return
+      const head = this.buffer.subarray(0, marker).toString('utf8')
+      this.buffer = this.buffer.subarray(marker + 4)
+      if (!head.startsWith('HTTP/1.1 101')) {
+        clearTimeout(timeout)
+        reject(new Error(`WebSocket handshake failed: ${head.split('\r\n')[0]}`))
+        return
+      }
+      this.handshakeComplete = true
+      clearTimeout(timeout)
+      resolve(this)
+    }
+    const decoded = decodeServerFrames(this.buffer)
+    this.buffer = decoded.rest
+    for (const frame of decoded.frames) {
+      if (frame.opcode === 0x1) {
+        this.messages.push(JSON.parse(frame.payload.toString('utf8')))
+        this.flushWaiters()
+      }
+    }
+  }
+
+  send(message) {
+    this.socket.write(encodeClientFrame(JSON.stringify(message)))
+  }
+
+  waitFor(type, predicate = () => true, timeoutMs = 2000) {
+    const found = this.messages.find((message) => message.type === type && predicate(message))
+    if (found) return Promise.resolve(found)
+    return new Promise((resolve, reject) => {
+      const waiter = {
+        match: (message) => message.type === type && predicate(message),
+        resolve,
+        timeout: setTimeout(() => {
+          this.waiters = this.waiters.filter((item) => item !== waiter)
+          reject(new Error(`readiness probe did not receive ${type}`))
+        }, timeoutMs)
+      }
+      this.waiters.push(waiter)
+    })
+  }
+
+  flushWaiters() {
+    for (const waiter of [...this.waiters]) {
+      const found = this.messages.find((message) => waiter.match(message))
+      if (!found) continue
+      clearTimeout(waiter.timeout)
+      this.waiters = this.waiters.filter((item) => item !== waiter)
+      waiter.resolve(found)
+    }
+  }
+
+  close() {
+    this.socket.end()
+  }
+}
+
+function addCheck(checks, id, pass, detail, required = true) {
+  checks.push({
+    id,
+    status: pass ? 'pass' : (required ? 'fail' : 'warn'),
+    required,
+    detail
+  })
+}
+
+function markdownTable(rows, headers) {
+  return [
+    `| ${headers.join(' | ')} |`,
+    `| ${headers.map(() => '---').join(' | ')} |`,
+    ...rows.map((row) => `| ${row.map((item) => String(item).replace(/\|/g, '/')).join(' | ')} |`)
+  ].join('\n')
+}
+
+function buildMarkdown(report) {
+  return `# 手机当电视摄像头现场准备度
+
+- 生成时间 UTC: \`${report.generatedAtUtc}\`
+- 状态: \`${report.status}\`
+- 手机入口: \`${report.inputs.pairBaseUrl}\`
+- 手机扫码 URL: \`${report.inputs.pairUrl}\`
+- 信令 URL: \`${report.inputs.signalingUrl}\`
+- 房间码: \`${report.inputs.roomCode}\`
+- 媒体档位: \`${report.inputs.profileId}\`
+
+## 准备度检查
+
+${markdownTable(report.checks.map((check) => [check.id, check.status, check.required ? 'yes' : 'no', check.detail]), ['检查', '状态', '必需', '证据'])}
+
+## 现场命令
+
+${markdownTable(Object.entries(report.fieldCommands).map(([key, value]) => [key, value]), ['用途', '命令'])}
+
+## 验收边界
+
+${markdownTable(Object.entries(report.acceptanceBoundary).map(([key, value]) => [key, value]), ['边界', '值'])}
+
+这份报告只证明手机扫码入口、安全上下文配置、局域网信令服务健康检查和电视端房间创建参数已经准备好。真实通过仍必须等手机权限、电视首帧、电视声音、session.stats、断线重连和停止按钮证据闭环。
+`
+}
+
+async function main() {
+  fs.mkdirSync(reportDir, { recursive: true })
+  const checks = []
+  const pairBaseUrl = normalizePairBaseUrl(defaultPairBaseUrl)
+  const pairUrl = phoneCameraPairUrlFromBaseUrl(pairBaseUrl, defaultRoomCode)
+  const signalingUrl = signalingUrlFromBaseUrl(pairBaseUrl)
+  const pairParsed = new URL(pairBaseUrl)
+  const signalingParsed = new URL(signalingUrl)
+  const pairIsSecure = isBrowserSecureUrl(pairBaseUrl)
+  const signalingIsSecure = isSecureSignalingUrl(signalingUrl)
+  const insecureAllowed = allowInsecure && !pairIsSecure
+
+  addCheck(checks, 'pair_base_url_parseable', pairParsed.pathname.endsWith('/phone-camera'), pairBaseUrl)
+  addCheck(checks, 'pair_entry_secure_context', pairIsSecure || insecureAllowed, pairIsSecure ? 'HTTPS/localhost 安全上下文' : `非安全入口: ${pairBaseUrl}`, !insecureAllowed)
+  addCheck(checks, 'signaling_url_secure', signalingIsSecure || insecureAllowed, signalingIsSecure ? signalingUrl : `非安全信令: ${signalingUrl}`, !insecureAllowed)
+  addCheck(checks, 'https_pair_uses_wss', pairParsed.protocol !== 'https:' || signalingParsed.protocol === 'wss:', signalingUrl)
+  addCheck(checks, 'room_code_six_digits', /^[0-9]{6}$/.test(defaultRoomCode), defaultRoomCode)
+  addCheck(checks, 'profile_capped_for_tv_box', ['mvp_480p_15', 'default_720p_15', 'lab_720p_30'].includes(defaultProfileId), defaultProfileId)
+
+  const service = createSignalingServer({
+    publicBaseUrl: pairBaseUrl,
+    roomTtlSeconds: 600,
+    codeGenerator: () => defaultRoomCode,
+    logger: { log() {}, info() {}, warn() {}, error() {} }
+  })
+  let probe = null
+
+  try {
+    await service.listen(0, '127.0.0.1')
+    const address = service.address()
+    const localPort = address.port
+    const localPhoneUrl = `http://127.0.0.1:${localPort}/phone-camera?room=${defaultRoomCode}`
+    const localHealthUrl = `http://127.0.0.1:${localPort}/healthz`
+    const localWsUrl = `ws://127.0.0.1:${localPort}/phone-camera/signaling`
+
+    const phonePage = await httpText(localPhoneUrl)
+    addCheck(checks, 'phone_capture_page_served', phonePage.statusCode === 200, `${localPhoneUrl} -> ${phonePage.statusCode}`)
+    addCheck(checks, 'phone_capture_page_has_getusermedia', phonePage.body.includes('navigator.mediaDevices.getUserMedia'), 'getUserMedia')
+    addCheck(checks, 'phone_capture_page_has_webrtc_offer', phonePage.body.includes('new RTCPeerConnection'), 'RTCPeerConnection')
+    addCheck(checks, 'phone_capture_page_has_stop_button', phonePage.body.includes('id="stopButton"'), 'visible stop button')
+    addCheck(checks, 'phone_capture_page_warns_secure_context', phonePage.body.includes('window.isSecureContext'), 'window.isSecureContext guard')
+
+    const health = JSON.parse((await httpText(localHealthUrl)).body)
+    addCheck(checks, 'signaling_healthz_ok', health.status === 'ok' && health.service === 'quicktv-phone-camera-signaling', `${localHealthUrl} -> ${health.status}`)
+
+    probe = await new ReadinessWsProbe(localWsUrl).open()
+    probe.send({
+      type: 'room.create',
+      role: 'tv',
+      deviceId: 'readiness-tv-box',
+      appVersion: '1.0.5',
+      roomCode: defaultRoomCode
+    })
+    const created = await probe.waitFor('room.created')
+    addCheck(checks, 'tv_room_create_public_pair_url', created.pairUrl === pairUrl, created.pairUrl)
+    addCheck(checks, 'tv_room_create_public_signaling_url', created.signalingUrl === signalingUrl, created.signalingUrl)
+    addCheck(checks, 'room_created_exposes_secure_context', created.secureContext?.phoneCameraRequiresSecureContext === true, JSON.stringify(created.secureContext || {}))
+    await wait(20)
+    const afterRoom = JSON.parse((await httpText(localHealthUrl)).body)
+    addCheck(checks, 'healthz_reports_tv_room', afterRoom.rooms.length === 1 && afterRoom.rooms[0].tvConnected === true, `${afterRoom.rooms.length} room(s)`)
+  } finally {
+    if (probe) probe.close()
+    await service.close()
+  }
+
+  const failed = checks.filter((check) => check.status === 'fail')
+  const warned = checks.filter((check) => check.status === 'warn')
+  const report = {
+    generatedAtUtc: new Date().toISOString(),
+    status: failed.length > 0 ? 'fail' : warned.length > 0 ? 'warn' : 'pass',
+    projectRoot: rootDir,
+    inputs: {
+      pairBaseUrl,
+      pairUrl,
+      signalingUrl,
+      roomCode: defaultRoomCode,
+      profileId: defaultProfileId,
+      allowInsecure
+    },
+    checks,
+    fieldCommands: {
+      startSignaling: `PHONE_CAMERA_PUBLIC_BASE_URL=${pairBaseUrl} npm run tv-box:phone-camera-signaling`,
+      androidPairSmoke: 'BOX_IP=<盒子IP> npm run tv-box:phone-camera-pair-smoke',
+      realMediaAcceptance: '手机授权摄像头/麦克风后，记录电视首帧、声音、session.stats、重连和停止按钮证据',
+      fallbackUsbCamera: 'C920 PRO 到货后执行 npm run tv-box:c920-arrived'
+    },
+    acceptanceBoundary: {
+      provesSecureEntryConfiguration: failed.length === 0 && warned.length === 0,
+      provesLocalSignalingServiceCanStart: true,
+      provesPhoneCapturePermissions: false,
+      provesTvNativeWebrtcFirstFrame: false,
+      provesTvAudioReceiving: false,
+      provesReconnectAndPrivacyStop: false,
+      noMediaContentPersisted: true
+    }
+  }
+
+  fs.writeFileSync(outputJsonPath, `${JSON.stringify(report, null, 2)}\n`)
+  fs.writeFileSync(outputMarkdownPath, buildMarkdown(report))
+
+  console.log(`TV-box phone camera readiness: ${report.status}`)
+  console.log(`Phone camera readiness report: ${outputMarkdownPath}`)
+  console.log(`Machine-readable readiness report: ${outputJsonPath}`)
+  if (failed.length > 0) process.exitCode = 1
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

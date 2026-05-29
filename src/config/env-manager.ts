@@ -1,4 +1,5 @@
 export interface EnvConfig {
+  mode: string
   maccmsApiUrl: string
   maccmsTimeout: number
   appPackageName: string
@@ -7,6 +8,7 @@ export interface EnvConfig {
   debugMode: boolean
   devServerHost: string
   devServerPort: number
+  tvBoxSimpleMode: boolean
 }
 
 class EnvironmentManager {
@@ -17,9 +19,10 @@ class EnvironmentManager {
   }
 
   private loadConfig(): EnvConfig {
-    const env = import.meta.env || {}
+    const env = this.readRuntimeEnv()
     
     return {
+      mode: env.MODE || 'production',
       maccmsApiUrl: env.VITE_MACCMS_API_URL || 'http://mockapi.quicktv.net/api',
       maccmsTimeout: parseInt(env.VITE_MACCMS_TIMEOUT || '10000'),
       appPackageName: env.VITE_APP_PACKAGE_NAME || 'es.tv.huan.hellotv',
@@ -27,12 +30,25 @@ class EnvironmentManager {
       useMockData: env.VITE_USE_MOCK_DATA === 'true',
       debugMode: env.VITE_DEBUG_MODE === 'true',
       devServerHost: env.VITE_DEV_SERVER_HOST || '0.0.0.0',
-      devServerPort: parseInt(env.VITE_DEV_SERVER_PORT || '38989')
+      devServerPort: parseInt(env.VITE_DEV_SERVER_PORT || '38989'),
+      tvBoxSimpleMode: env.VITE_TV_BOX_SIMPLE_MODE !== 'false'
+    }
+  }
+
+  private readRuntimeEnv(): Partial<ImportMetaEnv> {
+    try {
+      return (import.meta as unknown as { env?: Partial<ImportMetaEnv> }).env || {}
+    } catch {
+      return {}
     }
   }
 
   getConfig(): EnvConfig {
     return { ...this.config }
+  }
+
+  get mode(): string {
+    return this.config.mode
   }
 
   get maccmsApiUrl(): string {
@@ -67,12 +83,16 @@ class EnvironmentManager {
     return this.config.devServerPort
   }
 
+  get tvBoxSimpleMode(): boolean {
+    return this.config.tvBoxSimpleMode
+  }
+
   isDevelopment(): boolean {
-    return import.meta.env.MODE === 'development'
+    return this.config.mode === 'development'
   }
 
   isProduction(): boolean {
-    return import.meta.env.MODE === 'production'
+    return this.config.mode === 'production'
   }
 
   updateConfig(updates: Partial<EnvConfig>): void {

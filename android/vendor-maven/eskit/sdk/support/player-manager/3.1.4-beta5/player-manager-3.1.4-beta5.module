@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "player-manager",
+    "version": "3.1.4-beta5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "player-manager-3.1.4-beta5.aar",
+          "url": "player-manager-3.1.4-beta5.aar",
+          "size": 66249,
+          "sha512": "9ab79c3b9ad2042da8107bd4098db380dacccf8b2cd3de306ebca9ab50ed8d1c66849c499f8475f270352e14322423c0846c01d3368ebba3cb900599b6c5f702",
+          "sha256": "ab446129ec2dd7177e95bc8dedf47f70b27cd4f854a9b280a1608c41cb741192",
+          "sha1": "13abeef39f0152fc45428c762e61e72dbb2ccadb",
+          "md5": "59d58b6dd0f84c5b11f3f607b7b094b8"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "player-manager-3.1.4-beta5.aar",
+          "url": "player-manager-3.1.4-beta5.aar",
+          "size": 66249,
+          "sha512": "9ab79c3b9ad2042da8107bd4098db380dacccf8b2cd3de306ebca9ab50ed8d1c66849c499f8475f270352e14322423c0846c01d3368ebba3cb900599b6c5f702",
+          "sha256": "ab446129ec2dd7177e95bc8dedf47f70b27cd4f854a9b280a1608c41cb741192",
+          "sha1": "13abeef39f0152fc45428c762e61e72dbb2ccadb",
+          "md5": "59d58b6dd0f84c5b11f3f607b7b094b8"
+        }
+      ]
+    }
+  ]
+}

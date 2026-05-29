@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.quicktvui.hellotv.config.Config;
 import com.quicktvui.hellotv.config.ConfigLoadResult;
 import com.quicktvui.hellotv.config.ConfigModule;
+import com.quicktvui.hellotv.tvbox.TvBoxModule;
 import com.sunrain.toolkit.utils.FileUtils;
 import com.sunrain.toolkit.utils.ThreadUtils;
 import com.sunrain.toolkit.utils.ToastUtils;
@@ -44,7 +45,10 @@ public class App extends MultiDexApplication {
             initConfig.addFlags(InitConfig.FLAG_DYNAMIC_SO);
         }
 
-        initConfig.setSdkInitCallback(() -> EsComponentManager.get().registerModule(ConfigModule.class));
+        initConfig.setSdkInitCallback(() -> {
+            EsComponentManager.get().registerModule(ConfigModule.class);
+            EsComponentManager.get().registerModule(TvBoxModule.class);
+        });
         EsKitInitHelper.init(App.this, initConfig);
         Log.d(TAG, "initSdk");
     }

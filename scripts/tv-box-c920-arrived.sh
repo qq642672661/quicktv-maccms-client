@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROCUREMENT_JSON="${TV_BOX_C920_PROCUREMENT_JSON:-$ROOT_DIR/tv-box-field-state/c920-procurement.json}"
+
+json_value_or_empty() {
+  local file_path="$1"
+  local key_path="$2"
+  [[ -f "$file_path" ]] || return 0
+  node -e '
+const fs = require("fs")
+try {
+  const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"))
+  const value = process.argv[2].split(".").reduce((current, key) => {
+    if (current === undefined || current === null) return undefined
+    return current[key]
+  }, data)
+  if (value !== undefined && value !== null) process.stdout.write(String(value))
+} catch {}
+' "$file_path" "$key_path"
+}
+
+BOX_IP="${BOX_IP:-192.168.10.122}"
+C920_PHYSICAL_STATUS="${C920_PHYSICAL_STATUS:-inserted}"
+C920_PURCHASE_CHANNEL="${C920_PURCHASE_CHANNEL:-$(json_value_or_empty "$PROCUREMENT_JSON" "purchaseChannel")}"
+C920_EXPECTED_ARRIVAL_DATE="${C920_EXPECTED_ARRIVAL_DATE:-$(json_value_or_empty "$PROCUREMENT_JSON" "expectedArrivalDate")}"
+C920_PURCHASE_NOTE="${C920_PURCHASE_NOTE:-$(json_value_or_empty "$PROCUREMENT_JSON" "note")}"
+C920_ARRIVED_CURRENT_DATE="${C920_ARRIVED_CURRENT_DATE:-$(date +%F)}"
+
+export BOX_IP C920_PHYSICAL_STATUS C920_PURCHASE_CHANNEL C920_EXPECTED_ARRIVAL_DATE C920_PURCHASE_NOTE
+
+is_truthy() {
+  case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in
+    true|1|yes|y|force) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+is_iso_date() {
+  [[ "${1:-}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+}
+
+echo "== C920 PRO 到货一键验收 =="
+echo "BOX_IP: $BOX_IP"
+echo "Physical status: $C920_PHYSICAL_STATUS"
+echo "Purchase: ${C920_PURCHASE_CHANNEL:-unknown}; expected arrival: ${C920_EXPECTED_ARRIVAL_DATE:-unknown}"
+echo "Current date: $C920_ARRIVED_CURRENT_DATE"
+echo "底层验收脚本：npm run tv-box:c920-acceptance"
+
+if [[ "${C920_ARRIVED_DRY_RUN:-false}" == "true" ]]; then
+  echo "Dry run only; acceptance not executed."
+  exit 0
+fi
+
+if is_iso_date "$C920_EXPECTED_ARRIVAL_DATE" \
+  && is_iso_date "$C920_ARRIVED_CURRENT_DATE" \
+  && [[ "$C920_ARRIVED_CURRENT_DATE" < "$C920_EXPECTED_ARRIVAL_DATE" ]] \
+  && ! is_truthy "${C920_ARRIVED_ALLOW_EARLY:-false}"; then
+  echo
+  echo "C920 PRO 预计 ${C920_EXPECTED_ARRIVAL_DATE} 到货，当前还是 ${C920_ARRIVED_CURRENT_DATE}。"
+  echo "为避免把“未到货/未插入”误判为 USB 或 Camera2 故障，本次不执行实体摄像头验收。"
+  echo "到货并插入小米盒子 USB 口后，重新运行：npm run tv-box:c920-arrived"
+  echo "如果它已经提前到货且确认插好，可运行：C920_ARRIVED_ALLOW_EARLY=true npm run tv-box:c920-arrived"
+  exit 0
+fi
+
+exec "$ROOT_DIR/scripts/tv-box-c920-pro-acceptance.sh"

@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "swiper",
+    "version": "2.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "swiper-2.0.0-SNAPSHOT.aar",
+          "url": "swiper-2.0.0-SNAPSHOT.aar",
+          "size": 4004,
+          "sha512": "93aeb6231deaa3ee07e5ee24aa846a49aa7c98fb3d7a5ad8108bd5ee1f3586d522e2356bc9ad9d87b95cfe521282249b61c7da4ecf163cc8b34809a375ca5aa4",
+          "sha256": "a285ce4a7046b5d18bc3f83d080dfbdd4cc8b958c269eedc2be89019092f5ee0",
+          "sha1": "f3615d3f08fbd647c7b9a2b0837bb9b9b76e49a3",
+          "md5": "e2ac5de8be406481ef3ff85346f7c474"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "swiper-2.0.0-SNAPSHOT.aar",
+          "url": "swiper-2.0.0-SNAPSHOT.aar",
+          "size": 4004,
+          "sha512": "93aeb6231deaa3ee07e5ee24aa846a49aa7c98fb3d7a5ad8108bd5ee1f3586d522e2356bc9ad9d87b95cfe521282249b61c7da4ecf163cc8b34809a375ca5aa4",
+          "sha256": "a285ce4a7046b5d18bc3f83d080dfbdd4cc8b958c269eedc2be89019092f5ee0",
+          "sha1": "f3615d3f08fbd647c7b9a2b0837bb9b9b76e49a3",
+          "md5": "e2ac5de8be406481ef3ff85346f7c474"
+        }
+      ]
+    }
+  ]
+}

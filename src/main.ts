@@ -8,10 +8,11 @@ import { createESApp } from '@extscreen/es3-core'
 import { ESComponent } from '@extscreen/es3-component'
 import { MYComponent } from './components/qt-ul-component'
 import { MYTABSComponent } from './components/qt-tabs-component'
+import BuildConfig from './config/build-config'
 
 //--------------------components-----------------------
 const routerOptions = {
-  main: 'home',
+  main: BuildConfig.tvBoxSimpleMode ? 'tv_box_home' : 'home',
   error: 'error',
   limit: 5,
   routes: routes
@@ -30,10 +31,10 @@ const playerManager = createESPlayerManager()
 app.use(playerManager)
 
 const videoPlayer = createESVideoPlayer()
-app.use(videoPlayer)
+app.use(videoPlayer as any)
 
 const ADPlayer = createESADPlayer()
-app.use(ADPlayer)
+app.use(ADPlayer as any)
 
 //---------------------------QuickTVUI----------------------------------
 import '@quicktvui/quicktvui3/dist/index.css'
