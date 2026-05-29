@@ -126,7 +126,7 @@ function buildRoleNextActions(state) {
     return {
       projectOwner: 'C920 PRO 已进入待到货/接入链路；不要把未插摄像头的 0 结果判成盒子不兼容。',
       siteInstaller: 'C920 到货后先直插小米盒子 USB 口；直插不稳或同时接 USB 麦克风时，换带独立供电 USB Hub。',
-      engineer: c920.primaryAction || `执行 ${c920.command || 'BOX_IP=<盒子IP> C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance'}。`
+      engineer: c920.primaryAction || `执行 ${c920.command || 'npm run tv-box:c920-arrived'}。`
     }
   }
 
@@ -372,7 +372,7 @@ function buildActionCards(state) {
     actions.unshift({
       audience: '现场安装人员/工程维护人员',
       title: 'C920 到货后只跑专用验收',
-      command: c920.command || 'BOX_IP=<盒子IP> C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance',
+      command: c920.command || 'npm run tv-box:c920-arrived',
       details: [
         `采购状态: ${c920.procurement?.purchaseChannel || '未记录'} / 预计到货 ${c920.procurement?.expectedArrivalDate || '未记录'}`,
         '先直插 C920 PRO；直插不稳或同时接 USB 麦克风时，换带独立供电 USB Hub。',

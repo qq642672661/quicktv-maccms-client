@@ -89,8 +89,10 @@ BOX_IP=192.168.10.122 npm run tv-box:camera-smoke
 如果买回来的第一台主摄像头是 Logitech C920 PRO / C920 Pro HD，直接跑专用到货验收。它会自动执行遥控器基础冒烟、摄像头冒烟、CameraService/USB/音频线索采集、兼容性记录、硬件画像和完成度审计；电视上看到真实画面、麦克风输入和 USB 热插拔稳定性仍需要现场确认，未确认会保留 `unknown`，不能关闭验收。
 
 ```bash
-BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance
+npm run tv-box:c920-arrived
 ```
+
+`tv-box:c920-arrived` 默认面向当前小米盒子 `192.168.10.122`，并自动带上“已插入”和 `tv-box-field-state/c920-procurement.json` 的采购状态；换盒子时加 `BOX_IP=<盒子IP>` 即可。它底层仍调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，不会减少任何 USB、Camera2、音频、热插拔和人工确认证据。
 
 如果摄像头已经购买但还没有到货，或现场确认还没有插到盒子 USB 口，可以先把到货卡标成待接入，避免把“未插入基线”误读成兼容失败：
 
@@ -109,7 +111,7 @@ C920_PHYSICAL_STATUS=purchased_pending_arrival C920_PURCHASE_CHANNEL="京东自�
 ```bash
 C920_PHYSICAL_STATUS=已采购待到货 C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-30 npm run tv-box:c920-arrival-card
 C920_PHYSICAL_STATUS=已到货未插入 npm run tv-box:c920-arrival-card
-BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=已插入 npm run tv-box:c920-acceptance
+npm run tv-box:c920-arrived
 ```
 
 验收报告会额外生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并列出 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数。首次未插摄像头运行时会保存 `reports/tv-box-c920-pro-baseline.json` 到货前基线；后续插上 C920 后重跑，会自动对比是否新增 USB 视频、Camera2 摄像头和 USB 音频。它们用于判断是 USB 供电、盒子固件/Camera HAL、AudioManager 还是业务预览问题；但只有 Camera2/CameraService 枚举和电视真实画面一起成立，才算摄像头业务通过。

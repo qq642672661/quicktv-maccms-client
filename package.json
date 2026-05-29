@@ -17,6 +17,7 @@
     "tv-box:authorize": "./scripts/tv-box-authorize.sh",
     "tv-box:c920-acceptance": "./scripts/tv-box-c920-pro-acceptance.sh",
     "tv-box:c920-acceptance-test": "./scripts/tv-box-c920-pro-acceptance-test.sh",
+    "tv-box:c920-arrived": "./scripts/tv-box-c920-arrived.sh",
     "tv-box:c920-arrival-card": "node ./scripts/tv-box-c920-arrival-card.js",
     "tv-box:camera-smoke": "./scripts/tv-box-camera-smoke.sh",
     "tv-box:command-center": "node ./scripts/tv-box-command-center.js",

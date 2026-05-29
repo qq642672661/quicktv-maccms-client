@@ -178,8 +178,8 @@ write_c920_arrival_card() {
   cat > "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" <<JSON
 {
   "status": "$status",
-  "primaryAction": "到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance。",
-  "command": "BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance",
+  "primaryAction": "到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.0.2.10 npm run tv-box:c920-arrived。",
+  "command": "BOX_IP=192.0.2.10 npm run tv-box:c920-arrived",
   "procurement": {
     "purchaseChannel": "京东自营",
     "expectedArrivalDate": "2026-05-30"

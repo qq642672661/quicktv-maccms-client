@@ -167,7 +167,7 @@ function buildDecision(report, physicalStatus) {
         level: 'c920_purchased_pending_arrival',
         title: 'C920 PRO 已购买，待到货接入',
         summary: '当前报告只是到货前或未插入基线，不能判定为盒子不兼容；等 C920 到货并插入 USB 后再跑验收。',
-        primaryAction: '到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance。'
+        primaryAction: '到货后先直插小米盒子 USB 口，再执行 npm run tv-box:c920-arrived。'
       }
     }
     if (physicalStatus === 'not_inserted') {
@@ -212,7 +212,7 @@ function buildDecision(report, physicalStatus) {
     sourceLevel: 'not_run_yet',
     title: '还未运行 C920 到货验收',
     summary: '先把 C920 PRO 插到小米盒子 USB 口，再运行一条验收命令生成真实证据。',
-    primaryAction: '执行 BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance；脚本完成后看电视屏幕确认真实画面。'
+    primaryAction: '执行 npm run tv-box:c920-arrived；脚本完成后看电视屏幕确认真实画面。'
   }
 }
 
@@ -288,7 +288,8 @@ function buildBranch(level) {
 }
 
 function buildAcceptanceCommand(boxIp) {
-  return `BOX_IP=${boxIp} C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`
+  const baseCommand = 'npm run tv-box:c920-arrived'
+  return boxIp === '192.168.10.122' ? baseCommand : `BOX_IP=${boxIp} ${baseCommand}`
 }
 
 function buildCard(report) {
