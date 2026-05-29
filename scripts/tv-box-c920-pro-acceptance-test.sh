@@ -322,12 +322,25 @@ assert.equal(card.procurement.expectedArrivalDate, '2026-05-30')
 assert.equal(card.checklist.usbVideoDetected, true)
 assert.equal(card.hardwareEvidence.usbLogitechC920Detected, true)
 assert.match(card.command, /tv-box:c920-arrived/)
+assert.equal(card.evidenceReturn.folder, 'FIELD_RETURN/')
+assert.match(card.evidenceReturn.returnInboxCommand, /tv-box:return-inbox/)
+assert.ok(card.evidenceReturn.items.some((item) => item.fileName.includes('C920_PREVIEW_TV_SCREEN')))
+assert.ok(card.evidenceReturn.items.some((item) => item.fileName.includes('C920_MIC_BUSINESS_INPUT')))
+assert.ok(card.evidenceReturn.items.some((item) => item.fileName.includes('C920_HOTPLUG_RETEST')))
+assert.ok(card.evidenceReturn.items.some((item) => item.fileName.includes('SUPPORT_CODE_C920')))
 assert.match(cardMarkdown, /只有电视上看到 C920 PRO 真实画面/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已插入/)
 assert.match(cardMarkdown, /带独立供电 USB Hub/)
 assert.match(cardMarkdown, /USB Host 清单/)
+assert.match(cardMarkdown, /C920 回传证据文件名/)
+assert.match(cardMarkdown, /C920_PREVIEW_TV_SCREEN/)
+assert.match(cardMarkdown, /C920_MIC_BUSINESS_INPUT/)
+assert.match(cardMarkdown, /C920_HOTPLUG_RETEST/)
+assert.match(cardMarkdown, /npm run tv-box:return-inbox/)
 assert.match(cardMarkdown, /Fake UVC Camera|Logitech/)
 assert.match(cardHtml, /打印 C920 到货操作卡/)
+assert.match(cardHtml, /C920 回传证据文件名/)
+assert.match(cardHtml, /SUPPORT_CODE_C920/)
 NODE
 
 REALTEK_REPORT_DIR="$TMP_ROOT/realtek-card-reports"
@@ -419,6 +432,7 @@ assert.equal(card.hardwareEvidence.usbLogitechC920Detected, false)
 assert.equal(card.hardwareEvidence.usbRealtekOnly, true)
 assert.match(cardMarkdown, /未看到 Logitech\/C920/)
 assert.match(cardMarkdown, /USB Host 清单/)
+assert.match(cardMarkdown, /C920_PREVIEW_TV_SCREEN/)
 NODE
 
 cat >"$TMP_ROOT/c920-procurement.json" <<'JSON'
@@ -591,8 +605,10 @@ assert.match(cardMarkdown, /采购渠道: 京东自营/)
 assert.match(cardMarkdown, /预计到货: 2026-05-30/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已插入/)
 assert.match(cardMarkdown, /新增 USB 视频: `no`/)
-assert.match(cardMarkdown, /FIELD_CAMERA_PREVIEW \\| 未确认/)
-assert.doesNotMatch(cardMarkdown, /FIELD_CAMERA_PREVIEW \\| 失败/)
+assert.ok(cardMarkdown.includes('| FIELD_CAMERA_PREVIEW | 未确认 |'))
+assert.match(cardMarkdown, /C920 回传证据文件名/)
+assert.match(cardMarkdown, /SUPPORT_CODE_C920/)
+assert.ok(!cardMarkdown.includes('| FIELD_CAMERA_PREVIEW | 失败 |'))
 NODE
 
 (
@@ -614,7 +630,7 @@ assert.equal(card.fieldResults.cameraPreview, 'unknown')
 assert.match(card.physicalStatusLabel, /未插入/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已到货未插入/)
 assert.match(cardMarkdown, /未插入摄像头时看到 USB 视频和 Camera2 为 0 是正常基线/)
-assert.match(cardMarkdown, /FIELD_CAMERA_PREVIEW \\| 未确认/)
+assert.ok(cardMarkdown.includes('| FIELD_CAMERA_PREVIEW | 未确认 |'))
 NODE
 
 echo "C920 PRO acceptance failure self-test passed."

@@ -301,6 +301,60 @@ function buildAcceptanceCommand(boxIp) {
   return boxIp === '192.168.10.122' ? baseCommand : `BOX_IP=${boxIp} ${baseCommand}`
 }
 
+function buildEvidenceReturnChecklist(boxIp, command) {
+  return {
+    folder: 'FIELD_RETURN/',
+    returnInboxCommand: 'npm run tv-box:return-inbox -- <现场回传目录或zip>',
+    acceptanceCommand: command,
+    confirmationCommand: `BOX_IP=${boxIp || '192.168.10.122'} C920_CONFIRM_ALL_PASS=true npm run tv-box:c920-confirm`,
+    items: [
+      {
+        id: 'preview_photo_or_video',
+        fileName: 'C920_PREVIEW_TV_SCREEN.jpg 或 C920_PREVIEW_TV_SCREEN.mp4',
+        requiredForClose: true,
+        proves: '电视屏幕已经显示 C920 PRO 的真实实时画面。',
+        passRule: '只有看得出画面来自 C920，FIELD_CAMERA_PREVIEW / C920_CONFIRM_VIDEO 才能记 pass。'
+      },
+      {
+        id: 'microphone_business_input',
+        fileName: 'C920_MIC_BUSINESS_INPUT.mp4 或 C920_MIC_BUSINESS_INPUT.txt',
+        requiredForClose: true,
+        proves: 'C920 自带麦克风或独立 USB 麦克风已经进入录音/互动课业务链路。',
+        passRule: '只看到 USB 音频线索不算通过；必须有录音、互动课输入或现场文字说明。'
+      },
+      {
+        id: 'hotplug_retest',
+        fileName: 'C920_HOTPLUG_RETEST.jpg 或 C920_HOTPLUG_RETEST.txt',
+        requiredForClose: true,
+        proves: '拔插 C920 后系统仍能识别，并且预览不会黑屏或卡死。',
+        passRule: '未做拔插复测时，FIELD_USB_HOTPLUG / C920_CONFIRM_HOTPLUG 保持 unknown。'
+      },
+      {
+        id: 'support_code_photo',
+        fileName: 'SUPPORT_CODE_C920.jpg',
+        requiredForClose: true,
+        proves: '摄像头页或帮助页维护码可读，工程侧能看见设备、权限和能力摘要。',
+        passRule: '维护码照片清晰可读后，FIELD_SUPPORT_CODE / C920_CONFIRM_SUPPORT_CODE 才能记 pass。'
+      },
+      {
+        id: 'acceptance_report',
+        fileName: 'tv-box-c920-pro-acceptance-latest.md 和 tv-box-c920-pro-acceptance-latest.json',
+        requiredForClose: true,
+        proves: '保留本次 USB、Camera2、音频、基线对比和日志目录证据。',
+        passRule: '不要只发照片；报告和照片需要一起回传。'
+      },
+      {
+        id: 'support_bundle_when_failed_or_unknown',
+        fileName: 'tv-box-support-latest.zip',
+        requiredForClose: false,
+        proves: '摄像头、麦克风或热插拔失败/unknown 时，给工程侧完整日志和环境快照。',
+        passRule: '有 fail、unknown、黑屏、无声或掉线时必须一起发。'
+      }
+    ],
+    closeRule: '工程侧收到后先跑 return-inbox；只有 JSON、维护码、C920 预览/麦克风/热插拔证据和报告齐全，且现场结果没有 fail/unknown，才能进入关闭复核。'
+  }
+}
+
 function isPendingOrBaselineDecision(level) {
   return [
     'c920_purchased_pending_arrival',
@@ -397,6 +451,7 @@ function buildCard(report) {
       usbAudioIncreased: report?.baselineComparison?.signals?.usbAudioIncreased,
       audioInputChanged: report?.baselineComparison?.signals?.audioInputChanged
     },
+    evidenceReturn: buildEvidenceReturnChecklist(boxIp, command),
     closeGuard: [
       '只有电视上看到 C920 PRO 真实画面，FIELD_CAMERA_PREVIEW 才能记 pass。',
       'C920 自带麦克风或独立 USB 麦克风必须通过业务录音/互动课链路确认，不能只看 USB 线索。',
@@ -430,6 +485,13 @@ function buildMarkdown(card) {
     ['FIELD_AUDIO_INPUT', resultLabel(card.fieldResults.audioInput)],
     ['FIELD_USB_HOTPLUG', resultLabel(card.fieldResults.usbHotplug)]
   ]
+
+  const evidenceReturnRows = card.evidenceReturn.items.map((item) => [
+    item.fileName,
+    item.requiredForClose ? '必须' : '失败/unknown 时必须',
+    item.proves,
+    item.passRule
+  ])
 
   return `# C920 PRO 到货现场操作卡
 
@@ -483,9 +545,17 @@ ${card.hardwareEvidence.usbDeviceSummaries.length ? card.hardwareEvidence.usbDev
 
 ${card.closeGuard.map((item) => `- ${item}`).join('\n')}
 
+## C920 回传证据文件名
+
+把下面文件放进交付包里的 \`${card.evidenceReturn.folder}\`，再双击 \`PACK_FIELD_RETURN_ON_MAC.command\` 或 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\` 打包；工程侧收到后先运行 \`${card.evidenceReturn.returnInboxCommand}\`。
+
+${makeTable(evidenceReturnRows, ['文件名', '关闭要求', '证明什么', 'pass 规则'])}
+
 ## 回传给工程侧
 
 - 电视 C920 预览画面照片或短视频。
+- C920 麦克风业务输入证据。
+- USB 热插拔复测证据。
 - 摄像头页/帮助页维护码照片。
 - \`reports/tv-box-c920-pro-acceptance-latest.md/json\`。
 - \`reports/tv-box-support-latest.zip\`。
@@ -495,6 +565,7 @@ ${card.closeGuard.map((item) => `- ${item}`).join('\n')}
 function buildHtml(card) {
   const branchItems = card.branchSteps.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
   const guardItems = card.closeGuard.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
+  const evidenceRows = card.evidenceReturn.items.map((item) => `<tr><th>${htmlEscape(item.fileName)}</th><td>${htmlEscape(item.requiredForClose ? '必须' : '失败/unknown 时必须')}</td><td>${htmlEscape(item.proves)}</td><td>${htmlEscape(item.passRule)}</td></tr>`).join('\n')
   const usbDeviceItems = card.hardwareEvidence.usbDeviceSummaries.length
     ? card.hardwareEvidence.usbDeviceSummaries.map((item) => `<li>${htmlEscape(item)}</li>`).join('\n')
     : '<li>未列出外设。</li>'
@@ -557,9 +628,17 @@ function buildHtml(card) {
     <ul>${usbDeviceItems}</ul>
     <h2>不能关闭的边界</h2>
     <ul>${guardItems}</ul>
+    <h2>C920 回传证据文件名</h2>
+    <p>把下面文件放进 <code>${htmlEscape(card.evidenceReturn.folder)}</code>，再双击回传打包脚本；工程侧收到后先运行 <code>${htmlEscape(card.evidenceReturn.returnInboxCommand)}</code>。</p>
+    <table>
+      <tr><th>文件名</th><th>关闭要求</th><th>证明什么</th><th>pass 规则</th></tr>
+      ${evidenceRows}
+    </table>
     <h2>回传给工程侧</h2>
     <ul>
       <li>电视 C920 预览画面照片或短视频。</li>
+      <li>C920 麦克风业务输入证据。</li>
+      <li>USB 热插拔复测证据。</li>
       <li>摄像头页/帮助页维护码照片。</li>
       <li>reports/tv-box-c920-pro-acceptance-latest.md/json。</li>
       <li>reports/tv-box-support-latest.zip。</li>
