@@ -815,6 +815,8 @@ require_text "scripts/tv-box-c920-arrival-card.js" "tv-box:c920-arrived" "C920 a
 require_text "scripts/tv-box-c920-arrival-card.js" "C920_PHYSICAL_STATUS=已插入" "C920 arrival card tells field staff to mark inserted state"
 require_text "scripts/tv-box-c920-arrival-card.js" "USB Host 清单" "C920 arrival card exposes USB Host inventory"
 require_text "scripts/tv-box-c920-arrival-card.js" "normalizeFieldResultsForDecision" "C920 arrival card prevents pending/not-inserted baseline from showing false field failures"
+require_text "scripts/tv-box-c920-arrival-card.js" "TV_BOX_REMOTE_SMOKE_JSON" "C920 arrival card can read latest remote smoke evidence directly"
+require_text "scripts/tv-box-c920-arrival-card.js" "tv-box-remote-smoke-latest.png" "C920 arrival card exposes latest remote smoke screenshot"
 require_text "scripts/tv-box-c920-pro-acceptance-test.sh" "USB Host 只看到 Realtek 网卡" "C920 self-test covers Realtek-only arrival card wording"
 require_text "scripts/tv-box-c920-pro-acceptance-test.sh" "| FIELD_CAMERA_PREVIEW | 未确认 |" "C920 self-test prevents pending arrival card from showing preview failure"
 require_text "scripts/tv-box-handoff.sh" "C920_PHYSICAL_STATUS=inserted" "handoff package tells field staff to mark inserted state"

@@ -613,6 +613,37 @@ cat >"$PENDING_REPORT_DIR/tv-box-c920-pro-acceptance-latest.json" <<'JSON'
   }
 }
 JSON
+cat >"$PENDING_REPORT_DIR/tv-box-remote-smoke-latest.json" <<'JSON'
+{
+  "status": "pass",
+  "exitCode": 0,
+  "deviceSerial": "192.168.10.122:5555",
+  "runDir": "/tmp/pending-remote-smoke",
+  "boundary": {
+    "replacesRealRemoteAcceptance": false,
+    "replacesC920Acceptance": false
+  },
+  "crashCheck": {
+    "crashDetected": false
+  },
+  "scenarios": [
+    { "id": "live_help_menu_home" },
+    { "id": "camera_setup_navigation" }
+  ],
+  "keyEvents": [
+    { "keyCode": 0 },
+    { "keyCode": 23 },
+    { "keyCode": 4 }
+  ],
+  "artifacts": {
+    "json": { "path": "tv-box-remote-smoke-latest.json", "exists": true },
+    "markdown": { "path": "tv-box-remote-smoke-latest.md", "exists": true },
+    "screenshotLatest": { "path": "tv-box-remote-smoke-latest.png", "exists": true }
+  }
+}
+JSON
+printf '# pending remote smoke\n' >"$PENDING_REPORT_DIR/tv-box-remote-smoke-latest.md"
+printf 'fake-png' >"$PENDING_REPORT_DIR/tv-box-remote-smoke-latest.png"
 
 (
   cd "$ROOT_DIR"
@@ -638,6 +669,11 @@ assert.deepEqual(card.physicalStatusInputHints.inserted, ['inserted', '已插入
 assert.equal(card.procurement.purchaseChannel, '京东自营')
 assert.equal(card.procurement.expectedArrivalDate, '2026-05-30')
 assert.match(card.command, /tv-box:c920-arrived/)
+assert.equal(card.remoteSmokeEvidence.status, 'pass')
+assert.equal(card.remoteSmokeEvidence.scenarioCount, 2)
+assert.equal(card.remoteSmokeEvidence.keyEventCount, 3)
+assert.equal(card.remoteSmokeEvidence.crashDetected, false)
+assert.equal(card.remoteSmokeEvidence.screenshotPath, 'tv-box-remote-smoke-latest.png')
 assert.match(card.title, /已购买/)
 assert.match(card.summary, /不能判定为盒子不兼容/)
 assert.match(cardMarkdown, /物理状态: 已采购，待到货\/接入/)
@@ -648,6 +684,8 @@ assert.match(cardMarkdown, /预计到货: 2026-05-30/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已插入/)
 assert.match(cardMarkdown, /新增 USB 视频: `no`/)
 assert.ok(cardMarkdown.includes('| FIELD_CAMERA_PREVIEW | 未确认 |'))
+assert.match(cardMarkdown, /ADB 遥控器冒烟证据/)
+assert.match(cardMarkdown, /tv-box-remote-smoke-latest\.png/)
 assert.match(cardMarkdown, /C920 回传证据文件名/)
 assert.match(cardMarkdown, /SUPPORT_CODE_C920/)
 assert.ok(!cardMarkdown.includes('| FIELD_CAMERA_PREVIEW | 失败 |'))
