@@ -32,6 +32,14 @@ C920_PRIMARY_ACTION=""
 C920_COMMAND=""
 C920_PURCHASE_CHANNEL=""
 C920_EXPECTED_ARRIVAL_DATE=""
+C920_PREP_STATUS=""
+C920_PREP_REASON=""
+C920_PREP_CURRENT_DATE=""
+C920_PREP_TARGET_STATUS=""
+C920_REMOTE_SMOKE_STATUS=""
+C920_REMOTE_SMOKE_SCENARIO_COUNT=""
+C920_REMOTE_SMOKE_KEYEVENT_COUNT=""
+C920_REMOTE_SMOKE_SCREENSHOT=""
 
 print_step() {
   echo
@@ -108,6 +116,7 @@ write_report() {
   local command_center_json="$REPORT_DIR/tv-box-command-center-latest.json"
   local site_readiness_json="$REPORT_DIR/tv-box-site-readiness-latest.json"
   local c920_json="$REPORT_DIR/tv-box-c920-arrival-card-latest.json"
+  local c920_prep_json="$REPORT_DIR/tv-box-c920-onsite-prep-latest.json"
   local handoff_archive_txt="$REPORT_DIR/tv-box-handoff-latest-archive.txt"
   local support_archive_txt="$REPORT_DIR/tv-box-support-latest-archive.txt"
   local handoff_archive=""
@@ -125,12 +134,22 @@ write_report() {
   C920_COMMAND="${C920_COMMAND:-$(json_value_or_empty "$c920_json" "command")}"
   C920_PURCHASE_CHANNEL="${C920_PURCHASE_CHANNEL:-$(json_value_or_empty "$c920_json" "procurement.purchaseChannel")}"
   C920_EXPECTED_ARRIVAL_DATE="${C920_EXPECTED_ARRIVAL_DATE:-$(json_value_or_empty "$c920_json" "procurement.expectedArrivalDate")}"
+  C920_PREP_STATUS="${C920_PREP_STATUS:-$(json_value_or_empty "$c920_prep_json" "result.status")}"
+  C920_PREP_REASON="${C920_PREP_REASON:-$(json_value_or_empty "$c920_prep_json" "result.reason")}"
+  C920_PREP_CURRENT_DATE="${C920_PREP_CURRENT_DATE:-$(json_value_or_empty "$c920_prep_json" "inputs.currentDate")}"
+  C920_PREP_TARGET_STATUS="${C920_PREP_TARGET_STATUS:-$(json_value_or_empty "$c920_prep_json" "adb.targetStatus")}"
+  C920_REMOTE_SMOKE_STATUS="${C920_REMOTE_SMOKE_STATUS:-$(json_value_or_empty "$c920_json" "remoteSmokeEvidence.status")}"
+  C920_REMOTE_SMOKE_SCENARIO_COUNT="${C920_REMOTE_SMOKE_SCENARIO_COUNT:-$(json_value_or_empty "$c920_json" "remoteSmokeEvidence.scenarioCount")}"
+  C920_REMOTE_SMOKE_KEYEVENT_COUNT="${C920_REMOTE_SMOKE_KEYEVENT_COUNT:-$(json_value_or_empty "$c920_json" "remoteSmokeEvidence.keyEventCount")}"
+  C920_REMOTE_SMOKE_SCREENSHOT="${C920_REMOTE_SMOKE_SCREENSHOT:-$(json_value_or_empty "$c920_json" "remoteSmokeEvidence.screenshotPath")}"
 
   export STARTED_AT_UTC finished_at_utc ROOT_DIR PACKAGE_NAME BOX_IP DEVICE_SERIAL REPORT_DIR
   export RUN_CAMERA_SMOKE NEXT_ALLOW_INSTALL NEXT_BUILD_DELIVERY REQUIRE_NEXT_READY
   export RESULT_STATUS RESULT_REASON COMMANDS_TEXT NEXT_ACTIONS_TEXT
   export AUTH_STATUS PREFLIGHT_VERDICT COMMAND_CENTER_STATUS SITE_READINESS_STATUS
   export C920_STATUS C920_PRIMARY_ACTION C920_COMMAND C920_PURCHASE_CHANNEL C920_EXPECTED_ARRIVAL_DATE
+  export C920_PREP_STATUS C920_PREP_REASON C920_PREP_CURRENT_DATE C920_PREP_TARGET_STATUS
+  export C920_REMOTE_SMOKE_STATUS C920_REMOTE_SMOKE_SCENARIO_COUNT C920_REMOTE_SMOKE_KEYEVENT_COUNT C920_REMOTE_SMOKE_SCREENSHOT
   export OUTPUT_MD OUTPUT_JSON handoff_archive support_archive
 
   node <<'NODE' > "$OUTPUT_JSON"
@@ -175,6 +194,18 @@ const data = {
     c920Procurement: {
       purchaseChannel: emptyToNull(env.C920_PURCHASE_CHANNEL),
       expectedArrivalDate: emptyToNull(env.C920_EXPECTED_ARRIVAL_DATE)
+    },
+    c920Prep: {
+      status: emptyToNull(env.C920_PREP_STATUS),
+      reason: emptyToNull(env.C920_PREP_REASON),
+      currentDate: emptyToNull(env.C920_PREP_CURRENT_DATE),
+      targetStatus: emptyToNull(env.C920_PREP_TARGET_STATUS)
+    },
+    c920RemoteSmoke: {
+      status: emptyToNull(env.C920_REMOTE_SMOKE_STATUS),
+      scenarioCount: env.C920_REMOTE_SMOKE_SCENARIO_COUNT === '' ? null : Number(env.C920_REMOTE_SMOKE_SCENARIO_COUNT),
+      keyEventCount: env.C920_REMOTE_SMOKE_KEYEVENT_COUNT === '' ? null : Number(env.C920_REMOTE_SMOKE_KEYEVENT_COUNT),
+      screenshot: emptyToNull(env.C920_REMOTE_SMOKE_SCREENSHOT)
     }
   },
   commands: lines(env.COMMANDS_TEXT),
@@ -212,6 +243,8 @@ const md = `# HelloTV 电视盒子唯一下一步
 - 现场开工卡: \`${data.observed.siteReadinessStatus || 'unknown'}\`
 - C920 到货接入: \`${data.observed.c920Status || 'unknown'}\`
 - C920 采购/到货: \`${data.observed.c920Procurement.purchaseChannel || '未记录'} / ${data.observed.c920Procurement.expectedArrivalDate || '未记录'}\`
+- C920 前置检查: \`${data.observed.c920Prep.status || 'unknown'}\` / 当前日期 \`${data.observed.c920Prep.currentDate || 'unknown'}\` / ADB \`${data.observed.c920Prep.targetStatus || 'unknown'}\`
+- ADB 遥控器冒烟: \`${data.observed.c920RemoteSmoke.status || 'unknown'}\` / 场景 \`${data.observed.c920RemoteSmoke.scenarioCount ?? 0}\` / keyevent \`${data.observed.c920RemoteSmoke.keyEventCount ?? 0}\` / 截图 \`${data.observed.c920RemoteSmoke.screenshot || '未生成'}\`
 
 ## 已执行命令
 
@@ -260,18 +293,33 @@ echo "包名：$PACKAGE_NAME"
 
 run_npm_step "ADB/RSA 授权助手" "tv-box:authorize"
 AUTH_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-authorization-latest.json" "status")"
+run_npm_step "C920 到货前置检查" "tv-box:c920-prep"
 run_npm_step "C920 到货接入卡" "tv-box:c920-arrival-card"
 
 if [[ "$AUTH_STATUS" == "ready_for_install" ]]; then
+  C920_PREP_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" "result.status")"
+  C920_PREP_REASON="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" "result.reason")"
+  C920_PREP_CURRENT_DATE="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" "inputs.currentDate")"
+  C920_PREP_TARGET_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" "adb.targetStatus")"
   C920_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "status")"
   C920_PRIMARY_ACTION="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "primaryAction")"
   C920_COMMAND="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "command")"
   C920_PURCHASE_CHANNEL="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "procurement.purchaseChannel")"
   C920_EXPECTED_ARRIVAL_DATE="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "procurement.expectedArrivalDate")"
+  C920_REMOTE_SMOKE_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "remoteSmokeEvidence.status")"
+  C920_REMOTE_SMOKE_SCENARIO_COUNT="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "remoteSmokeEvidence.scenarioCount")"
+  C920_REMOTE_SMOKE_KEYEVENT_COUNT="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "remoteSmokeEvidence.keyEventCount")"
+  C920_REMOTE_SMOKE_SCREENSHOT="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "remoteSmokeEvidence.screenshotPath")"
   if [[ "$NEXT_ALLOW_INSTALL" == "false" ]]; then
     if [[ "$C920_STATUS" == "c920_purchased_pending_arrival" || "$C920_STATUS" == "c920_not_inserted_baseline" || "$C920_STATUS" == "c920_insert_status_unconfirmed" ]]; then
       RESULT_STATUS="$C920_STATUS"
       RESULT_REASON="盒子已授权；当前禁用了自动安装，C920 到货卡显示实体摄像头仍需现场接入验收。"
+      if [[ -n "$C920_PREP_REASON" ]]; then
+        append_action "C920 前置检查：${C920_PREP_REASON}"
+      fi
+      if [[ "$C920_REMOTE_SMOKE_STATUS" == "pass" ]]; then
+        append_action "ADB 遥控器冒烟已通过：${C920_REMOTE_SMOKE_SCENARIO_COUNT:-0} 个场景、${C920_REMOTE_SMOKE_KEYEVENT_COUNT:-0} 个 keyevent，截图 ${C920_REMOTE_SMOKE_SCREENSHOT:-tv-box-remote-smoke-latest.png}；它不替代真实遥控器手感和 C920 实物验收。"
+      fi
       append_action "${C920_PRIMARY_ACTION:-到货后先直插小米盒子 USB 口，再执行 ${C920_COMMAND:-BOX_IP=${BOX_IP:-<盒子IP>} C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance}。}"
       append_action "直插不稳或同时接 USB 麦克风时，换带独立供电 USB Hub；看到真实电视画面前不要把 FIELD_CAMERA_PREVIEW 记 pass。"
     else
