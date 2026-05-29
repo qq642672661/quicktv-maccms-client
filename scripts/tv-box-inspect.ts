@@ -164,6 +164,12 @@ function sourceContracts() {
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '微信小程序推流'),
     phoneCameraPairNativeWebRtcBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '电视端原生 WebRTC 接收端') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '不会把手机伪装成系统摄像头'),
+    phoneCameraCapturePage: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'navigator.mediaDevices.getUserMedia') &&
+      hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'new RTCPeerConnection'),
+    phoneCameraCaptureStopButton: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'id="stopButton"') &&
+      hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), "type: 'session.hangup'"),
+    phoneCameraCaptureSecureContextGuard: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'window.isSecureContext') &&
+      hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'HTTPS/WSS'),
     zeroKeyHelp: hasText(path.join(rootDir, 'src/pages/tv-box-home/index.vue'), 'launch.launchTvBoxHelp()'),
     remoteHelpKeys: hasText(path.join(rootDir, 'src/tools/tv-box/remote-control.ts'), 'isRemoteHelpKey'),
     homeHelpKeys: hasText(path.join(rootDir, 'src/pages/tv-box-home/index.vue'), 'isRemoteHelpKey'),

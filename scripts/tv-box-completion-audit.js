@@ -316,10 +316,10 @@ function main() {
   ))
   requirements.push(makeRequirement(
     'phone_camera_pairing_ui',
-    '手机当电视摄像头配对入口和验收边界',
-    allTruthy(sourceContracts, ['phoneCameraPairRoute', 'cameraPagePhoneCameraShortcut', 'phoneCameraPairPage', 'phoneCameraPairQrCode', 'phoneCameraPairRoomCode', 'phoneCameraPairRemoteActions', 'phoneCameraPairHelpKeys', 'phoneCameraPairPrivacyBoundary', 'phoneCameraPairNativeWebRtcBoundary']) ? 'proven' : 'missing',
-    'inspection.sourceContracts 覆盖 camera-setup 入口、phone_camera_pair 路由、二维码、6 位房间码、三个遥控动作、帮助救援、隐私边界和 WebRTC/Camera2 边界。',
-    '后续接入真实局域网信令与 Android 原生 WebRTC 接收端后，再用手机端权限截图、电视端首帧、session.stats 和断线重连证据关闭验收。'
+    '手机当电视摄像头配对、采集入口和验收边界',
+    allTruthy(sourceContracts, ['phoneCameraPairRoute', 'cameraPagePhoneCameraShortcut', 'phoneCameraPairPage', 'phoneCameraPairQrCode', 'phoneCameraPairRoomCode', 'phoneCameraPairRemoteActions', 'phoneCameraPairHelpKeys', 'phoneCameraPairPrivacyBoundary', 'phoneCameraPairNativeWebRtcBoundary', 'phoneCameraCapturePage', 'phoneCameraCaptureStopButton', 'phoneCameraCaptureSecureContextGuard']) ? 'proven' : 'missing',
+    'inspection.sourceContracts 覆盖 camera-setup 入口、phone_camera_pair 路由、二维码、6 位房间码、三个遥控动作、帮助救援、隐私边界、WebRTC/Camera2 边界，以及手机 getUserMedia/RTCPeerConnection/停止按钮/HTTPS-WSS 保护。',
+    '后续接入 Android 原生 WebRTC 接收端后，再用真实手机权限截图、电视端首帧、session.stats 和断线重连证据关闭验收。'
   ))
   requirements.push(makeRequirement(
     'real_camera_acceptance',

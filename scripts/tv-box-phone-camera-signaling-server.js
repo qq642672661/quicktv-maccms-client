@@ -140,8 +140,10 @@ function decodeFrames(buffer) {
 }
 
 function publicBaseUrlFromRequest(request) {
+  const forwardedProto = String(request.headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  const proto = forwardedProto || 'http'
   const host = request.headers.host || `127.0.0.1:${DEFAULT_PORT}`
-  return `http://${host}`
+  return `${proto}://${host}`
 }
 
 function getLanHints() {
@@ -173,6 +175,292 @@ function validatePayload(type, payload) {
   }
 
   return ''
+}
+
+function buildPhoneCameraHtml(roomCode) {
+  const escapedRoomCode = htmlEscape(roomCode)
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>HelloTV 手机摄像头</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f7fb; color: #172033; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #f5f7fb; }
+    main { width: min(720px, 100%); margin: 0 auto; padding: 20px 18px 32px; }
+    h1 { margin: 0; font-size: 28px; line-height: 1.18; letter-spacing: 0; }
+    p { margin: 8px 0 0; font-size: 16px; line-height: 1.55; }
+    .hero { padding: 18px 0 12px; }
+    .panel { margin-top: 14px; padding: 16px; background: #fff; border: 1px solid #d8e0ea; border-radius: 8px; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05); }
+    label { display: block; font-size: 14px; font-weight: 700; color: #344256; }
+    input { width: 100%; margin-top: 8px; height: 56px; border: 2px solid #9fb0c4; border-radius: 8px; font-size: 30px; font-weight: 800; text-align: center; letter-spacing: 8px; color: #172033; background: #fff; }
+    video { width: 100%; aspect-ratio: 16 / 9; margin-top: 12px; background: #0f172a; border-radius: 8px; object-fit: cover; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    button { min-height: 54px; border: 0; border-radius: 8px; font-size: 18px; font-weight: 800; color: #fff; background: #2454a6; }
+    button.secondary { background: #5b6678; }
+    button.danger { background: #b42318; }
+    button:disabled { opacity: 0.48; }
+    .status { min-height: 48px; padding: 12px; border-radius: 8px; background: #eef4ff; color: #1e3a8a; font-weight: 700; }
+    .warn { background: #fff7ed; color: #9a3412; }
+    .ok { background: #ecfdf3; color: #087443; }
+    .error { background: #fef3f2; color: #b42318; }
+    ul { margin: 8px 0 0; padding-left: 20px; }
+    li { margin-top: 5px; line-height: 1.5; }
+    .fine { font-size: 13px; color: #5b6678; }
+    @media (max-width: 420px) { main { padding: 16px 12px 24px; } h1 { font-size: 25px; } .actions { grid-template-columns: 1fr; } input { letter-spacing: 5px; } }
+  </style>
+</head>
+<body data-room-code="${escapedRoomCode}">
+  <main>
+    <section class="hero">
+      <h1>HelloTV 手机摄像头</h1>
+      <p>手机负责拍摄和收音，电视盒子通过 WebRTC 接收画面。默认不录制，不上传音视频内容。</p>
+    </section>
+
+    <section class="panel">
+      <label for="roomCode">电视上的 6 位房间码</label>
+      <input id="roomCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" value="${escapedRoomCode}" autocomplete="one-time-code">
+      <video id="localPreview" muted playsinline autoplay></video>
+      <div class="actions">
+        <button id="startButton" type="button">开始发送</button>
+        <button id="stopButton" class="danger" type="button" disabled>停止</button>
+      </div>
+      <p id="status" class="status">请确认房间码后点“开始发送”。</p>
+      <p class="fine">如果浏览器提示不安全页面，请用 HTTPS/WSS 入口或手机 App；普通局域网 HTTP 页面通常拿不到摄像头权限。</p>
+    </section>
+
+    <section class="panel">
+      <strong>现场只看三件事</strong>
+      <ul>
+        <li>手机弹出摄像头和麦克风授权，并且本页能看到预览。</li>
+        <li>电视端接入原生 WebRTC 接收端后，10 秒内出现首帧和声音。</li>
+        <li>点“停止”后手机采集灯熄灭，电视端收到挂断。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict'
+
+      var PROFILE_ID = 'default_720p_15'
+      var localStream = null
+      var socket = null
+      var peer = null
+      var keepaliveTimer = null
+      var currentState = 'idle'
+      var roomInput = document.getElementById('roomCode')
+      var localPreview = document.getElementById('localPreview')
+      var startButton = document.getElementById('startButton')
+      var stopButton = document.getElementById('stopButton')
+      var statusBox = document.getElementById('status')
+
+      function setStatus(text, kind) {
+        statusBox.textContent = text
+        statusBox.className = 'status' + (kind ? ' ' + kind : '')
+      }
+
+      function roomCode() {
+        return String(roomInput.value || '').replace(/\\D/g, '').slice(0, 6)
+      }
+
+      function signalingUrl() {
+        var override = new URLSearchParams(window.location.search).get('signaling')
+        if (override) return override
+        var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        return protocol + '//' + window.location.host + '/phone-camera/signaling'
+      }
+
+      function mediaConstraints() {
+        return {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280, max: 1280 },
+            height: { ideal: 720, max: 720 },
+            frameRate: { ideal: 15, max: 15 }
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        }
+      }
+
+      function send(message) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) return
+        socket.send(JSON.stringify(message))
+      }
+
+      function startKeepalive() {
+        clearInterval(keepaliveTimer)
+        keepaliveTimer = setInterval(function () {
+          send({
+            type: 'session.keepalive',
+            roomCode: roomCode(),
+            state: currentState,
+            timestampUtc: new Date().toISOString()
+          })
+        }, 2000)
+      }
+
+      async function openSocket() {
+        return new Promise(function (resolve, reject) {
+          socket = new WebSocket(signalingUrl())
+          socket.addEventListener('open', resolve, { once: true })
+          socket.addEventListener('error', function () {
+            reject(new Error('信令服务连接失败，请确认手机和电视在同一网络，且 HTTPS 页面对应 WSS。'))
+          }, { once: true })
+          socket.addEventListener('message', onMessage)
+          socket.addEventListener('close', function () {
+            if (currentState !== 'stopped') setStatus('信令已断开，可点开始重新连接。', 'warn')
+          })
+        })
+      }
+
+      async function createPeer() {
+        peer = new RTCPeerConnection({ iceServers: [] })
+        peer.addEventListener('icecandidate', function (event) {
+          if (!event.candidate) return
+          send({
+            type: 'webrtc.ice-candidate',
+            candidate: event.candidate.candidate,
+            sdpMid: event.candidate.sdpMid,
+            sdpMLineIndex: event.candidate.sdpMLineIndex
+          })
+        })
+        peer.addEventListener('connectionstatechange', function () {
+          currentState = peer.connectionState === 'connected' ? 'receiving' : 'negotiating'
+          if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
+            currentState = 'reconnecting'
+            setStatus('连接不稳定，正在等待电视端恢复。', 'warn')
+          }
+        })
+        localStream.getTracks().forEach(function (track) {
+          peer.addTrack(track, localStream)
+        })
+        var offer = await peer.createOffer()
+        await peer.setLocalDescription(offer)
+        send({ type: 'webrtc.offer', sdp: offer.sdp, profileId: PROFILE_ID })
+      }
+
+      async function onMessage(event) {
+        var message = {}
+        try {
+          message = JSON.parse(event.data)
+        } catch (error) {
+          return
+        }
+        if (message.type === 'webrtc.answer' && peer) {
+          await peer.setRemoteDescription({ type: 'answer', sdp: message.sdp })
+          currentState = 'receiving'
+          setStatus('电视端已应答，等待首帧确认。', 'ok')
+        } else if (message.type === 'webrtc.ice-candidate' && peer && message.candidate) {
+          try {
+            await peer.addIceCandidate({
+              candidate: message.candidate,
+              sdpMid: message.sdpMid,
+              sdpMLineIndex: message.sdpMLineIndex
+            })
+          } catch (error) {
+            setStatus('收到 ICE 候选但添加失败，可重新开始。', 'warn')
+          }
+        } else if (message.type === 'session.error') {
+          setStatus(message.message || '信令错误，请重新扫码。', message.recoverable ? 'warn' : 'error')
+        } else if (message.type === 'session.hangup') {
+          stop('电视端已结束连接')
+        }
+      }
+
+      async function start() {
+        var code = roomCode()
+        roomInput.value = code
+        if (!/^[0-9]{6}$/.test(code)) {
+          setStatus('请输入电视上的 6 位数字房间码。', 'warn')
+          return
+        }
+        if (!window.isSecureContext) {
+          setStatus('当前不是安全上下文，手机浏览器通常会拒绝摄像头。请改用 HTTPS/WSS 入口或手机 App。', 'error')
+          return
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setStatus('当前浏览器不支持 getUserMedia，请换 Chrome/Safari 或使用手机 App。', 'error')
+          return
+        }
+        if (typeof RTCPeerConnection !== 'function') {
+          setStatus('当前浏览器不支持 RTCPeerConnection，无法作为摄像头发送。', 'error')
+          return
+        }
+
+        startButton.disabled = true
+        stopButton.disabled = false
+        currentState = 'phone_connected'
+        try {
+          setStatus('正在请求摄像头和麦克风权限...', '')
+          localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints())
+          localPreview.srcObject = localStream
+          await openSocket()
+          send({
+            type: 'peer.hello',
+            roomCode: code,
+            role: 'phone',
+            userAgent: navigator.userAgent,
+            mediaCapabilities: {
+              camera: localStream.getVideoTracks().length > 0,
+              microphone: localStream.getAudioTracks().length > 0,
+              profileId: PROFILE_ID,
+              secureContext: window.isSecureContext
+            }
+          })
+          currentState = 'negotiating'
+          setStatus('已连接信令，正在向电视发送 WebRTC offer。', 'ok')
+          await createPeer()
+          startKeepalive()
+        } catch (error) {
+          setStatus(error && error.message ? error.message : '手机摄像头启动失败。', 'error')
+          stop('启动失败')
+        }
+      }
+
+      function stop(reason) {
+        currentState = 'stopped'
+        clearInterval(keepaliveTimer)
+        send({ type: 'session.hangup', reason: reason || 'user_stop' })
+        if (peer) peer.close()
+        if (socket && socket.readyState === WebSocket.OPEN) socket.close()
+        if (localStream) {
+          localStream.getTracks().forEach(function (track) { track.stop() })
+        }
+        peer = null
+        socket = null
+        localStream = null
+        localPreview.srcObject = null
+        startButton.disabled = false
+        stopButton.disabled = true
+        setStatus(reason || '已停止，手机摄像头和麦克风已关闭。', reason === '启动失败' ? 'error' : 'ok')
+      }
+
+      roomInput.addEventListener('input', function () {
+        roomInput.value = roomCode()
+      })
+      startButton.addEventListener('click', start)
+      stopButton.addEventListener('click', function () { stop('user_stop') })
+      window.addEventListener('pagehide', function () { stop('page_hide') })
+
+      if (!roomCode()) {
+        var queryRoom = new URLSearchParams(window.location.search).get('room') || ''
+        roomInput.value = queryRoom.replace(/\\D/g, '').slice(0, 6)
+      }
+      if (!window.isSecureContext) {
+        setStatus('提示：当前不是 HTTPS 安全上下文。页面可配对，但手机浏览器大概率不会给摄像头权限。', 'warn')
+      }
+    })()
+  </script>
+</body>
+</html>`
 }
 
 function makeError(code, message, recoverable = true) {
@@ -422,18 +710,7 @@ function createSignalingServer(options = {}) {
         'content-type': 'text/html; charset=utf-8',
         'cache-control': 'no-store'
       })
-      response.end(`<!doctype html>
-<html lang="zh-CN">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HelloTV 手机摄像头</title>
-<body>
-<h1>手机摄像头信令已就绪</h1>
-<p>房间码：<strong>${htmlEscape(roomCode || '请从电视扫码进入')}</strong></p>
-<p>当前页面只提供局域网信令入口说明；手机采集端接入后，会在这里请求摄像头和麦克风权限，并提供明显停止按钮。</p>
-<p>默认不录制、不上传音视频内容。电视端出现首帧和音频后才算通过。</p>
-</body>
-</html>`)
+      response.end(buildPhoneCameraHtml(roomCode))
       return
     }
 
@@ -577,5 +854,6 @@ if (require.main === module) {
 
 module.exports = {
   createSignalingServer,
+  buildPhoneCameraHtml,
   SIGNALING_MESSAGE_REQUIREMENTS
 }
