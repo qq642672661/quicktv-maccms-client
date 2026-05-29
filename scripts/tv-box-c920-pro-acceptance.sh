@@ -340,10 +340,70 @@ const nativeCapabilities = {
   usbAudioInputDeviceCount: numberFromCapabilities(capabilityLine, 'usbAudioInputDeviceCount')
 }
 const pass = cameraSmokeStatus === '0' && cameraPreviewResult === 'pass'
+const parsedCameraCount = Number(cameraCount)
+const camera2Enumerated = Number.isFinite(parsedCameraCount) && parsedCameraCount > 0
+const usbVideoDetected = usbVideoHints.length > 0 || (nativeCapabilities.usbVideoDeviceCount || 0) > 0
+const usbAudioDetected = usbAudioHints.length > 0 || (nativeCapabilities.usbAudioInputDeviceCount || 0) > 0
+const previewActivityOpened = cameraSmokeStatus === '0'
+const realPreviewConfirmed = cameraPreviewResult === 'pass'
+const audioConfirmed = audioInputResult === 'pass'
+const hotplugConfirmed = usbHotplugResult === 'pass'
+
+function buildFieldDecision() {
+  if (!usbVideoDetected && !camera2Enumerated) {
+    return {
+      level: 'waiting_for_camera_or_usb_not_detected',
+      title: '未看到 C920 视频设备',
+      summary: '当前更像是摄像头未接入、线材/供电/Hub 问题，或盒子 USB 层没有识别到视频设备。',
+      primaryAction: '先确认 C920 已插紧且指示灯/硬件正常；直插不行就改用带独立供电 USB Hub 后重跑。'
+    }
+  }
+  if (usbVideoDetected && !camera2Enumerated) {
+    return {
+      level: 'usb_seen_camera_hal_missing',
+      title: 'USB 已见视频线索，但 Camera2 未枚举',
+      summary: '摄像头可能已被 USB 层看到，但盒子固件或 Camera HAL 没有开放给 Android Camera2。',
+      primaryAction: '优先换带独立供电 USB Hub；仍为 0 时试 C270。C270 也不通再走用户态 UVC 或手机 WebRTC 路线。'
+    }
+  }
+  if (camera2Enumerated && !previewActivityOpened) {
+    return {
+      level: 'camera2_seen_preview_failed',
+      title: 'Camera2 已见设备，但预览冒烟失败',
+      summary: '系统能枚举摄像头，但 App 预览 Activity、权限、分辨率或 Camera2 会话可能失败。',
+      primaryAction: '查看 camera-smoke.log；重启盒子后重跑，必要时降低预览规格或修 CameraPreviewActivity。'
+    }
+  }
+  if (previewActivityOpened && !realPreviewConfirmed) {
+    return {
+      level: 'preview_opened_needs_visual_confirmation',
+      title: '预览页能打开，等待电视画面确认',
+      summary: '自动化只能证明 Activity 打开且无崩溃；还必须肉眼确认电视上是真实 C920 画面。',
+      primaryAction: '看电视屏幕：有真实画面才设置 FIELD_CAMERA_PREVIEW=pass；黑屏/静态/权限弹窗都不能算通过。'
+    }
+  }
+  if (realPreviewConfirmed && (!audioConfirmed || !hotplugConfirmed)) {
+    return {
+      level: 'camera_ok_audio_or_hotplug_open',
+      title: '摄像头画面已确认，音频或热插拔未闭环',
+      summary: 'C920 视频链路可以继续现场验收，但麦克风和拔插稳定性仍要补证据。',
+      primaryAction: '确认录音/互动课音频输入，并拔插 C920 后重跑一次验收；全部通过后再关闭。'
+    }
+  }
+  return {
+    level: 'ready_for_extended_field_acceptance',
+    title: 'C920 视频、音频和热插拔已闭环',
+    summary: '摄像头组合已具备继续做直播、遥控器和维护码照片的完整现场验收条件。',
+    primaryAction: '继续完成直播播放、播放暂停键、退出确认、遥控器练习页和维护码照片。'
+  }
+}
+
+const fieldDecision = buildFieldDecision()
 const nextActions = []
 if (offlineAdbDevices.length > 0) {
   nextActions.push(`ADB 设备列表还有离线/未授权噪声：${offlineAdbDevices.join(', ')}；现场验收前可执行 adb disconnect <序列号> 清理，避免选错设备。`)
 }
+nextActions.push(fieldDecision.primaryAction)
 if (cameraSmokeStatus !== '0') {
   nextActions.push('摄像头冒烟未通过：先确认 C920 PRO 插紧；仍失败时改用带独立供电 USB Hub，重启盒子后重跑本命令。')
 }
@@ -378,6 +438,18 @@ const report = {
   cameraService: {
     cameraCount,
     normalCameraCount
+  },
+  fieldDecision: {
+    ...fieldDecision,
+    checklist: {
+      usbVideoDetected,
+      camera2Enumerated,
+      previewActivityOpened,
+      realPreviewConfirmed,
+      usbAudioDetected,
+      audioConfirmed,
+      hotplugConfirmed
+    }
   },
   hardwareEvidence: {
     adbOfflineOrUnauthorizedDevices: offlineAdbDevices,
@@ -431,10 +503,24 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - 摄像头真实画面: \`${cameraPreviewResult}\`
 - 音频输入: \`${audioInputResult}\`
 - USB 热插拔: \`${usbHotplugResult}\`
+- 到货判定: \`${fieldDecision.level}\`
+- 判定标题: \`${fieldDecision.title}\`
 - 最新兼容性记录: \`${report.fieldResults.latestRecordId || 'unknown'}\`
 - 最新记录结论: \`${report.fieldResults.latestVerdict}\`
 - 当前状态: \`${report.status}\`
 - 日志目录: \`${runDir}\`
+
+## 到货判定卡
+
+- USB 视频设备: \`${usbVideoDetected ? 'seen' : 'not_seen'}\`
+- Camera2 枚举: \`${camera2Enumerated ? 'seen' : 'not_seen'}\`
+- 预览 Activity: \`${previewActivityOpened ? 'opened' : 'not_opened'}\`
+- 电视真实画面: \`${realPreviewConfirmed ? 'confirmed' : 'not_confirmed'}\`
+- USB 音频线索: \`${usbAudioDetected ? 'seen' : 'not_seen'}\`
+- 麦克风业务输入: \`${audioConfirmed ? 'confirmed' : 'not_confirmed'}\`
+- USB 热插拔: \`${hotplugConfirmed ? 'confirmed' : 'not_confirmed'}\`
+- 结论: ${fieldDecision.summary}
+- 优先动作: ${fieldDecision.primaryAction}
 
 ## 下一步
 

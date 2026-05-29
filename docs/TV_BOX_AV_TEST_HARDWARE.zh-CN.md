@@ -92,7 +92,7 @@ BOX_IP=192.168.10.122 npm run tv-box:camera-smoke
 BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance
 ```
 
-验收报告会额外列出 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数。它们用于判断是 USB 供电、盒子固件/Camera HAL、AudioManager 还是业务预览问题；但只有 Camera2/CameraService 枚举和电视真实画面一起成立，才算摄像头业务通过。
+验收报告会额外生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并列出 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数。它们用于判断是 USB 供电、盒子固件/Camera HAL、AudioManager 还是业务预览问题；但只有 Camera2/CameraService 枚举和电视真实画面一起成立，才算摄像头业务通过。
 
 如果一键验收：
 
