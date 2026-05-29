@@ -32,6 +32,28 @@ function isIsoDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))
 }
 
+function resolveCurrentDate() {
+  if (process.env.C920_PREP_CURRENT_DATE) {
+    return {
+      value: process.env.C920_PREP_CURRENT_DATE,
+      source: 'C920_PREP_CURRENT_DATE',
+      isOverride: true
+    }
+  }
+  if (process.env.C920_ARRIVED_CURRENT_DATE) {
+    return {
+      value: process.env.C920_ARRIVED_CURRENT_DATE,
+      source: 'C920_ARRIVED_CURRENT_DATE',
+      isOverride: true
+    }
+  }
+  return {
+    value: localIsoDate(),
+    source: 'system_date',
+    isOverride: false
+  }
+}
+
 function parseAdbDevices(text) {
   return String(text || '')
     .split(/\r?\n/)
@@ -169,7 +191,8 @@ function markdownTable(rows) {
 const procurementState = readJson(procurementStatePath) || {}
 const expectedArrivalDate = process.env.C920_EXPECTED_ARRIVAL_DATE || procurementState.expectedArrivalDate || ''
 const purchaseChannel = process.env.C920_PURCHASE_CHANNEL || procurementState.purchaseChannel || ''
-const currentDate = process.env.C920_PREP_CURRENT_DATE || process.env.C920_ARRIVED_CURRENT_DATE || localIsoDate()
+const currentDateInfo = resolveCurrentDate()
+const currentDate = currentDateInfo.value
 const adb = adbDevices()
 const decision = buildDecision({ currentDate, expectedArrivalDate, adb })
 
@@ -180,7 +203,9 @@ const data = {
   inputs: {
     boxIp,
     deviceSerial,
-    currentDate
+    currentDate,
+    currentDateSource: currentDateInfo.source,
+    currentDateOverride: currentDateInfo.isOverride
   },
   procurement: {
     cameraModel: procurementState.cameraModel || 'Logitech C920 PRO',
@@ -216,17 +241,25 @@ const data = {
   },
   onsiteChecklist: [
     '先把 C920 PRO 直插小米盒子 USB 口。',
+    '小米盒子只有一个 USB 口时，第一轮只接 C920：同一根 USB 同时测试画面和 C920 自带麦克风。',
     '电视盒子和电脑保持同一网络，盒子网络调试保持开启。',
     '运行 npm run tv-box:c920-arrived。',
     '电视上看到 C920 实时画面后，FIELD_CAMERA_PREVIEW 才能记 pass。',
-    '对着 C920 自带麦克风说话，或在互动课/录音链路里确认声音进入业务。',
+    '对着 C920 自带麦克风说话，在互动课/录音链路里确认声音进入业务。',
     '拔插一次 C920 后重新确认 USB/Camera2/预览是否稳定。'
   ],
+  singleUsbPlan: {
+    status: 'use_c920_builtin_microphone_first',
+    reason: '小米盒子只有一个 USB 口，C920 PRO 自带麦克风；先用一根 USB 同时验证视频和音频，减少 Hub 和独立麦克风变量。',
+    primary: 'C920 PRO 直插小米盒子 USB 口，先测真实画面，再测 C920 自带麦克风业务输入。',
+    fallback: '直插供电不稳、C920 麦克风不进业务，或必须外接独立会议麦克风时，再换带独立供电 USB Hub。',
+    doNotStartWith: '不要一开始就串联无源 Hub、独立麦克风和多设备，避免把供电/Hub 问题误判成摄像头不兼容。'
+  },
   failureBranches: [
     'USB 仍只看到 Realtek 或没有 Logitech/C920/UVC：重新插紧，再换带独立供电 USB Hub。',
     'USB 有视频线索但 CameraService cameraCount 仍为 0：优先判定为盒子固件/Camera HAL 风险，准备 C270 低规格复测。',
     'CameraPreviewActivity 打开但电视黑屏：不能记 pass，保留照片/日志后排查权限、分辨率和 Camera2 会话。',
-    '麦克风不稳定：先试 C920 自带麦；仍不稳时准备免驱 USB Audio Class 会议麦克风。'
+    'C920 自带麦克风不稳定：再换带独立供电 USB Hub，并准备免驱 USB Audio Class 会议麦克风。'
   ],
   closeGuards: [
     '没有电视真实画面，不能关闭摄像头验收。',
@@ -243,6 +276,7 @@ const md = `# C920 PRO 到货现场预备卡
 
 - 生成时间 UTC: \`${data.generatedAtUtc}\`
 - 当前日期: \`${currentDate}\`
+- 日期来源: \`${currentDateInfo.source}${currentDateInfo.isOverride ? ' / override' : ''}\`
 - 摄像头: \`${data.procurement.cameraModel}\`
 - 采购/预计到货: \`${purchaseChannel || '未记录'} / ${expectedArrivalDate || '未记录'}\`
 - 盒子 IP: \`${boxIp}\`
@@ -268,6 +302,13 @@ ${markdownList(decision.cleanupCommands.length ? decision.cleanupCommands.map((c
 ## 现场核对
 
 ${markdownList(data.onsiteChecklist)}
+
+## 单 USB 口接线策略
+
+- 优先: ${data.singleUsbPlan.primary}
+- 原因: ${data.singleUsbPlan.reason}
+- 降级: ${data.singleUsbPlan.fallback}
+- 避免: ${data.singleUsbPlan.doNotStartWith}
 
 ## 失败分流
 
