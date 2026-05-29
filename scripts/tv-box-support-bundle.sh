@@ -166,6 +166,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
 - \`tv-box-phone-camera-capture-test-latest.md/json\`: 手机采集端页面回归，证明房间码、getUserMedia、RTCPeerConnection、停止按钮和 HTTPS/WSS 安全边界已固化。
 - \`tv-box-phone-camera-readiness-latest.md/json\`: 手机当电视摄像头现场准备度，证明 HTTPS/WSS、手机入口、信令健康检查和电视端房间创建参数已准备好。
+- \`handoff-PHONE_CAMERA_ONSITE_CARD.html\`: 手机当电视摄像头现场操作卡，现场按启动信令、电视配对、手机扫码、首帧/音频/stats/重连/停止证据闭环处理。
 - \`tv-box-phone-camera-signaling-test-latest.md/json\`: 局域网 WebSocket 信令服务回归，证明房间码、单手机配对、offer/answer/ICE、keepalive、stats 和挂断关闭房间可跑通。
 - \`tv-box-phone-camera-scenarios-test-latest.md/json\`: 手机当电视摄像头合同场景回归，覆盖扫码首帧、权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁。
 - \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。
@@ -266,6 +267,7 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-capture-test-late
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-capture-test-latest.json" "tv-box-phone-camera-capture-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-readiness-latest.md" "tv-box-phone-camera-readiness-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-readiness-latest.json" "tv-box-phone-camera-readiness-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/PHONE_CAMERA_ONSITE_CARD.html" "handoff-PHONE_CAMERA_ONSITE_CARD.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-signaling-test-latest.md" "tv-box-phone-camera-signaling-test-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-signaling-test-latest.json" "tv-box-phone-camera-signaling-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-scenarios-test-latest.md" "tv-box-phone-camera-scenarios-test-latest.md"
@@ -276,6 +278,7 @@ copy_if_exists "$REPORT_DIR/tv-box-phone-camera-capture-test-latest.md" "tv-box-
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-capture-test-latest.json" "tv-box-phone-camera-capture-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-readiness-latest.md" "tv-box-phone-camera-readiness-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-readiness-latest.json" "tv-box-phone-camera-readiness-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-onsite-card.html" "tv-box-phone-camera-onsite-card.html"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-signaling-test-latest.md" "tv-box-phone-camera-signaling-test-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-signaling-test-latest.json" "tv-box-phone-camera-signaling-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.md" "tv-box-phone-camera-scenarios-test-latest.md"

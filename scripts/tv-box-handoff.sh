@@ -65,6 +65,7 @@ PHONE_CAMERA_SCENARIOS_JSON="$REPORT_DIR/tv-box-phone-camera-scenarios-test-late
 PHONE_CAMERA_SCENARIOS_MD="$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.md"
 PHONE_CAMERA_READINESS_JSON="$REPORT_DIR/tv-box-phone-camera-readiness-latest.json"
 PHONE_CAMERA_READINESS_MD="$REPORT_DIR/tv-box-phone-camera-readiness-latest.md"
+PHONE_CAMERA_ONSITE_CARD_HTML="$REPORT_DIR/tv-box-phone-camera-onsite-card.html"
 EASY_SUMMARY_JSON="$REPORT_DIR/tv-box-easy-run-latest.json"
 EASY_SUMMARY_MD="$REPORT_DIR/tv-box-easy-run-latest.md"
 COMPLETION_AUDIT_JSON="$REPORT_DIR/tv-box-completion-audit-latest.json"
@@ -279,6 +280,10 @@ if [[ -f "$PHONE_CAMERA_READINESS_MD" ]]; then
   cp "$PHONE_CAMERA_READINESS_MD" "$HANDOFF_DIR/tv-box-phone-camera-readiness-latest.md"
 fi
 
+if [[ -f "$PHONE_CAMERA_ONSITE_CARD_HTML" ]]; then
+  cp "$PHONE_CAMERA_ONSITE_CARD_HTML" "$HANDOFF_DIR/PHONE_CAMERA_ONSITE_CARD.html"
+fi
+
 if [[ -f "$EASY_SUMMARY_JSON" ]]; then
   cp "$EASY_SUMMARY_JSON" "$HANDOFF_DIR/tv-box-easy-run-latest.json"
 fi
@@ -403,6 +408,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "phoneCameraCaptureJson": "tv-box-phone-camera-capture-test-latest.json",
     "phoneCameraReadinessMarkdown": "tv-box-phone-camera-readiness-latest.md",
     "phoneCameraReadinessJson": "tv-box-phone-camera-readiness-latest.json",
+    "phoneCameraOnsiteCardHtml": "PHONE_CAMERA_ONSITE_CARD.html",
     "phoneCameraSignalingMarkdown": "tv-box-phone-camera-signaling-test-latest.md",
     "phoneCameraSignalingJson": "tv-box-phone-camera-signaling-test-latest.json",
     "phoneCameraScenariosMarkdown": "tv-box-phone-camera-scenarios-test-latest.md",
@@ -654,6 +660,7 @@ cat > "$HANDOFF_DIR/START_HERE.html" <<STARTHERE
         <a class="button secondary" href="tv-box-c920-confirm-latest.md">C920：确认写入卡</a>
         <a class="button secondary" href="TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md">手机摄像头：信令与验收合同</a>
         <a class="button secondary" href="tv-box-phone-camera-readiness-latest.md">手机摄像头：现场准备度</a>
+        <a class="button secondary" href="PHONE_CAMERA_ONSITE_CARD.html">手机摄像头：现场操作卡</a>
         <a class="button secondary" href="FIELD_RETURN_CARD.html">打印：现场回传卡</a>
         <a class="button secondary" href="FIELD_RETURN/README.zh-CN.txt">现场：回传文件夹说明</a>
         <a class="button secondary" href="PACK_FIELD_RETURN_ON_WINDOWS.bat">Windows：打包回传证据</a>
@@ -812,6 +819,7 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 - C920 现场预备卡: \`tv-box-c920-onsite-prep-latest.md\` / \`tv-box-c920-onsite-prep-latest.json\`
 - 音视频测试硬件方案: \`TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`
 - 手机摄像头信令与验收合同: \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`
+- 手机摄像头现场操作卡: \`PHONE_CAMERA_ONSITE_CARD.html\`
 - 手机摄像头采集页回归: \`tv-box-phone-camera-capture-test-latest.md\`
 - 手机摄像头局域网信令回归: \`tv-box-phone-camera-signaling-test-latest.md\`
 - 现场验收清单: \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`

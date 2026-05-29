@@ -14,6 +14,7 @@ const rootDir = path.resolve(__dirname, '..')
 const reportDir = process.env.REPORT_DIR || path.join(rootDir, 'reports')
 const outputJsonPath = process.env.TV_BOX_PHONE_CAMERA_READINESS_JSON || path.join(reportDir, 'tv-box-phone-camera-readiness-latest.json')
 const outputMarkdownPath = process.env.TV_BOX_PHONE_CAMERA_READINESS_MD || path.join(reportDir, 'tv-box-phone-camera-readiness-latest.md')
+const outputOnsiteCardPath = process.env.TV_BOX_PHONE_CAMERA_ONSITE_CARD_HTML || path.join(reportDir, 'tv-box-phone-camera-onsite-card.html')
 const defaultPairBaseUrl = process.env.TV_BOX_PHONE_CAMERA_PAIR_BASE_URL ||
   process.env.VITE_PHONE_CAMERA_PAIR_BASE_URL ||
   'https://quicktv.local/phone-camera'
@@ -248,6 +249,14 @@ function markdownTable(rows, headers) {
   ].join('\n')
 }
 
+function htmlEscape(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 function buildMarkdown(report) {
   return `# 手机当电视摄像头现场准备度
 
@@ -272,6 +281,102 @@ ${markdownTable(Object.entries(report.fieldCommands).map(([key, value]) => [key,
 ${markdownTable(Object.entries(report.acceptanceBoundary).map(([key, value]) => [key, value]), ['边界', '值'])}
 
 这份报告只证明手机扫码入口、安全上下文配置、局域网信令服务健康检查和电视端房间创建参数已经准备好。真实通过仍必须等手机权限、电视首帧、电视声音、session.stats、断线重连和停止按钮证据闭环。
+`
+}
+
+function buildOnsiteCardHtml(report) {
+  const statusClass = report.status === 'pass' ? 'ok' : report.status === 'warn' ? 'warn' : 'fail'
+  const failedChecks = report.checks.filter((check) => check.status !== 'pass')
+  const evidenceItems = [
+    '电视端房间码/二维码照片',
+    '手机端摄像头和麦克风权限截图',
+    '电视端首帧照片或短视频',
+    '电视端收到声音的业务证据',
+    'session.stats JSON 或维护码照片',
+    '断线重连和停止按钮证据'
+  ]
+  const steps = [
+    `工程电脑启动信令：${report.fieldCommands.startSignaling}`,
+    `电视盒子打开配对页：${report.fieldCommands.androidPairSmoke}`,
+    `手机扫码打开：${report.inputs.pairUrl}`,
+    '手机允许摄像头和麦克风，屏幕上必须能看到本地预览。',
+    '电视出现真实首帧并能收到声音后，才把手机摄像头记为 pass。',
+    '断开手机网络或退出一次后重连，确认 15 秒内恢复；最后点手机停止按钮。'
+  ]
+
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>手机当电视摄像头现场操作卡</title>
+  <style>
+    :root { color-scheme: light; --ink: #172033; --muted: #5b6576; --line: #d8dee8; --ok: #0f7b4f; --warn: #9a5b00; --fail: #a12b2b; --bg: #f7f9fc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+    main { max-width: 980px; margin: 0 auto; padding: 28px; }
+    h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.15; }
+    h2 { margin: 26px 0 10px; font-size: 22px; }
+    p { line-height: 1.65; }
+    .meta, .panel { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 18px; margin-top: 16px; }
+    .status { display: inline-block; padding: 6px 12px; border-radius: 999px; font-weight: 700; color: white; }
+    .status.ok { background: var(--ok); }
+    .status.warn { background: var(--warn); }
+    .status.fail { background: var(--fail); }
+    code { background: #eef2f7; border-radius: 5px; padding: 2px 5px; word-break: break-all; }
+    .big-code { font-size: 32px; font-weight: 800; letter-spacing: 0; }
+    ol, ul { padding-left: 24px; }
+    li { margin: 8px 0; line-height: 1.55; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 8px; }
+    th, td { border: 1px solid var(--line); padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #eef2f7; }
+    .guard { border-left: 6px solid var(--fail); }
+    @media print { body { background: white; } main { padding: 0; max-width: none; } .panel, .meta { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>手机当电视摄像头现场操作卡</h1>
+    <p><span class="status ${statusClass}">${htmlEscape(report.status)}</span> 这张卡只负责现场按步骤验证手机摄像头路线，不把手机伪装成系统 Camera2。</p>
+
+    <section class="meta">
+      <p>房间码：<span class="big-code">${htmlEscape(report.inputs.roomCode)}</span></p>
+      <p>手机扫码 URL：<code>${htmlEscape(report.inputs.pairUrl)}</code></p>
+      <p>信令 URL：<code>${htmlEscape(report.inputs.signalingUrl)}</code></p>
+      <p>媒体档位：<code>${htmlEscape(report.inputs.profileId)}</code></p>
+    </section>
+
+    <section class="panel">
+      <h2>只做六步</h2>
+      <ol>${steps.map((step) => `<li>${htmlEscape(step)}</li>`).join('')}</ol>
+    </section>
+
+    <section class="panel guard">
+      <h2>不能误判通过</h2>
+      <ul>
+        <li>手机扫码页能打开，只说明入口存在，不等于手机权限通过。</li>
+        <li>信令 room.create 成功，只说明房间码和 WebSocket 可用，不等于电视有画面。</li>
+        <li>只有电视上看到真实首帧、收到声音、持续上报 stats、可重连且手机停止按钮有效，才能写入 pass。</li>
+        <li>微信小程序 live-pusher 需要主体资质、服务类目和接口权限审核，不能当成默认免安装承诺。</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>必须回传证据</h2>
+      <ul>${evidenceItems.map((item) => `<li>${htmlEscape(item)}</li>`).join('')}</ul>
+    </section>
+
+    <section class="panel">
+      <h2>准备度检查</h2>
+      <table>
+        <thead><tr><th>检查</th><th>状态</th><th>证据</th></tr></thead>
+        <tbody>${report.checks.map((check) => `<tr><td>${htmlEscape(check.id)}</td><td>${htmlEscape(check.status)}</td><td>${htmlEscape(check.detail)}</td></tr>`).join('')}</tbody>
+      </table>
+      ${failedChecks.length ? `<p>先处理未通过项：${htmlEscape(failedChecks.map((check) => check.id).join('、'))}</p>` : '<p>准备度检查已通过，可以进入真实手机和电视首帧验收。</p>'}
+    </section>
+  </main>
+</body>
+</html>
 `
 }
 
@@ -369,15 +474,21 @@ async function main() {
       provesTvAudioReceiving: false,
       provesReconnectAndPrivacyStop: false,
       noMediaContentPersisted: true
+    },
+    onsiteCard: {
+      htmlPath: outputOnsiteCardPath,
+      title: '手机当电视摄像头现场操作卡'
     }
   }
 
   fs.writeFileSync(outputJsonPath, `${JSON.stringify(report, null, 2)}\n`)
   fs.writeFileSync(outputMarkdownPath, buildMarkdown(report))
+  fs.writeFileSync(outputOnsiteCardPath, buildOnsiteCardHtml(report))
 
   console.log(`TV-box phone camera readiness: ${report.status}`)
   console.log(`Phone camera readiness report: ${outputMarkdownPath}`)
   console.log(`Machine-readable readiness report: ${outputJsonPath}`)
+  console.log(`Printable phone camera onsite card: ${outputOnsiteCardPath}`)
   if (failed.length > 0) process.exitCode = 1
 }
 
