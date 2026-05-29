@@ -13,11 +13,11 @@ run_step() {
 }
 
 run_step "Shell script syntax" bash -n scripts/*.sh
-run_step "APK builder syntax" node --check scripts/build-apk.ts
-run_step "TV-box inspector syntax" node --check scripts/tv-box-inspect.ts
+run_step "APK builder syntax" node --import tsx --check scripts/build-apk.ts
+run_step "TV-box inspector syntax" node --import tsx --check scripts/tv-box-inspect.ts
 run_step "TV-box command center syntax" node --check scripts/tv-box-command-center.js
 run_step "TV-box completion audit syntax" node --check scripts/tv-box-completion-audit.js
-run_step "TV-box compatibility summary syntax" node --check scripts/tv-box-compatibility-summary.ts
+run_step "TV-box compatibility summary syntax" node --import tsx --check scripts/tv-box-compatibility-summary.ts
 run_step "TV-box easy summary syntax" node --check scripts/tv-box-easy-summary.js
 run_step "TV-box field import syntax" node --check scripts/tv-box-field-import.js
 run_step "TV-box field inbox syntax" node --check scripts/tv-box-field-inbox.js
