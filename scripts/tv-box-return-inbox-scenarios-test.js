@@ -80,10 +80,39 @@ function writeEvidenceFile(filePath, body) {
   fs.writeFileSync(filePath, body)
 }
 
+function c920TextDefaults(overrides = {}) {
+  return {
+    FIELD_BOX_MODEL: 'Xiaomi Box 4S Pro with Logitech C920 PRO',
+    FIELD_CAMERA_MODEL: 'Logitech C920 PRO / C920 Pro HD',
+    FIELD_CAMERA_CONNECTION: 'usb',
+    FIELD_MICROPHONE_MODEL: 'Logitech C920 PRO built-in microphone',
+    FIELD_MICROPHONE_CONNECTION: 'usb',
+    ...overrides
+  }
+}
+
+function writeC920Evidence(folder, scenario) {
+  const evidence = scenario.c920Evidence
+  if (!evidence) return
+  if (evidence.preview !== false) {
+    writeEvidenceFile(path.join(folder, 'C920_PREVIEW_TV_SCREEN.jpg'), `synthetic C920 TV preview evidence for ${scenario.id}\n`)
+  }
+  if (evidence.microphone !== false) {
+    writeEvidenceFile(path.join(folder, 'C920_MIC_BUSINESS_INPUT.txt'), `synthetic C920 microphone business-input evidence for ${scenario.id}\n`)
+  }
+  if (evidence.hotplug !== false) {
+    writeEvidenceFile(path.join(folder, 'C920_HOTPLUG_RETEST.txt'), `synthetic C920 USB hotplug retest evidence for ${scenario.id}\n`)
+  }
+  if (evidence.supportCode !== false) {
+    writeEvidenceFile(path.join(folder, 'SUPPORT_CODE_C920.jpg'), `synthetic C920 support-code photo for ${scenario.id}\n`)
+  }
+}
+
 function createReturnFolder(baseDir, scenario) {
   const folder = path.join(baseDir, scenario.id)
   fs.mkdirSync(folder, { recursive: true })
   writeFieldJson(path.join(folder, `${scenario.id}-field-record.json`), scenario.env, scenario.id)
+  writeC920Evidence(folder, scenario)
 
   if (scenario.supportCodePhoto === 'clear') {
     writeEvidenceFile(path.join(folder, 'support-code-photo.jpg'), `synthetic support code photo for ${scenario.id}\n`)
@@ -228,6 +257,126 @@ const scenarios = [
       issue_evidence: 'pass',
       unknown_closure: 'pass'
     }
+  },
+  {
+    id: 'c920_complete_ready',
+    title: 'C920 证据齐全：真实预览、麦克风、热插拔、维护码都闭环',
+    expectedReadiness: 'ready_for_engineering_import',
+    expectedClosureStatus: 'ready_to_close',
+    expectedStrictExitCode: 0,
+    c920Evidence: {},
+    env: buildEnv(
+      c920TextDefaults({ FIELD_BOX_MODEL: 'Scenario C920 Complete Return Evidence' }),
+      {},
+      'Synthetic C920 return with all named evidence files; should be ready to close.'
+    ),
+    expectedChecks: {
+      field_json: 'pass',
+      support_code_photo: 'pass',
+      install_log_or_support_bundle: 'pass',
+      issue_evidence: 'not_required',
+      unknown_closure: 'pass',
+      c920_preview_tv_screen: 'pass',
+      c920_mic_business_input: 'pass',
+      c920_hotplug_retest: 'pass',
+      c920_support_code_photo: 'pass'
+    }
+  },
+  {
+    id: 'c920_missing_preview_evidence',
+    title: 'C920 缺电视真实预览证据：不能关闭',
+    expectedReadiness: 'needs_site_follow_up',
+    expectedClosureStatus: 'needs_site_follow_up',
+    expectedStrictExitCode: 1,
+    c920Evidence: { preview: false },
+    env: buildEnv(
+      c920TextDefaults({ FIELD_BOX_MODEL: 'Scenario C920 Missing Preview Evidence' }),
+      {},
+      'Synthetic C920 return missing TV preview evidence.'
+    ),
+    expectedChecks: {
+      field_json: 'pass',
+      support_code_photo: 'pass',
+      install_log_or_support_bundle: 'pass',
+      issue_evidence: 'not_required',
+      unknown_closure: 'pass',
+      c920_preview_tv_screen: 'missing',
+      c920_mic_business_input: 'pass',
+      c920_hotplug_retest: 'pass',
+      c920_support_code_photo: 'pass'
+    }
+  },
+  {
+    id: 'c920_missing_microphone_evidence',
+    title: 'C920 缺麦克风业务输入证据：不能关闭',
+    expectedReadiness: 'needs_site_follow_up',
+    expectedClosureStatus: 'needs_site_follow_up',
+    expectedStrictExitCode: 1,
+    c920Evidence: { microphone: false },
+    env: buildEnv(
+      c920TextDefaults({ FIELD_BOX_MODEL: 'Scenario C920 Missing Microphone Evidence' }),
+      {},
+      'Synthetic C920 return missing microphone business-input evidence.'
+    ),
+    expectedChecks: {
+      field_json: 'pass',
+      support_code_photo: 'pass',
+      install_log_or_support_bundle: 'pass',
+      issue_evidence: 'not_required',
+      unknown_closure: 'pass',
+      c920_preview_tv_screen: 'pass',
+      c920_mic_business_input: 'missing',
+      c920_hotplug_retest: 'pass',
+      c920_support_code_photo: 'pass'
+    }
+  },
+  {
+    id: 'c920_missing_hotplug_evidence',
+    title: 'C920 缺 USB 热插拔复测证据：不能关闭',
+    expectedReadiness: 'needs_site_follow_up',
+    expectedClosureStatus: 'needs_site_follow_up',
+    expectedStrictExitCode: 1,
+    c920Evidence: { hotplug: false },
+    env: buildEnv(
+      c920TextDefaults({ FIELD_BOX_MODEL: 'Scenario C920 Missing Hotplug Evidence' }),
+      {},
+      'Synthetic C920 return missing USB hotplug retest evidence.'
+    ),
+    expectedChecks: {
+      field_json: 'pass',
+      support_code_photo: 'pass',
+      install_log_or_support_bundle: 'pass',
+      issue_evidence: 'not_required',
+      unknown_closure: 'pass',
+      c920_preview_tv_screen: 'pass',
+      c920_mic_business_input: 'pass',
+      c920_hotplug_retest: 'missing',
+      c920_support_code_photo: 'pass'
+    }
+  },
+  {
+    id: 'c920_missing_support_code_evidence',
+    title: 'C920 缺维护码照片：不能关闭',
+    expectedReadiness: 'needs_site_follow_up',
+    expectedClosureStatus: 'needs_site_follow_up',
+    expectedStrictExitCode: 1,
+    c920Evidence: { supportCode: false },
+    env: buildEnv(
+      c920TextDefaults({ FIELD_BOX_MODEL: 'Scenario C920 Missing Support Code Evidence' }),
+      {},
+      'Synthetic C920 return missing SUPPORT_CODE_C920 photo.'
+    ),
+    expectedChecks: {
+      field_json: 'pass',
+      support_code_photo: 'needs_manual_review',
+      install_log_or_support_bundle: 'pass',
+      issue_evidence: 'not_required',
+      unknown_closure: 'pass',
+      c920_preview_tv_screen: 'pass',
+      c920_mic_business_input: 'pass',
+      c920_hotplug_retest: 'pass',
+      c920_support_code_photo: 'missing'
+    }
   }
 ]
 
@@ -319,6 +468,7 @@ ${rows}
 - 只有普通照片、文件名无法确认维护码时必须进入 \`needs_manual_photo_review\`。
 - JSON 里仍有 \`unknown\` 且没有异常证据时，不能关闭真实盒子验收。
 - 失败项如果带了 keyCode/异常照片/日志，应给出 \`needs_fix\`，允许工程导入为待修复组合，而不是丢失现场证据或误关闭。
+- C920 到货接入必须额外补齐 \`C920_PREVIEW_TV_SCREEN\`、\`C920_MIC_BUSINESS_INPUT\`、\`C920_HOTPLUG_RETEST\` 和 \`SUPPORT_CODE_C920\`；缺任一项都不能关闭。
 `
 }
 
