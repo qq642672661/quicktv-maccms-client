@@ -951,6 +951,13 @@ HelloTV 现场回传文件夹
 3. INSTALL_LOG.txt；如果失败，同时放入 tv-box-support-latest.zip。
 4. 如果有失败、unknown、黑屏、权限或摄像头问题，再放入异常照片、日志或 keyCode 照片。
 
+C920 PRO 到货验收还要额外放入这 4 个固定文件名：
+
+- C920_PREVIEW_TV_SCREEN.jpg 或 C920_PREVIEW_TV_SCREEN.mp4：电视上真实 C920 预览画面。
+- C920_MIC_BUSINESS_INPUT.mp4 或 C920_MIC_BUSINESS_INPUT.txt：C920 麦克风进入业务录音/互动链路。
+- C920_HOTPLUG_RETEST.jpg 或 C920_HOTPLUG_RETEST.txt：拔插后仍能识别并预览。
+- SUPPORT_CODE_C920.jpg：本次 C920 验收的维护码照片。
+
 放好后：
 
 - Windows：回到上一层目录，双击 PACK_FIELD_RETURN_ON_WINDOWS.bat。
@@ -2570,6 +2577,15 @@ cat > "$HANDOFF_DIR/FIELD_RETURN_CARD.zh-CN.md" <<'RETURNCARD'
 
 不会压缩文件时，把这 4 类文件放进 `FIELD_RETURN` 文件夹，Windows 双击 `PACK_FIELD_RETURN_ON_WINDOWS.bat`，macOS 双击 `PACK_FIELD_RETURN_ON_MAC.command`；只发生成的 `HelloTV-field-return-*.zip`。
 
+## C920 PRO 到货验收还要加 4 个文件
+
+- `C920_PREVIEW_TV_SCREEN.jpg` 或 `C920_PREVIEW_TV_SCREEN.mp4`：电视上真实 C920 预览画面。
+- `C920_MIC_BUSINESS_INPUT.mp4` 或 `C920_MIC_BUSINESS_INPUT.txt`：C920 麦克风进入业务录音/互动链路。
+- `C920_HOTPLUG_RETEST.jpg` 或 `C920_HOTPLUG_RETEST.txt`：拔插后仍能识别并预览。
+- `SUPPORT_CODE_C920.jpg`：本次 C920 验收的维护码照片。
+
+工程侧 `tv-box:return-inbox` 会检查这些固定文件名；缺任何一个，C920 不能关闭。
+
 ## 现场先自己核对
 
 - [ ] 电视上能打开 HelloTV，并看到“电视盒子简易模式”。
@@ -2842,6 +2858,17 @@ cat > "$HANDOFF_DIR/FIELD_RETURN_CARD.html" <<'RETURNCARDHTML'
         </div>
       </div>
       <p class="danger">不会压缩文件时，把这 4 类文件放进 <code>FIELD_RETURN</code> 文件夹，Windows 双击 <code>PACK_FIELD_RETURN_ON_WINDOWS.bat</code>，macOS 双击 <code>PACK_FIELD_RETURN_ON_MAC.command</code>，只发生成的 <code>HelloTV-field-return-*.zip</code>。</p>
+    </section>
+
+    <section class="panel warning">
+      <h2>C920 PRO 到货验收还要加 4 个文件</h2>
+      <ul class="checks">
+        <li><code>C920_PREVIEW_TV_SCREEN.jpg</code> 或 <code>C920_PREVIEW_TV_SCREEN.mp4</code>：电视上真实 C920 预览画面。</li>
+        <li><code>C920_MIC_BUSINESS_INPUT.mp4</code> 或 <code>C920_MIC_BUSINESS_INPUT.txt</code>：C920 麦克风进入业务录音/互动链路。</li>
+        <li><code>C920_HOTPLUG_RETEST.jpg</code> 或 <code>C920_HOTPLUG_RETEST.txt</code>：拔插后仍能识别并预览。</li>
+        <li><code>SUPPORT_CODE_C920.jpg</code>：本次 C920 验收的维护码照片。</li>
+      </ul>
+      <p class="danger">工程侧 <code>tv-box:return-inbox</code> 会检查这些固定文件名；缺任何一个，C920 不能关闭。</p>
     </section>
 
     <section class="panel warning">
