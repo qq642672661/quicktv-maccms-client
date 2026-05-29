@@ -164,15 +164,15 @@ sleep 1
 echo
 echo "== Recent app log snapshot =="
 sleep "$LOG_SECONDS"
-LOG_SNAPSHOT="$(run_adb logcat -d -t 500 | tr -d '\r' | grep -E 'HelloTV|TvBoxModule|AndroidRuntime|FATAL EXCEPTION|Permission|ActivityNotFound' || true)"
+LOG_SNAPSHOT="$(run_adb logcat -d -t 500 | tr -d '\r' | grep -E 'HelloTV|TvBoxModule|Hippy|tdf|reportException|render view exception|Uncaught|AndroidRuntime|FATAL EXCEPTION|Permission|ActivityNotFound' || true)"
 if [[ -n "$LOG_SNAPSHOT" ]]; then
   printf '%s\n' "$LOG_SNAPSHOT"
 else
   echo "No matching app, permission, or crash log lines were captured."
 fi
 
-if printf '%s\n' "$LOG_SNAPSHOT" | grep -E 'AndroidRuntime|FATAL EXCEPTION' >/dev/null; then
-  echo "ERROR: Android crash log was captured during the TV-box smoke walk-through." >&2
+if printf '%s\n' "$LOG_SNAPSHOT" | grep -E 'E AndroidRuntime|FATAL EXCEPTION|reportException|render view exception|Uncaught' >/dev/null; then
+  echo "ERROR: Android or JS runtime failure was captured during the TV-box smoke walk-through." >&2
   exit 1
 fi
 

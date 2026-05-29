@@ -203,12 +203,12 @@ write_manual_acceptance_checklist() {
 - [ ] 帮助页按 3 能进入“遥控器练习”；方向键和 OK 会在练习页给出大字反馈，显示中文按键名和 `keyCode`，返回键回到简易首页。
 - [ ] 首页按返回进入大字退出确认，默认 OK/返回都继续看；只有选“退出应用”才关闭。
 - [ ] 摄像头页“测试摄像头”能打开 App 内置 Camera2 预览；没有 Camera HAL 摄像头时给出清晰提示且不崩溃。
-- [ ] 连接盒子后执行 `BOX_IP=<盒子IP> npm run tv-box:camera-smoke`，脚本确认 `CameraPreviewActivity` 成为前台 Activity、返回键可退出，且日志中没有 AndroidRuntime/FATAL EXCEPTION。
+- [ ] 连接盒子后执行 `BOX_IP=<盒子IP> npm run tv-box:camera-smoke`，脚本确认 `CameraPreviewActivity` 成为前台 Activity、返回键可退出，且日志中没有 E AndroidRuntime/FATAL EXCEPTION。
 - [ ] 无摄像头盒子不阻塞看片；盒子支持 USB Host 时，插入 USB 摄像头后“重新检测”能显示系统摄像头数量或 USB 视频设备数量。
 - [ ] 如果摄像头页显示“USB 摄像头已接入/待适配”，现场能理解为硬件已插入但系统暂未开放摄像头，并能按操作卡更换 UVC 摄像头或检查盒子固件。
 - [ ] 摄像头页能显示麦克风/音频输入状态；没有麦克风或录音权限未允许不影响看电视。
 - [ ] 未授权时“一键授权”能触发系统权限弹窗，失败时“打开权限设置”可进入系统设置。
-- [ ] 连续按 6、返回、0、返回、OK、0、返回、OK、右键、返回、返回，以及下键、OK、6、返回、0、返回、右键、下键、上键、左键、返回没有 AndroidRuntime/FATAL EXCEPTION。
+- [ ] 连续按 6、返回、0、返回、OK、0、返回、OK、右键、返回、返回，以及下键、OK、6、返回、0、返回、右键、下键、上键、左键、返回没有 E AndroidRuntime/FATAL EXCEPTION。
 CHECKLIST
 }
 

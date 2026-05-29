@@ -38,6 +38,7 @@ run_step "TV-box field wizard syntax" node --check scripts/tv-box-field-wizard.j
 run_step "TV-box field wizard offline HTML syntax" node --check scripts/tv-box-field-wizard-html.js
 run_step "TV-box handoff HTML smoke syntax" node --check scripts/tv-box-handoff-html-smoke.js
 run_step "TV-box hardware profile syntax" node --check scripts/tv-box-hardware-profile.js
+run_step "TV-box next-step scenarios regression syntax" bash -n scripts/tv-box-next-scenarios-test.sh
 run_step "TV-box release ledger syntax" node --check scripts/tv-box-release-ledger.js
 run_step "TV-box site readiness syntax" node --check scripts/tv-box-site-readiness.js
 run_step "TV-box UX audit syntax" node --check scripts/tv-box-ux-audit.js
@@ -57,6 +58,7 @@ run_step "Field compatibility offline import" npm run tv-box:field-import -- rep
 run_step "Field compatibility inbox dry-run" npm run tv-box:field-inbox -- reports/tv-box-field-wizard-latest.json --dry-run --no-append
 run_step "Field return inbox dry-run" npm run tv-box:return-inbox -- reports/tv-box-field-wizard-latest.json --no-field-inbox
 run_step "Field return inbox scenarios regression" npm run tv-box:return-inbox-scenarios-test
+run_step "Next-step autopilot scenarios regression" npm run tv-box:next-scenarios-test
 run_step "Compatibility summary" npm run tv-box:compatibility-summary
 run_step "Hardware compatibility profile" npm run tv-box:hardware-profile
 run_step "Easy install summary" npm run tv-box:easy-summary

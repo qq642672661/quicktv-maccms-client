@@ -95,6 +95,7 @@ jobs:
             reports/tv-box-ux-audit-latest.*
             reports/tv-box-command-center-latest.*
             reports/tv-box-next-latest.*
+            reports/tv-box-next-scenarios-test-latest.*
             reports/tv-box-preflight-latest.*
             reports/tv-box-site-readiness-latest.*
             reports/tv-box-site-readiness-card.html

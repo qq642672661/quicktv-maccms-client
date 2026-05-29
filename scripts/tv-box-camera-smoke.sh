@@ -161,21 +161,17 @@ echo
 echo "== Navigate to camera setup and trigger camera test =="
 run_adb logcat -c
 run_adb shell am force-stop "$PACKAGE_NAME"
-run_adb shell am start -n "$MAIN_ACTIVITY"
+START_URI="esapp://action/start?es_pkg=${PACKAGE_NAME}&from=tv_box_camera_smoke&splash=-1&args={\"url\":\"tv_box_home\"}"
+run_adb shell am start -n "$MAIN_ACTIVITY" -d "$START_URI"
+sleep 6
+
+# Simple home: digit 4 directly opens "摄像头", avoiding focus drift on TV launchers
+# and stale restored pages from earlier manual tests.
+run_adb shell input keyevent 11
 sleep 3
 
-# Simple home grid: DOWN moves from "看电视" to "摄像头", OK opens camera setup.
-run_adb shell input keyevent 20
-sleep 1
-run_adb shell input keyevent 23
-sleep 2
-
-# Camera setup row: RIGHT twice moves to "测试摄像头", OK opens the native CameraPreviewActivity.
-run_adb shell input keyevent 22
-sleep 1
-run_adb shell input keyevent 22
-sleep 1
-run_adb shell input keyevent 23
+# Camera setup: digit 3 directly opens "测试摄像头" and the native CameraPreviewActivity.
+run_adb shell input keyevent 10
 sleep 3
 
 echo
@@ -203,17 +199,18 @@ require_not_current_activity "$CAMERA_PREVIEW_ACTIVITY" "$FOCUS_AFTER_BACK" "cam
 
 echo
 echo "== Camera smoke log snapshot =="
-LOG_SNAPSHOT="$(run_adb logcat -d -t "$LOG_LINES" | tr -d '\r' | grep -E 'TvBoxModule|CameraPreviewActivity|Camera|camera|Audio|audio|Microphone|microphone|ActivityNotFound|AndroidRuntime|FATAL EXCEPTION|Permission' || true)"
+LOG_SNAPSHOT="$(run_adb logcat -d -t "$LOG_LINES" | tr -d '\r' | grep -E 'TvBoxModule|CameraPreviewActivity|Camera|camera|Audio|audio|Microphone|microphone|Hippy|tdf|reportException|render view exception|Uncaught|ActivityNotFound|AndroidRuntime|FATAL EXCEPTION|Permission' || true)"
 if [[ -n "$LOG_SNAPSHOT" ]]; then
   printf '%s\n' "$LOG_SNAPSHOT"
 else
   echo "No camera-related log lines were captured."
 fi
 
-if printf '%s\n' "$LOG_SNAPSHOT" | grep -E 'AndroidRuntime|FATAL EXCEPTION' >/dev/null; then
-  echo "ERROR: Android crash log was captured during camera smoke." >&2
+if printf '%s\n' "$LOG_SNAPSHOT" | grep -E 'E AndroidRuntime|FATAL EXCEPTION|reportException|render view exception|Uncaught' >/dev/null; then
+  echo "ERROR: Android or JS runtime failure was captured during camera smoke." >&2
   exit 1
 fi
 
 echo
-echo "Camera smoke finished. Internal camera preview opened and remote BACK exited it without Android crash logs."
+echo "Internal camera preview opened and remote BACK exited it without Android or JS crash logs."
+echo "Camera smoke finished."

@@ -109,6 +109,7 @@ npm run dev
 - 直播页返回键优先关闭频道列表，再按返回到简易首页；首页再按返回会出现大字退出确认。
 - 搜索页、继续看页和“全部内容”原始首页在简易模式下都保留救援路径：按 0、菜单、信息、指南、设置或帮助键进入“帮助/自检”，“全部内容”页也支持 6 键自检，按返回最终回到简易首页。
 - 摄像头页支持能力检测、一键授权摄像头/麦克风、内置 Camera2 预览测试和系统权限入口，会显示真实摄像头数量、USB/UVC 视频设备数量、麦克风/音频输入数量；预览测试会优先选择可预览的外接摄像头，再回退到后置/前置/任意摄像头；没有摄像头或麦克风也不影响看电视。
+- 官方 QuickTVUI 仓库暂未提供手机摄像头 WebRTC 示例；“手机当电视摄像头”按 `docs/TV_BOX_REMOTE_CAMERA_PLAN.zh-CN.md` 的分层路线推进：默认推荐手机采集 + 电视端原生 WebRTC 接收，RTSP/RTMP + IJK 只作为同网预览 MVP，USB/UVC/Camera2 继续作为实体摄像头保底。微信小程序 `live-pusher` 可作为手机侧免安装入口，但需要服务类目、主体资质和接口权限审核，不能作为默认无门槛承诺。
 
 如需恢复原瀑布流首页启动，把 `.env.production` 或 `.env.local` 里的 `VITE_TV_BOX_SIMPLE_MODE=false`。
 
@@ -172,6 +173,8 @@ BOX_IP=<盒子IP> npm run tv-box:inspect
 `tv-box:authorize` 是 ADB/RSA 授权助手，会生成 `reports/tv-box-authorization-latest.md` 和 `reports/tv-box-authorization-latest.json`，把现场状态压成 `adb_missing`、`no_box_target`、`target_not_visible`、`needs_rsa_authorization`、`needs_device_selection` 或 `ready_for_install`；报告没有变成 `ready_for_install` 前不要反复安装，先按报告处理同网、盒子 IP、电视屏幕 RSA 弹窗或 `DEVICE_SERIAL`。
 
 `tv-box:next` 是现场唯一下一步入口，会生成 `reports/tv-box-next-latest.md` 和 `reports/tv-box-next-latest.json`。它先运行授权助手；如果状态是 `ready_for_install` 且未禁用自动安装，就继续执行安装、启动、遥控器冒烟、摄像头/麦克风冒烟和交付沉淀；如果未授权，就刷新 preflight、site readiness 和 command center，只告诉现场先授权、先发包、先补工具链还是先等真实盒子。需要只生成报告不安装时可设置 `NEXT_ALLOW_INSTALL=false`，需要禁止自动补交付包时可设置 `NEXT_BUILD_DELIVERY=false`。
+
+`tv-box:next-scenarios-test` 会生成 `reports/tv-box-next-scenarios-test-latest.md/json`，用假 npm/假报告回归 `tv-box:next` 的 6 类分支：未授权不安装、已授权但禁用安装、已授权自动安装、缺交付包但禁用补齐、缺交付包自动补齐、工具链阻断。它不连接真实盒子，专门防止唯一入口未来误安装、误跳过授权或漏跑 `tv-box:check`。
 
 `tv-box:preflight` 是安装前自动预检，会生成 `reports/tv-box-preflight-latest.md` 和 `reports/tv-box-preflight-latest.json`，自动判断电脑工具链、遥控器逻辑自测、Debug APK、交付压缩包 SHA256、ADB 授权状态和下一步动作；没有实机时会明确提示“可交付给现场但还需真实盒子验收”。
 
@@ -249,7 +252,7 @@ FIELD_OPERATOR=张三 FIELD_BOX_BRAND=小米 FIELD_ZERO_KEY_HELP=pass FIELD_HELP
 
 本地或 CI 没接盒子、也没填写现场字段时，`tv-box:field-record` 只刷新 latest 记录，不会把空白 `needs_box` 行追加进累计 CSV；需要强制追加时可设置 `FIELD_APPEND_MATRIX=true`。
 
-仓库也提供 GitHub Actions 工作流 `.github/workflows/tv-box-check.yml`，会在 PR、main/master/codex 分支推送或手动触发时用 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-latest.*`、`reports/tv-box-return-inbox-json/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-hardware-profile-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-next-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-ux-audit-latest.*`、`reports/tv-box-site-readiness-latest.*`、`reports/tv-box-site-readiness-card.html`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 和对应 `.sha256` 作为构建产物。
+仓库也提供 GitHub Actions 工作流 `.github/workflows/tv-box-check.yml`，会在 PR、main/master/codex 分支推送或手动触发时用 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-latest.*`、`reports/tv-box-return-inbox-json/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-hardware-profile-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-next-latest.*`、`reports/tv-box-next-scenarios-test-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-ux-audit-latest.*`、`reports/tv-box-site-readiness-latest.*`、`reports/tv-box-site-readiness-card.html`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 和对应 `.sha256` 作为构建产物。
 
 需要留存验收证据时，生成一份 Markdown 报告：
 

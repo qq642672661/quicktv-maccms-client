@@ -371,6 +371,7 @@ function main() {
   const handoffHtmlSmoke = readJson(path.join(reportDir, 'tv-box-handoff-html-smoke-latest.json'))
   const fieldScenarios = readJson(path.join(reportDir, 'tv-box-field-scenarios-test-latest.json'))
   const returnInboxScenarios = readJson(path.join(reportDir, 'tv-box-return-inbox-scenarios-test-latest.json'))
+  const nextScenarios = readJson(path.join(reportDir, 'tv-box-next-scenarios-test-latest.json'))
   const uxAudit = readJson(path.join(reportDir, 'tv-box-ux-audit-latest.json'))
   const fieldInbox = readJson(path.join(reportDir, 'tv-box-field-inbox-latest.json'))
   const returnInbox = readJson(path.join(reportDir, 'tv-box-return-inbox-latest.json'))
@@ -432,6 +433,11 @@ function main() {
       scenarioCount: (returnInboxScenarios.scenarios || []).length,
       scenarioIds: (returnInboxScenarios.scenarios || []).map((scenario) => scenario.id).filter(Boolean)
     } : null,
+    nextScenariosRegression: nextScenarios ? {
+      status: nextScenarios.status || 'unknown',
+      scenarioCount: (nextScenarios.scenarios || []).length,
+      failedScenarios: (nextScenarios.scenarios || []).filter((scenario) => scenario.status !== 'pass').map((scenario) => scenario.id)
+    } : null,
     uxAudit: uxAudit ? {
       overall: uxAudit.summary?.overall || 'unknown',
       pass: uxAudit.summary?.pass || 0,
@@ -486,6 +492,8 @@ function main() {
       fieldScenariosRegressionMarkdown: fileState(path.join(reportDir, 'tv-box-field-scenarios-test-latest.md')),
       returnInboxScenariosRegressionJson: fileState(path.join(reportDir, 'tv-box-return-inbox-scenarios-test-latest.json')),
       returnInboxScenariosRegressionMarkdown: fileState(path.join(reportDir, 'tv-box-return-inbox-scenarios-test-latest.md')),
+      nextScenariosRegressionJson: fileState(path.join(reportDir, 'tv-box-next-scenarios-test-latest.json')),
+      nextScenariosRegressionMarkdown: fileState(path.join(reportDir, 'tv-box-next-scenarios-test-latest.md')),
       returnInboxJson: fileState(path.join(reportDir, 'tv-box-return-inbox-latest.json')),
       returnInboxMarkdown: fileState(path.join(reportDir, 'tv-box-return-inbox-latest.md')),
       siteReadinessMarkdown: fileState(path.join(reportDir, 'tv-box-site-readiness-latest.md')),
@@ -511,6 +519,7 @@ function main() {
       ...(readiness?.nextActions || []),
       ...(fieldScenarios && fieldScenarios.status !== 'pass' ? ['现场验收场景回归未通过，先运行 npm run tv-box:field-scenarios-test 并修复分类规则。'] : []),
       ...(returnInboxScenarios && returnInboxScenarios.status !== 'pass' ? ['现场回传收件箱场景回归未通过，先运行 npm run tv-box:return-inbox-scenarios-test 并修复证据质检规则。'] : []),
+      ...(nextScenarios && nextScenarios.status !== 'pass' ? ['唯一下一步入口场景回归未通过，先运行 npm run tv-box:next-scenarios-test 并修复 tv-box:next 分支判断。'] : []),
       ...(uxAudit && uxAudit.summary?.overall !== 'pass' ? ['长辈/小孩遥控器 UX 审计未通过，先运行 npm run tv-box:ux-audit 并修复简易首页、帮助、自检、遥控练习、现场验收或退出确认。'] : [])
     ),
     sources: {
@@ -550,6 +559,7 @@ ${card.details.map((item) => `- ${item}`).join('\n')}`).join('\n\n')
 - handoff HTML smoke: \`${state.handoffHtmlSmoke?.status || 'unknown'}\` / checks \`${state.handoffHtmlSmoke?.checkCount ?? 0}\`
 - field scenarios regression: \`${state.fieldScenariosRegression?.status || 'unknown'}\` / records \`${state.fieldScenariosRegression?.totalRecords ?? 0}\`
 - return inbox scenarios regression: \`${state.returnInboxScenariosRegression?.status || 'unknown'}\` / scenarios \`${state.returnInboxScenariosRegression?.scenarioCount ?? 0}\`
+- next-step scenarios regression: \`${state.nextScenariosRegression?.status || 'unknown'}\` / scenarios \`${state.nextScenariosRegression?.scenarioCount ?? 0}\`
 - return inbox closure: \`${state.returnInbox?.closureStatus || 'unknown'}\`
 - site readiness: \`${state.siteReadiness?.status || 'unknown'}\`
 - elder/child UX audit: \`${state.uxAudit?.overall || 'unknown'}\` / failed checks \`${state.uxAudit?.failedChecks ?? 0}\`
@@ -600,6 +610,8 @@ ${[
   artifactRow('现场验收场景回归 JSON', state.artifacts.fieldScenariosRegressionJson, '机器读取四类验收场景结果'),
   artifactRow('现场回传收件箱场景回归 MD', state.artifacts.returnInboxScenariosRegressionMarkdown, '证明证据收件箱规则不漂移'),
   artifactRow('现场回传收件箱场景回归 JSON', state.artifacts.returnInboxScenariosRegressionJson, '机器读取五类回传证据场景结果'),
+  artifactRow('唯一下一步场景回归 MD', state.artifacts.nextScenariosRegressionMarkdown, '证明 tv-box:next 不会误安装、误跳过授权或漏补交付包'),
+  artifactRow('唯一下一步场景回归 JSON', state.artifacts.nextScenariosRegressionJson, '机器读取 tv-box:next 六类分支结果'),
   artifactRow('现场回传收件箱 MD', state.artifacts.returnInboxMarkdown, '质检 JSON/照片/日志/排障包是否齐全'),
   artifactRow('现场回传收件箱 JSON', state.artifacts.returnInboxJson, '机器读取现场回传完整度'),
   artifactRow('现场开工判定卡 MD', state.artifacts.siteReadinessMarkdown, '给负责人/现场/工程判断先授权、安装、补证据还是修复'),

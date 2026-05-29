@@ -39,6 +39,7 @@
 - `AndroidManifest.xml` 声明 `LEANBACK_LAUNCHER`、电视启动横幅、可选摄像头/麦克风/USB Host 能力和 `CAMERA`、`RECORD_AUDIO` 权限。摄像头、麦克风与 USB Host 均为 `required=false`，避免无外设盒子无法安装。
 - 直播页遥控器策略改为：OK/左/右打开频道列表，上/下切台，频道 +/- 切台；有数字键的遥控器可按 1-9 直达对应频道，有播放/暂停物理键的遥控器可直接暂停或继续播放，频道列表里按 7 收藏/取消收藏、按 8 在“全部频道/只看收藏”间切换，0/菜单/信息/帮助键进入帮助/自检，返回先收起菜单、再回简易首页。
 - 新增 `npm run tv-box:next`：现场唯一下一步入口，先判断 ADB/RSA 授权；已授权就继续跑一键安装、遥控器冒烟、摄像头/麦克风冒烟和交付沉淀，未授权就刷新 preflight、site readiness、command center 和 `reports/tv-box-next-latest.md/json`，把“先发包、先授权、先安装、先补工具链、先补现场证据”压成一页。
+- 新增 `npm run tv-box:next-scenarios-test`：不用真实盒子，用假 npm/假报告回归唯一下一步入口的 6 类关键分支，证明未授权不会误安装、已授权才进 `tv-box:easy`、缺交付包时才按开关补 `tv-box:check`、工具链阻断不会被误判为可安装。
 - 新增 `npm run tv-box:easy`：中文引导式一键安装验收，串起构建、连接、安装、启动、遥控器冒烟、验收报告、兼容性 latest 记录、兼容性自动汇总、一键安装自动沉淀摘要和交付目录。
 - 新增 `npm run tv-box:install-debug`：构建 Debug APK、安装到盒子、启动 App，并可自动跑遥控器冒烟脚本。
 - 新增 `npm run tv-box:camera-smoke`：连上盒子后自动授予摄像头和录音权限，进入摄像头页，触发“测试摄像头”，确认 `CameraPreviewActivity` 成为前台 Activity，再按返回验证可退出并抓取摄像头/音频/崩溃日志。
@@ -58,8 +59,8 @@
 - 新增 `npm run tv-box:completion-audit`：把源码合约、自动化报告、交付包、排障包、离线验收表和真实盒子验收状态汇成 `reports/tv-box-completion-audit-latest.md/json`，逐项标记 `proven`、`needs_box`、`missing` 或 `failed`，防止把“未接真实盒子”误说成“已完成实机验收”。默认 `final_delivery` 审计校验最终交付 zip 和排障 zip 的 SHA256；交付包和排障包内分别携带 `handoff_package`、`support_bundle` 随包快照，不自我引用尚未完成写入的外层压缩包。
 - 新增 `npm run tv-box:release-ledger`：生成 `reports/tv-box-release-ledger-latest.md/json` 并追加 `reports/tv-box-release-ledger.jsonl`，沉淀每次发包的 releaseId、APK/交付包/排障包 SHA256、readiness、完成度统计、兼容性样本、Git 分支/提交和下一步动作，便于长期追踪现场版本。
 - 新增 `npm run tv-box:audit`：自动核对简易入口、摄像头入口、Manifest、APK、验收报告、安装日志说明和交付包是否齐全。
-- 新增 `.github/workflows/tv-box-check.yml`：在 PR、main/master/codex 分支推送或手动触发时基于 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-next-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 与对应 `.sha256`，避免电视盒子方案只停留在单台电脑可用。
-- 基础遥控器冒烟和摄像头冒烟都会抓取交互期间日志；出现 `AndroidRuntime` 或 `FATAL EXCEPTION` 会直接失败，避免“看起来按过键但实际崩过”的假通过。
+- 新增 `.github/workflows/tv-box-check.yml`：在 PR、main/master/codex 分支推送或手动触发时基于 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-next-latest.*`、`reports/tv-box-next-scenarios-test-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 与对应 `.sha256`，避免电视盒子方案只停留在单台电脑可用。
+- 基础遥控器冒烟和摄像头冒烟都会抓取交互期间日志；出现 `E AndroidRuntime`、`FATAL EXCEPTION`、`reportException`、`render view exception` 或 `Uncaught` 会直接失败，避免“看起来按过键但实际崩过”的假通过，同时不过度误判 `adb shell input` 产生的普通 `D AndroidRuntime`。
 
 ## 遥控器交互规范
 
@@ -90,6 +91,45 @@
 直播收藏不新增复杂设置页：进入频道列表后，按 7 就把当前焦点频道加入或移出收藏，按 8 切换“只看收藏频道”和“全部频道”。收藏保存在本机电视盒子本地存储里，下一次打开仍然保留；没有收藏时按 8 会自动提示先收藏频道。
 
 ## 摄像头技术路线
+
+### 手机当电视摄像头：官方证据与推荐架构
+
+2026-05-29 已对官方 GitHub 仓库 `quicktvui/quicktvui`、`quicktvui/quicktvui-next`、`quicktvui/quicktvui-sdk`、`quicktvui/quicktvui-runtime-apk`、`quicktvui/quicktvui-api-demo-vue3`、`quicktvui/quicktvui-template` 和 `quicktvui/hellotv` 拉取最新远端引用并检索。当前没有发现官方提供的 `WebRTC`、`getUserMedia`、`RTCPeerConnection` 或“手机摄像头直连电视端”的示例代码。因此“手机当电视摄像头”不能理解成 QuickTVUI 已经把手机注册成 Android 系统 `Camera2` 设备；更科学的理解是：手机负责采集音视频，电视盒子 App 通过局域网信令和媒体通道接收、展示或用于业务。
+
+官方仓库可利用的能力边界如下：
+
+- `quicktvui-sdk` 提供 IJK 视频播放器，`IjkVideoView` 的协议白名单包含 `sdp`、`rtp`、`rtmp`、`rtsp`、`tcp`、`udp`，并支持播放器 option 下发；这适合把手机端推出来的 RTSP/RTMP/UDP 流作为电视端播放源。
+- `quicktvui-next` 文档提供 `ESVideoPlayer` / `ESPlayerManager`，前端业务侧以 `ESMediaSource.uri` 设置播放地址；这可以承接 `rtsp://`、`rtmp://`、`http(s)://` 等媒体 URL，但实时通话级能力仍取决于底层播放器和盒子固件。
+- `quicktvui-sdk` 提供 `webview` / `x5webview`，文档暴露 `loadUrl`、`evaluateJavascript`、`setMediaPlaybackRequiresUserGesture` 等 WebView API；但官方源码里未发现 WebRTC 权限请求、`onPermissionRequest` 或 WebRTC 示例，所以 WebView 方案必须先做实机兼容实验，不能作为默认承诺。
+- `quicktvui-sdk` 提供 `websocket` / `socket-io` 支持，`quicktvui` 提供 `qt-qr-code` 组件；这适合做手机扫码配对、局域网发现和信令交换。
+- `quicktvui-sdk` 提供 USB 设备枚举、USB 热插拔事件、设备信息里的 Camera 信息，以及 `audio-record`、音频播放/录音模块；这说明官方更偏向 Android 原生能力桥接，而不是把手机摄像头虚拟成系统摄像头。
+- 微信小程序 `live-pusher` / `live-player` 可以作为“手机免安装入口”，但它不是 QuickTVUI/Android 盒子侧能力。开发者提供的类目说明显示，推流能力需要国内主体、类目审核和后台接口权限；教育类“在线视频课程”、IT 科技类“多方通信/音视频设备”等场景可能覆盖，但必须先完成主体资质、服务类目和审核确认，不能当作默认无门槛链路。
+
+推荐把“手机当摄像头”拆成四条产品路线：
+
+| 路线 | 适用目标 | 技术方案 | 优点 | 风险与限制 |
+| --- | --- | --- | --- | --- |
+| A. WebRTC 原生接入 | 视频通话、AI 看护、互动课、低延迟摄像头 | 手机 Web/PWA 或手机 App 采集摄像头和麦克风；电视盒子原生 Android 集成成熟 WebRTC SDK；QuickTVUI 负责二维码、状态页、遥控器操作和原生桥启动/停止 | 低延迟、音视频同步、拥塞控制、回声消除、后续可双向通话 | 需要新增原生 WebRTC 模块；信令服务必须可维护；旧盒子需限制 720p/15fps 或 480p/15fps |
+| B. RTSP/RTMP 局域网投屏 | 只需要把手机画面显示到电视，不需要强互动 | 手机 App 推 RTSP/RTMP 或本地 HTTP-FLV/HLS；电视端用官方 IJK/ESVideoPlayer 播放 URL | 和现有 QuickTVUI 播放器体系贴合，MVP 快 | 延迟通常更高；浏览器手机端不一定能直接推 RTSP/RTMP；音频同步、断线重连和权限体验要额外做 |
+| C. USB/UVC/Camera2 | 真正让电视盒子本机获得摄像头能力 | 外接 USB 摄像头或盒子内置摄像头走 Camera2/CameraX；当前 `CameraPreviewActivity` 已验证这条路 | 最接近 Android 系统摄像头，适合扫码、拍照、体感、离线能力 | 依赖盒子固件是否把 UVC 暴露给 Camera HAL；不同摄像头兼容性必须现场矩阵沉淀 |
+| D. 微信小程序免安装推流 | 用户不愿安装手机 App，且主体资质能覆盖直播/实时音视频类目 | 手机端用小程序 `live-pusher` 采集摄像头/麦克风；电视端仍走 WebRTC/RTC 云或低延迟播放链路接收；QuickTVUI 显示二维码、配对状态和断线重试 | 手机侧入口最轻，适合公开课、线上课、售后演示和临时互动 | 需要服务类目、主体资质、接口权限和审核；审核周期、隐私合规、未成年人保护、直播监管和云服务成本都要提前评估 |
+
+本项目默认推荐路线 A：电视端新增“手机摄像头配对”能力时，先实现局域网信令 + 原生 WebRTC 接收端，前端只做遥控器友好的配对、状态、重试和降级，不在 QuickTVUI 前端手写媒体传输。原因是 WebRTC 已经包含实时音视频必需的 jitter buffer、带宽自适应、NACK/PLI、音视频同步和回声处理，适合长辈小孩使用时“少等待、少配置、断了能重连”的目标。
+
+路线 A 的最小闭环建议：
+
+1. 电视端显示一个大二维码，内容为 `https://<局域网服务>/pair?room=<一次性房间码>`；遥控器只有“重新生成”“返回”“帮助”三个动作。
+2. 手机扫码打开网页或 App，用户只点“允许摄像头/麦克风”和“开始连接”。
+3. 局域网信令服务用 WebSocket 交换 offer/answer/ICE；同 Wi-Fi 优先 host candidate，跨网或复杂路由再配置 STUN/TURN。
+4. 手机端默认 720p/15fps，低端盒子自动降到 480p/15fps；电视端只渲染远端流，不默认采集电视摄像头。
+5. 断线后电视端显示“手机离线，按 OK 重新生成二维码”，手机端自动重连一次；超过 30 秒给出手动重连。
+6. 音频策略默认使用手机麦克风；如果电视盒子已检测到本机麦克风，可在后续专业模式里切换，但长辈模式不暴露复杂选项。
+
+路线 B 的 MVP 可作为快速验证：手机端使用成熟推流 App 或自研 Android 小 App 推 `rtsp://<phone-ip>:8554/live`，电视端把这个 URL 作为 `ESMediaSource.uri` 交给 IJK 播放。若现场只需要“远程看一眼手机摄像头画面”，这条路成本最低；若目标是视频通话、互动课或 AI 识别，仍应回到路线 A。
+
+路线 C 保持为实体摄像头保底：当前系统已经做了 Camera2 能力检测、USB 视频设备识别、麦克风/录音权限检测和内置预览 Activity。手机当摄像头不会替代这条路线，因为 Android 盒子通常不能仅凭同 Wi-Fi 把手机变成系统级 `Camera2` 设备；除非未来引入厂家虚拟摄像头驱动、USB Gadget/UVC 模式或专用硬件，这不适合作为普通家庭交付默认路径。
+
+路线 D 是合规后再打开的免安装入口，不建议放在第 1 个技术里程碑：小程序负责降低手机侧安装门槛，但电视端仍需要稳定的接收端、信令、房间码、权限提示和断线恢复。若业务场景是 Keep 直播课、幼儿园互动课或家庭远程陪伴，建议先准备三份材料再开发：主体/类目/资质清单，隐私与未成年人使用告知，音视频云或自建 RTC 的成本与日志留存方案。资质未确认前，产品文案只能写“可接入微信小程序推流方案”，不能承诺“扫码即用手机摄像头”。
 
 ### 第 1 阶段：能力检测
 
@@ -355,8 +395,8 @@ BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy
 - OK、返回、右键、OK、返回这一组遥控器路径是否触发崩溃日志。
 - 数字键 5、0、返回、数字键 5、6、返回、数字键 2、0、返回、数字键 3、菜单、返回这一组“全部内容/搜索/继续看救援”路径是否触发崩溃日志或卡死。
 - 下键、OK、右键、下键、上键、左键、返回这一组“进入摄像头检测页再回首页”的路径是否触发崩溃日志。
-- 摄像头冒烟会额外执行下键、OK、右键、右键、OK、返回，覆盖“测试摄像头”按钮；脚本会先尝试 `pm grant` 摄像头和录音权限，点击后用 `dumpsys window` / `dumpsys activity` 确认 `CameraPreviewActivity` 已进入前台，再按返回确认能退出，并抓取 `CameraPreviewActivity`、`Camera`、`Audio`、`ActivityNotFound`、`AndroidRuntime` 等日志。
-- 两类冒烟只要抓到 `AndroidRuntime` 或 `FATAL EXCEPTION` 就会退出失败。
+- 摄像头冒烟会额外执行数字键 4、数字键 3、返回，先直达“摄像头”，再直达“测试摄像头”，避免焦点漂移影响自动化；脚本会先尝试 `pm grant` 摄像头和录音权限，点击后用 `dumpsys window` / `dumpsys activity` 确认 `CameraPreviewActivity` 已进入前台，再按返回确认能退出，并抓取 `CameraPreviewActivity`、`Camera`、`Audio`、`ActivityNotFound`、`AndroidRuntime`、`reportException` 等日志。
+- 两类冒烟只要抓到 `E AndroidRuntime`、`FATAL EXCEPTION`、`reportException`、`render view exception` 或 `Uncaught` 就会退出失败；普通 `D AndroidRuntime` 多来自 adb input 命令，不作为崩溃证据。
 
 ## 后续优化建议
 
