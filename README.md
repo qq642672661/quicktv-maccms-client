@@ -155,6 +155,14 @@ Logitech C920 PRO / C920 Pro HD 到货并插入 USB 后，优先跑专用接入�
 npm run tv-box:c920-arrived
 ```
 
+到货前或现场开工前，如果只想先确认“今天该不该跑、盒子 ADB 是否在线、有没有离线设备噪声、明天现场只执行哪条命令”，先生成预备卡：
+
+```bash
+npm run tv-box:c920-prep
+```
+
+它会输出 `reports/tv-box-c920-onsite-prep-latest.md/json`，不会触发实体摄像头验收；看到 `waiting_for_delivery` 就继续等到货，看到 `ready_to_plug_and_run` 或 `ready_to_plug_and_run_with_adb_noise` 再直插 C920 并运行 `npm run tv-box:c920-arrived`。如果报告提示 `adb disconnect <序列号>`，只是清理离线/未授权噪声，避免现场选错设备。
+
 `tv-box:c920-arrived` 默认使用当前小米盒子 `192.168.10.122`，默认把 C920 标记为已插入，并自动读取 `tv-box-field-state/c920-procurement.json` 里的京东自营和预计到货日。换盒子时才需要加 `BOX_IP=<盒子IP>`；如果预计到货日还没到，它会只提示等待，不会误跑实体摄像头验收，避免把“未到货/未插入”误判为 USB 或 Camera2 故障。确认已经提前到货并插好时，可加 `C920_ARRIVED_ALLOW_EARLY=true` 强制执行。底层仍然调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，所以完整采集和关闭边界不变。
 
 C920 验收报告还会生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并汇总 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数；首次未插摄像头运行时会保存 `reports/tv-box-c920-pro-baseline.json` 到货前基线，后续插上 C920 会自动对比是否新增 USB 视频、Camera2 摄像头和 USB 音频。上述证据用于排障，不替代 Camera2/CameraService 枚举和电视真实画面确认。已采购但未到货时，可把采购渠道和预计到货日写进操作卡，避免把未插入基线误读成故障：

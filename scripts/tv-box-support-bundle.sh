@@ -160,6 +160,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-OPERATION_CARD.html\`: 给家人/长辈/小孩看的可打印大字操作卡。
 - \`handoff-HARDWARE_SELECTION_CARD.html\`: 给采购、现场安装和维护人员看的可打印硬件选型卡。
 - \`handoff-C920_ARRIVAL_CARD.html\`: C920 PRO 到货接入卡，现场按直插、供电 Hub、真实画面、麦克风和热插拔顺序验收。
+- \`tv-box-c920-onsite-prep-latest.md/json\`: C920 到货前/现场预备卡，说明今天是否该跑、盒子 ADB 是否在线、是否有离线设备噪声。
 - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
 - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
 - \`tv-box-phone-camera-capture-test-latest.md/json\`: 手机采集端页面回归，证明房间码、getUserMedia、RTCPeerConnection、停止按钮和 HTTPS/WSS 安全边界已固化。
@@ -222,6 +223,7 @@ run_and_capture "Field acceptance scenarios regression" "$BUNDLE_DIR/tv-box-fiel
 run_and_capture "Compatibility summary" "$BUNDLE_DIR/tv-box-compatibility-summary.txt" env TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" npm run -s tv-box:compatibility-summary
 run_and_capture "Hardware compatibility profile" "$BUNDLE_DIR/tv-box-hardware-profile.txt" env TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" TV_BOX_FIELD_RECORD_JSON="$REPORT_DIR/tv-box-field-record-latest.json" TV_BOX_COMPATIBILITY_SUMMARY_JSON="$REPORT_DIR/tv-box-compatibility-summary-latest.json" npm run -s tv-box:hardware-profile
 run_and_capture "C920 arrival operation card" "$BUNDLE_DIR/tv-box-c920-arrival-card.txt" npm run -s tv-box:c920-arrival-card
+run_and_capture "C920 onsite prep card" "$BUNDLE_DIR/tv-box-c920-onsite-prep.txt" npm run -s tv-box:c920-prep
 run_and_capture "Phone camera contract" "$BUNDLE_DIR/tv-box-phone-camera-contract.txt" npm run -s tv-box:phone-camera-contract
 run_and_capture "Phone camera capture page regression" "$BUNDLE_DIR/tv-box-phone-camera-capture-test.txt" npm run -s tv-box:phone-camera-capture-test
 run_and_capture "Phone camera field readiness" "$BUNDLE_DIR/tv-box-phone-camera-readiness.txt" npm run -s tv-box:phone-camera-readiness
@@ -250,6 +252,8 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-c920-arrival-card-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-c920-arrival-card.html" "handoff-C920_ARRIVAL_CARD.html"
 copy_if_exists "$REPORT_DIR/tv-box-c920-arrival-card-latest.md" "tv-box-c920-arrival-card-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "tv-box-c920-arrival-card-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-c920-onsite-prep-latest.md" "tv-box-c920-onsite-prep-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" "tv-box-c920-onsite-prep-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_AV_TEST_HARDWARE.zh-CN.md" "handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md" "handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.md" "tv-box-phone-camera-contract-latest.md"

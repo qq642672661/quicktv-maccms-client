@@ -49,6 +49,8 @@ HARDWARE_PROFILE_MD="$REPORT_DIR/tv-box-hardware-profile-latest.md"
 C920_ARRIVAL_CARD_JSON="$REPORT_DIR/tv-box-c920-arrival-card-latest.json"
 C920_ARRIVAL_CARD_MD="$REPORT_DIR/tv-box-c920-arrival-card-latest.md"
 C920_ARRIVAL_CARD_HTML="$REPORT_DIR/tv-box-c920-arrival-card.html"
+C920_ONSITE_PREP_JSON="$REPORT_DIR/tv-box-c920-onsite-prep-latest.json"
+C920_ONSITE_PREP_MD="$REPORT_DIR/tv-box-c920-onsite-prep-latest.md"
 AV_TEST_HARDWARE_PLAN_MD="$ROOT_DIR/docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 PHONE_CAMERA_CONTRACT_SOURCE_MD="$ROOT_DIR/docs/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 PHONE_CAMERA_CONTRACT_JSON="$REPORT_DIR/tv-box-phone-camera-contract-latest.json"
@@ -131,6 +133,7 @@ cp "$APK_PATH" "$HANDOFF_DIR/HelloTV-debug.apk"
   npm run -s tv-box:hardware-profile >/dev/null)
 
 (cd "$ROOT_DIR" && npm run -s tv-box:c920-arrival-card >/dev/null)
+(cd "$ROOT_DIR" && npm run -s tv-box:c920-prep >/dev/null)
 
 (cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-contract >/dev/null)
 
@@ -207,6 +210,14 @@ fi
 
 if [[ -f "$C920_ARRIVAL_CARD_HTML" ]]; then
   cp "$C920_ARRIVAL_CARD_HTML" "$HANDOFF_DIR/C920_ARRIVAL_CARD.html"
+fi
+
+if [[ -f "$C920_ONSITE_PREP_JSON" ]]; then
+  cp "$C920_ONSITE_PREP_JSON" "$HANDOFF_DIR/tv-box-c920-onsite-prep-latest.json"
+fi
+
+if [[ -f "$C920_ONSITE_PREP_MD" ]]; then
+  cp "$C920_ONSITE_PREP_MD" "$HANDOFF_DIR/tv-box-c920-onsite-prep-latest.md"
 fi
 
 if [[ -f "$AV_TEST_HARDWARE_PLAN_MD" ]]; then
@@ -369,6 +380,8 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "c920ArrivalCardMarkdown": "tv-box-c920-arrival-card-latest.md",
     "c920ArrivalCardJson": "tv-box-c920-arrival-card-latest.json",
     "c920ArrivalCardHtml": "C920_ARRIVAL_CARD.html",
+    "c920OnsitePrepMarkdown": "tv-box-c920-onsite-prep-latest.md",
+    "c920OnsitePrepJson": "tv-box-c920-onsite-prep-latest.json",
     "avTestHardwarePlan": "TV_BOX_AV_TEST_HARDWARE.zh-CN.md",
     "phoneCameraContract": "TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md",
     "phoneCameraContractMarkdown": "tv-box-phone-camera-contract-latest.md",
@@ -469,7 +482,7 @@ HelloTV 电视盒子交付包 - 先看这里
 1. 如果能打开网页文件，先双击 START_HERE.html。
 2. 如果只想教家人怎么用，双击 OPERATION_CARD.html，直接打印或贴在电视旁。
 3. 不知道该买哪种盒子、遥控器、USB 摄像头或麦克风时，双击 HARDWARE_SELECTION_CARD.html 打印选型卡。
-4. C920 PRO 到货后，先双击 C920_ARRIVAL_CARD.html 看接线、验收命令、失败分流和不能关闭的边界。
+4. C920 PRO 到货前或现场开工前，先打开 tv-box-c920-onsite-prep-latest.md；到货后再双击 C920_ARRIVAL_CARD.html 看接线、验收命令、失败分流和不能关闭的边界。
 5. 手机当电视摄像头还在开发/验收时，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md，看 WebRTC 房间码、手机采集页、信令、隐私和现场验收边界；tv-box-phone-camera-readiness-latest.md 先看 HTTPS/WSS 和房间创建准备度，tv-box-phone-camera-capture-test-latest.md 只证明手机页面具备 getUserMedia/offer/停止按钮，tv-box-phone-camera-signaling-test-latest.md 只证明局域网信令层，不证明真实首帧。
 6. 安装前双击 SITE_READINESS_CARD.html，看当前应先发包、授权、安装还是补证据。
 7. 测完真实盒子后，双击 FIELD_RETURN_CARD.html，按卡片把 JSON、照片、日志和排障包发给工程人员。
@@ -623,6 +636,7 @@ cat > "$HANDOFF_DIR/START_HERE.html" <<STARTHERE
         <a class="button secondary" href="INSTALL_ON_MAC.command">macOS：双击安装脚本</a>
         <a class="button secondary" href="OPERATION_CARD.html">打印：电视旁操作卡</a>
         <a class="button secondary" href="HARDWARE_SELECTION_CARD.html">打印：硬件选型卡</a>
+        <a class="button secondary" href="tv-box-c920-onsite-prep-latest.md">C920：现场预备卡</a>
         <a class="button secondary" href="C920_ARRIVAL_CARD.html">C920：到货接入卡</a>
         <a class="button secondary" href="TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md">手机摄像头：信令与验收合同</a>
         <a class="button secondary" href="tv-box-phone-camera-readiness-latest.md">手机摄像头：现场准备度</a>
@@ -688,7 +702,7 @@ cat > "$HANDOFF_DIR/QUICK_START.zh-CN.md" <<QUICKSTART
 
 这个目录已经是完整交付包。不要改文件名，按下面做即可。
 
-如果不习惯看 Markdown，直接双击 \`START_HERE.html\`；只想教家人怎么用时双击 \`OPERATION_CARD.html\` 打印；需要采购/复核硬件时双击 \`HARDWARE_SELECTION_CARD.html\` 打印；C920 PRO 到货时双击 \`C920_ARRIVAL_CARD.html\`；要做手机当电视摄像头时先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`；测完真实盒子准备发回证据时双击 \`FIELD_RETURN_CARD.html\`，再把文件放进 \`FIELD_RETURN\` 文件夹并双击 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\` 或 \`PACK_FIELD_RETURN_ON_MAC.command\` 打包；如果电脑打不开网页文件，就打开 \`README_FIRST.txt\`。
+如果不习惯看 Markdown，直接双击 \`START_HERE.html\`；只想教家人怎么用时双击 \`OPERATION_CARD.html\` 打印；需要采购/复核硬件时双击 \`HARDWARE_SELECTION_CARD.html\` 打印；C920 PRO 到货前先看 \`tv-box-c920-onsite-prep-latest.md\`，到货时双击 \`C920_ARRIVAL_CARD.html\`；要做手机当电视摄像头时先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`；测完真实盒子准备发回证据时双击 \`FIELD_RETURN_CARD.html\`，再把文件放进 \`FIELD_RETURN\` 文件夹并双击 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\` 或 \`PACK_FIELD_RETURN_ON_MAC.command\` 打包；如果电脑打不开网页文件，就打开 \`README_FIRST.txt\`。
 
 安装前先打开 \`PRE_INSTALL_CHECKLIST.zh-CN.md\`，按 6 项确认电脑、电视盒子、IP、网络调试、RSA 授权和交付文件都准备好，再双击安装脚本。
 
@@ -780,6 +794,7 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 - Markdown 操作卡: \`OPERATION_CARD.zh-CN.md\`
 - 硬件选型卡: \`HARDWARE_SELECTION_CARD.html\` / \`HARDWARE_SELECTION_CARD.zh-CN.md\`
 - C920 到货接入卡: \`C920_ARRIVAL_CARD.html\` / \`tv-box-c920-arrival-card-latest.md\`
+- C920 现场预备卡: \`tv-box-c920-onsite-prep-latest.md\` / \`tv-box-c920-onsite-prep-latest.json\`
 - 音视频测试硬件方案: \`TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`
 - 手机摄像头信令与验收合同: \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`
 - 手机摄像头采集页回归: \`tv-box-phone-camera-capture-test-latest.md\`
