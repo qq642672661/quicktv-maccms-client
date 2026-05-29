@@ -92,7 +92,7 @@ BOX_IP=192.168.10.122 npm run tv-box:camera-smoke
 npm run tv-box:c920-arrived
 ```
 
-`tv-box:c920-arrived` 默认面向当前小米盒子 `192.168.10.122`，并自动带上“已插入”和 `tv-box-field-state/c920-procurement.json` 的采购状态；换盒子时加 `BOX_IP=<盒子IP>` 即可。如果预计到货日还没到，它会只提示等待，不会误跑实体摄像头验收，避免把“未到货/未插入”误判为 USB 或 Camera2 故障。确认已经提前到货并插好时，可加 `C920_ARRIVED_ALLOW_EARLY=true` 强制执行。它底层仍调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，不会减少任何 USB、Camera2、音频、热插拔和人工确认证据。
+`tv-box:c920-arrived` 默认面向当前小米盒子 `192.168.10.122`，并自动带上“已插入”和 `tv-box-field-state/c920-procurement.json` 的采购状态；换盒子时加 `BOX_IP=<盒子IP>` 即可。如果预计到货日还没到，它会只提示等待，不会误跑实体摄像头验收，避免把“未到货/未插入”误判为 USB 或 Camera2 故障。确认已经提前到货并插好时，可加 `C920_ARRIVED_ALLOW_EARLY=true` 强制执行。小米盒子只有一个 USB 口时，第一轮只直插 C920，一根线同时测真实画面和 C920 自带麦克风；直插供电不稳、C920 麦克风不进业务或必须外接独立会议麦克风时，再换带独立供电 USB Hub。它底层仍调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，不会减少任何 USB、Camera2、音频、热插拔和人工确认证据。
 
 如果摄像头已经购买但还没有到货，或现场确认还没有插到盒子 USB 口，可以先把到货卡标成待接入，避免把“未插入基线”误读成兼容失败：
 

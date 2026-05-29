@@ -37,7 +37,7 @@ run_case() {
   C920_PREP_CURRENT_DATE="$current_date" \
   node "$ROOT_DIR/scripts/tv-box-c920-onsite-prep.js" >/dev/null
 
-  node - "$report_dir/tv-box-c920-onsite-prep-latest.json" "$expected_status" <<'NODE'
+	  node - "$report_dir/tv-box-c920-onsite-prep-latest.json" "$expected_status" <<'NODE'
 const fs = require('fs')
 const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
 const expected = process.argv[3]
@@ -49,10 +49,24 @@ if (!report.commands.main.includes('tv-box:c920-arrived')) {
   console.error('missing c920 arrived command')
   process.exit(1)
 }
+if (report.inputs.currentDateSource !== 'C920_PREP_CURRENT_DATE' || report.inputs.currentDateOverride !== true) {
+  console.error('prep report must record synthetic date source and override flag')
+  process.exit(1)
+}
+if (report.singleUsbPlan?.status !== 'use_c920_builtin_microphone_first') {
+  console.error('missing single-USB C920 built-in microphone plan')
+  process.exit(1)
+}
+if (!report.singleUsbPlan?.fallback?.includes('独立供电 USB Hub')) {
+  console.error('single-USB fallback must mention powered USB Hub')
+  process.exit(1)
+}
 NODE
 
-  grep -q "C920 PRO 到货现场预备卡" "$report_dir/tv-box-c920-onsite-prep-latest.md"
-}
+	  grep -q "C920 PRO 到货现场预备卡" "$report_dir/tv-box-c920-onsite-prep-latest.md"
+	  grep -q "日期来源" "$report_dir/tv-box-c920-onsite-prep-latest.md"
+	  grep -q "单 USB 口接线策略" "$report_dir/tv-box-c920-onsite-prep-latest.md"
+	}
 
 run_case "before-arrival" "2026-05-30" "$FAKE_DEVICES" "waiting_for_delivery"
 run_case "arrival-day-online-with-noise" "2026-05-31" "$FAKE_DEVICES" "ready_to_plug_and_run_with_adb_noise"

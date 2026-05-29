@@ -185,7 +185,7 @@ C920 验收报告还会生成“到货判定卡”，直接区分“USB 没看�
 C920_PHYSICAL_STATUS=purchased_pending_arrival C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-31 npm run tv-box:c920-arrival-card
 ```
 
-当前采购状态也会持久记录在 `tv-box-field-state/c920-procurement.json`，所以 `npm run tv-box:c920-arrival-card` 和 `tv-box:next` 不带环境变量时也会显示“京东自营 / 2026-05-31 / 已采购待到货”。`npm run tv-box:c920-arrival-card` 会把最新 C920 验收报告转成 `reports/tv-box-c920-arrival-card-latest.md/json` 和可打印的 `reports/tv-box-c920-arrival-card.html`，给现场人员按“直插 C920 -> 运行验收命令 -> 电视真实画面确认 -> C920 自带麦克风/独立 USB 麦克风 -> USB 热插拔 -> 回传 support zip”顺序处理。它会明确写出：只有电视上看到 C920 PRO 真实画面，`FIELD_CAMERA_PREVIEW` 才能记 `pass`；只看到 USB 线索、Activity 打开或音频线索都不能冒充业务通过。
+当前采购状态也会持久记录在 `tv-box-field-state/c920-procurement.json`，所以 `npm run tv-box:c920-arrival-card` 和 `tv-box:next` 不带环境变量时也会显示“京东自营 / 2026-05-31 / 已采购待到货”。`npm run tv-box:c920-arrival-card` 会把最新 C920 验收报告转成 `reports/tv-box-c920-arrival-card-latest.md/json` 和可打印的 `reports/tv-box-c920-arrival-card.html`，给现场人员按“直插 C920 -> 运行验收命令 -> 电视真实画面确认 -> C920 自带麦克风/独立 USB 麦克风 -> USB 热插拔 -> 回传 support zip”顺序处理。小米盒子只有一个 USB 口时，第一轮只直插 C920，一根线同时测画面和 C920 自带麦克风；直插供电不稳、C920 麦克风不进业务或必须外接会议麦克风时，再换带独立供电 USB Hub。它会明确写出：只有电视上看到 C920 PRO 真实画面，`FIELD_CAMERA_PREVIEW` 才能记 `pass`；只看到 USB 线索、Activity 打开或音频线索都不能冒充业务通过。
 
 想在一键安装后顺手跑摄像头冒烟，可以打开开关：
 
