@@ -37,6 +37,7 @@
     "tv-box:hardware-profile": "node ./scripts/tv-box-hardware-profile.js",
     "tv-box:inspect": "tsx ./scripts/tv-box-inspect.ts",
     "tv-box:install-debug": "./scripts/tv-box-install-debug.sh",
+    "tv-box:next": "./scripts/tv-box-next.sh",
     "tv-box:preflight": "./scripts/tv-box-preflight.sh",
     "tv-box:release-ledger": "node ./scripts/tv-box-release-ledger.js",
     "tv-box:remote-test": "tsx ./scripts/tv-box-remote-test.ts",

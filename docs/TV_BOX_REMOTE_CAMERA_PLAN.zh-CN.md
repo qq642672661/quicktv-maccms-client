@@ -38,6 +38,7 @@
 - `MainActivity` 对摄像头预览和权限设置这类外部 Activity 做保活处理，避免用户测试摄像头或打开系统设置后返回时 App 被直接关闭。
 - `AndroidManifest.xml` 声明 `LEANBACK_LAUNCHER`、电视启动横幅、可选摄像头/麦克风/USB Host 能力和 `CAMERA`、`RECORD_AUDIO` 权限。摄像头、麦克风与 USB Host 均为 `required=false`，避免无外设盒子无法安装。
 - 直播页遥控器策略改为：OK/左/右打开频道列表，上/下切台，频道 +/- 切台；有数字键的遥控器可按 1-9 直达对应频道，有播放/暂停物理键的遥控器可直接暂停或继续播放，频道列表里按 7 收藏/取消收藏、按 8 在“全部频道/只看收藏”间切换，0/菜单/信息/帮助键进入帮助/自检，返回先收起菜单、再回简易首页。
+- 新增 `npm run tv-box:next`：现场唯一下一步入口，先判断 ADB/RSA 授权；已授权就继续跑一键安装、遥控器冒烟、摄像头/麦克风冒烟和交付沉淀，未授权就刷新 preflight、site readiness、command center 和 `reports/tv-box-next-latest.md/json`，把“先发包、先授权、先安装、先补工具链、先补现场证据”压成一页。
 - 新增 `npm run tv-box:easy`：中文引导式一键安装验收，串起构建、连接、安装、启动、遥控器冒烟、验收报告、兼容性 latest 记录、兼容性自动汇总、一键安装自动沉淀摘要和交付目录。
 - 新增 `npm run tv-box:install-debug`：构建 Debug APK、安装到盒子、启动 App，并可自动跑遥控器冒烟脚本。
 - 新增 `npm run tv-box:camera-smoke`：连上盒子后自动授予摄像头和录音权限，进入摄像头页，触发“测试摄像头”，确认 `CameraPreviewActivity` 成为前台 Activity，再按返回验证可退出并抓取摄像头/音频/崩溃日志。
@@ -57,7 +58,7 @@
 - 新增 `npm run tv-box:completion-audit`：把源码合约、自动化报告、交付包、排障包、离线验收表和真实盒子验收状态汇成 `reports/tv-box-completion-audit-latest.md/json`，逐项标记 `proven`、`needs_box`、`missing` 或 `failed`，防止把“未接真实盒子”误说成“已完成实机验收”。默认 `final_delivery` 审计校验最终交付 zip 和排障 zip 的 SHA256；交付包和排障包内分别携带 `handoff_package`、`support_bundle` 随包快照，不自我引用尚未完成写入的外层压缩包。
 - 新增 `npm run tv-box:release-ledger`：生成 `reports/tv-box-release-ledger-latest.md/json` 并追加 `reports/tv-box-release-ledger.jsonl`，沉淀每次发包的 releaseId、APK/交付包/排障包 SHA256、readiness、完成度统计、兼容性样本、Git 分支/提交和下一步动作，便于长期追踪现场版本。
 - 新增 `npm run tv-box:audit`：自动核对简易入口、摄像头入口、Manifest、APK、验收报告、安装日志说明和交付包是否齐全。
-- 新增 `.github/workflows/tv-box-check.yml`：在 PR、main/master/codex 分支推送或手动触发时基于 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 与对应 `.sha256`，避免电视盒子方案只停留在单台电脑可用。
+- 新增 `.github/workflows/tv-box-check.yml`：在 PR、main/master/codex 分支推送或手动触发时基于 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-next-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 与对应 `.sha256`，避免电视盒子方案只停留在单台电脑可用。
 - 基础遥控器冒烟和摄像头冒烟都会抓取交互期间日志；出现 `AndroidRuntime` 或 `FATAL EXCEPTION` 会直接失败，避免“看起来按过键但实际崩过”的假通过。
 
 ## 遥控器交互规范
@@ -298,10 +299,11 @@ BOX_IP=<盒子IP> npm run tv-box:support
 最省事的一条命令：让盒子打开“开发者选项 / 网络调试”后，在本仓库执行：
 
 ```bash
+BOX_IP=<盒子IP> npm run tv-box:next
 BOX_IP=<盒子IP> npm run tv-box:easy
 ```
 
-脚本会自动完成：
+优先用 `tv-box:next`，因为它会先处理“有没有授权、该不该安装、要不要先补交付包”。当盒子已授权时，安装脚本会自动完成：
 
 - 构建 Debug APK。
 - `adb connect <盒子IP>:5555`。

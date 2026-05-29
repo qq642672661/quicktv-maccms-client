@@ -75,6 +75,7 @@ run_step "Easy install summary final refresh" npm run tv-box:easy-summary
 run_step "Completion evidence audit final refresh" npm run tv-box:completion-audit
 run_step "Release ledger" npm run tv-box:release-ledger
 run_step "Command center" npm run tv-box:command-center
+run_step "Next-step autopilot report" env NEXT_ALLOW_INSTALL=false NEXT_BUILD_DELIVERY=false npm run tv-box:next
 run_step "Site readiness card final refresh" npm run tv-box:site-readiness
 run_step "Delivery audit" npm run tv-box:audit
 

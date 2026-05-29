@@ -115,10 +115,11 @@ npm run dev
 最傻瓜化的电视盒子安装验收：
 
 ```bash
+BOX_IP=<盒子IP> npm run tv-box:next
 BOX_IP=<盒子IP> npm run tv-box:easy
 ```
 
-这条命令会用中文提示构建 Debug APK、连接盒子、安装、启动，自动跑一次遥控器基础冒烟，并生成交付报告、兼容性 latest 记录、兼容性自动汇总、`reports/tv-box-easy-run-latest.md/json` 一键安装自动沉淀摘要和交付目录；如果安装或验收中断，会自动生成 `reports/tv-box-support-latest.zip` 排障包。如果已经构建过 APK，只想重装：
+优先跑 `tv-box:next`，它会先判断 ADB/RSA 授权；盒子已授权时自动执行 `tv-box:easy` 安装验收，未授权时自动刷新预检、现场开工卡、交付总控和 `reports/tv-box-next-latest.md/json`，把下一步压成一页。`tv-box:easy` 会用中文提示构建 Debug APK、连接盒子、安装、启动，自动跑一次遥控器基础冒烟，并生成交付报告、兼容性 latest 记录、兼容性自动汇总、`reports/tv-box-easy-run-latest.md/json` 一键安装自动沉淀摘要和交付目录；如果安装或验收中断，会自动生成 `reports/tv-box-support-latest.zip` 排障包。如果已经构建过 APK，只想重装：
 
 ```bash
 BOX_IP=<盒子IP> SKIP_BUILD=true npm run tv-box:install-debug
@@ -156,6 +157,8 @@ BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy
 不确定是电脑环境、APK、ADB 连接还是盒子权限问题时，先跑体检：
 
 ```bash
+npm run tv-box:next
+BOX_IP=<盒子IP> npm run tv-box:next
 npm run tv-box:authorize
 BOX_IP=<盒子IP> npm run tv-box:authorize
 npm run tv-box:preflight
@@ -167,6 +170,8 @@ BOX_IP=<盒子IP> npm run tv-box:inspect
 ```
 
 `tv-box:authorize` 是 ADB/RSA 授权助手，会生成 `reports/tv-box-authorization-latest.md` 和 `reports/tv-box-authorization-latest.json`，把现场状态压成 `adb_missing`、`no_box_target`、`target_not_visible`、`needs_rsa_authorization`、`needs_device_selection` 或 `ready_for_install`；报告没有变成 `ready_for_install` 前不要反复安装，先按报告处理同网、盒子 IP、电视屏幕 RSA 弹窗或 `DEVICE_SERIAL`。
+
+`tv-box:next` 是现场唯一下一步入口，会生成 `reports/tv-box-next-latest.md` 和 `reports/tv-box-next-latest.json`。它先运行授权助手；如果状态是 `ready_for_install` 且未禁用自动安装，就继续执行安装、启动、遥控器冒烟、摄像头/麦克风冒烟和交付沉淀；如果未授权，就刷新 preflight、site readiness 和 command center，只告诉现场先授权、先发包、先补工具链还是先等真实盒子。需要只生成报告不安装时可设置 `NEXT_ALLOW_INSTALL=false`，需要禁止自动补交付包时可设置 `NEXT_BUILD_DELIVERY=false`。
 
 `tv-box:preflight` 是安装前自动预检，会生成 `reports/tv-box-preflight-latest.md` 和 `reports/tv-box-preflight-latest.json`，自动判断电脑工具链、遥控器逻辑自测、Debug APK、交付压缩包 SHA256、ADB 授权状态和下一步动作；没有实机时会明确提示“可交付给现场但还需真实盒子验收”。
 
@@ -244,7 +249,7 @@ FIELD_OPERATOR=张三 FIELD_BOX_BRAND=小米 FIELD_ZERO_KEY_HELP=pass FIELD_HELP
 
 本地或 CI 没接盒子、也没填写现场字段时，`tv-box:field-record` 只刷新 latest 记录，不会把空白 `needs_box` 行追加进累计 CSV；需要强制追加时可设置 `FIELD_APPEND_MATRIX=true`。
 
-仓库也提供 GitHub Actions 工作流 `.github/workflows/tv-box-check.yml`，会在 PR、main/master/codex 分支推送或手动触发时用 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-latest.*`、`reports/tv-box-return-inbox-json/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-hardware-profile-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-ux-audit-latest.*`、`reports/tv-box-site-readiness-latest.*`、`reports/tv-box-site-readiness-card.html`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 和对应 `.sha256` 作为构建产物。
+仓库也提供 GitHub Actions 工作流 `.github/workflows/tv-box-check.yml`，会在 PR、main/master/codex 分支推送或手动触发时用 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-latest.*`、`reports/tv-box-return-inbox-json/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-hardware-profile-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-next-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-ux-audit-latest.*`、`reports/tv-box-site-readiness-latest.*`、`reports/tv-box-site-readiness-card.html`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 和对应 `.sha256` 作为构建产物。
 
 需要留存验收证据时，生成一份 Markdown 报告：
 

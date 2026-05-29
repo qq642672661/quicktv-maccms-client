@@ -226,6 +226,15 @@ function buildActionCards(state) {
   const actions = [
     {
       audience: '工程维护人员/现场安装人员',
+      title: '只跑唯一下一步入口',
+      command: 'BOX_IP=<盒子IP> npm run tv-box:next',
+      details: [
+        '它会先判断 ADB/RSA 授权；已授权就继续安装验收，未授权就刷新预检、现场开工卡和交付总控。',
+        '需要只生成报告不安装时设置 NEXT_ALLOW_INSTALL=false；需要禁止自动重建交付包时设置 NEXT_BUILD_DELIVERY=false。'
+      ]
+    },
+    {
+      audience: '工程维护人员/现场安装人员',
       title: '先跑 ADB/RSA 授权助手',
       command: 'BOX_IP=<盒子IP> npm run tv-box:authorize',
       details: [
