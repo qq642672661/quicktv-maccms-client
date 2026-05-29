@@ -51,11 +51,6 @@ echo "Purchase: ${C920_PURCHASE_CHANNEL:-unknown}; expected arrival: ${C920_EXPE
 echo "Current date: $C920_ARRIVED_CURRENT_DATE"
 echo "底层验收脚本：npm run tv-box:c920-acceptance"
 
-if [[ "${C920_ARRIVED_DRY_RUN:-false}" == "true" ]]; then
-  echo "Dry run only; acceptance not executed."
-  exit 0
-fi
-
 if is_iso_date "$C920_EXPECTED_ARRIVAL_DATE" \
   && is_iso_date "$C920_ARRIVED_CURRENT_DATE" \
   && [[ "$C920_ARRIVED_CURRENT_DATE" < "$C920_EXPECTED_ARRIVAL_DATE" ]] \
@@ -124,6 +119,13 @@ try {
       echo "C920_ARRIVED_ALLOW_UNREADY=true 已设置，继续执行底层验收。"
       ;;
   esac
+fi
+
+if is_truthy "${C920_ARRIVED_DRY_RUN:-false}"; then
+  echo
+  echo "Dry run only; date and C920 preflight passed, but acceptance was not executed."
+  echo "到货并确认 C920 已插好后，去掉 C920_ARRIVED_DRY_RUN=true 再运行：npm run tv-box:c920-arrived"
+  exit 0
 fi
 
 exec "$ROOT_DIR/scripts/tv-box-c920-pro-acceptance.sh"

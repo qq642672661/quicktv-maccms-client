@@ -536,6 +536,34 @@ assert.equal(report.procurement.expectedArrivalDate, '2026-05-30')
 assert.equal(report.fieldDecision.level, 'usb_seen_camera_hal_missing')
 NODE
 
+DRY_RUN_REPORT_DIR="$TMP_ROOT/arrived-dry-run-reports"
+mkdir -p "$DRY_RUN_REPORT_DIR"
+(
+  cd "$ROOT_DIR"
+  TV_BOX_TOOL_PATH="$FAKE_BIN" \
+  REPORT_DIR="$DRY_RUN_REPORT_DIR" \
+  BOX_IP=192.168.10.122 \
+  DEVICE_SERIAL=192.168.10.122:5555 \
+  TV_BOX_C920_PROCUREMENT_JSON="$TMP_ROOT/c920-procurement.json" \
+  TV_BOX_C920_PREP_FAKE_ADB_DEVICES="$FAKE_PREP_READY" \
+  C920_ARRIVED_CURRENT_DATE=2026-05-30 \
+  C920_ARRIVED_DRY_RUN=true \
+  INTERACTIVE=false \
+  FIELD_APPEND_MATRIX=false \
+  ./scripts/tv-box-c920-arrived.sh >"$TMP_ROOT/c920-arrived-dry-run.log" 2>&1
+)
+
+grep -q "C920 arrival preflight status: ready_to_plug_and_run_with_adb_noise" "$TMP_ROOT/c920-arrived-dry-run.log"
+grep -q "Dry run only; date and C920 preflight passed" "$TMP_ROOT/c920-arrived-dry-run.log"
+if grep -q "Logitech C920 PRO TV-box acceptance" "$TMP_ROOT/c920-arrived-dry-run.log"; then
+  echo "c920-arrived dry run executed acceptance" >&2
+  exit 1
+fi
+if [[ -f "$DRY_RUN_REPORT_DIR/tv-box-c920-pro-acceptance-latest.json" ]]; then
+  echo "c920-arrived dry run wrote acceptance report" >&2
+  exit 1
+fi
+
 UNREADY_REPORT_DIR="$TMP_ROOT/arrived-unready-reports"
 mkdir -p "$UNREADY_REPORT_DIR"
 FAKE_PREP_NO_TARGET=$'List of devices attached\n192.0.2.10:5555        offline transport_id:1\n'
