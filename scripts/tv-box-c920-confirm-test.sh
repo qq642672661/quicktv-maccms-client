@@ -46,6 +46,16 @@ run_confirm --video pass --mic fail --hotplug pass --support-code na --dry-run >
 [[ "$(read_json "process.stdout.write(j.fieldInputs.audioInput)")" == "fail" ]]
 [[ "$(read_json "process.stdout.write(j.fieldInputs.supportCode)")" == "na" ]]
 
+C920_CONFIRM_CURRENT_DATE=2026-05-30 run_confirm --all-pass >/dev/null
+[[ "$(read_json "process.stdout.write(j.status)")" == "blocked_before_expected_arrival" ]]
+read_json "if (j.preflight.status !== 'waiting_for_delivery') process.exit(1)"
+read_json "if (!j.preflight.reason.includes('2026-05-31')) process.exit(1)"
+
+fake_offline_adb=$'List of devices attached\n192.168.10.122:5555\toffline product:frozen\n'
+C920_CONFIRM_CURRENT_DATE=2026-05-31 TV_BOX_C920_PREP_FAKE_ADB_DEVICES="$fake_offline_adb" run_confirm --all-pass >/dev/null
+[[ "$(read_json "process.stdout.write(j.status)")" == "blocked_by_preflight" ]]
+read_json "if (j.preflight.status !== 'needs_box_connection') process.exit(1)"
+
 run_confirm --video pass --mic pass --hotplug pass --dry-run >/dev/null
 [[ "$(read_json "process.stdout.write(j.status)")" == "needs_confirmation" ]]
 read_json "if (!j.missingConfirmations.includes('维护码照片/可读性')) process.exit(1)"

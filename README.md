@@ -177,7 +177,7 @@ C920_CONFIRM_ALL_PASS=true npm run tv-box:c920-confirm
 C920_CONFIRM_VIDEO=pass C920_CONFIRM_MIC=fail C920_CONFIRM_HOTPLUG=pass C920_CONFIRM_SUPPORT_CODE=pass npm run tv-box:c920-confirm
 ```
 
-不带确认参数时，`npm run tv-box:c920-confirm` 只生成 `reports/tv-box-c920-confirm-latest.md/json`，告诉现场下一条该怎么写；它不会误改验收结果。
+不带确认参数时，`npm run tv-box:c920-confirm` 只生成 `reports/tv-box-c920-confirm-latest.md/json`，告诉现场下一条该怎么写；它不会误改验收结果。确认写入也会先做日期和 ADB 前置保护：预计到货日前不会把全通过写入矩阵；到货日以后会先跑 `tv-box:c920-prep`，只有目标盒子在线且状态适合验收才继续写入。确实提前到货并已插好时才加 `C920_CONFIRM_ALLOW_EARLY=true`，确实要绕过前置检查时才加 `C920_CONFIRM_ALLOW_UNREADY=true` 或 `C920_CONFIRM_SKIP_PREFLIGHT=true`。
 
 C920 验收报告还会生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并汇总 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数；首次未插摄像头运行时会保存 `reports/tv-box-c920-pro-baseline.json` 到货前基线，后续插上 C920 会自动对比是否新增 USB 视频、Camera2 摄像头和 USB 音频。上述证据用于排障，不替代 Camera2/CameraService 枚举和电视真实画面确认。已采购但未到货时，可把采购渠道和预计到货日写进操作卡，避免把未插入基线误读成故障：
 
