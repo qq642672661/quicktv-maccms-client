@@ -9,6 +9,9 @@ const outputJsonPath = process.env.TV_BOX_C920_ARRIVAL_CARD_JSON || path.join(re
 const outputMarkdownPath = process.env.TV_BOX_C920_ARRIVAL_CARD_MD || path.join(reportDir, 'tv-box-c920-arrival-card-latest.md')
 const outputHtmlPath = process.env.TV_BOX_C920_ARRIVAL_CARD_HTML || path.join(reportDir, 'tv-box-c920-arrival-card.html')
 const procurementStatePath = process.env.TV_BOX_C920_PROCUREMENT_JSON || path.join(rootDir, 'tv-box-field-state', 'c920-procurement.json')
+const remoteSmokeJsonPath = process.env.TV_BOX_REMOTE_SMOKE_JSON || path.join(reportDir, 'tv-box-remote-smoke-latest.json')
+const remoteSmokeMarkdownPath = process.env.TV_BOX_REMOTE_SMOKE_MD || path.join(reportDir, 'tv-box-remote-smoke-latest.md')
+const remoteSmokeScreenshotPath = process.env.TV_BOX_REMOTE_SMOKE_SCREENSHOT || path.join(reportDir, 'tv-box-remote-smoke-latest.png')
 
 function readJson(filePath) {
   try {
@@ -379,9 +382,50 @@ function normalizeFieldResultsForDecision(fieldResults, decisionLevel) {
   }
 }
 
+function readableArtifactPath(filePath) {
+  if (!filePath) return ''
+  if (!path.isAbsolute(filePath)) {
+    return fs.existsSync(path.join(reportDir, filePath)) ? filePath : ''
+  }
+  return fs.existsSync(filePath) ? path.relative(reportDir, filePath) : ''
+}
+
+function boundaryLines(source) {
+  if (Array.isArray(source?.boundary) && source.boundary.length) return source.boundary
+  return [
+    'ADB remote smoke proves only remote keyevent navigation, launch/focus state, screenshot capture, and filtered crash-log state.',
+    'It does not replace physical remote-control hand-feel acceptance.',
+    'It does not replace C920 real preview, microphone input, or USB hotplug acceptance.'
+  ]
+}
+
+function remoteSmokeEvidenceFromLatest(report, latestReport) {
+  const artifacts = latestReport?.artifacts || {}
+  return {
+    status: latestReport?.status || 'unknown',
+    exitCode: latestReport?.exitCode ?? '',
+    reportPath: readableArtifactPath(artifacts.json?.path || remoteSmokeJsonPath),
+    markdownPath: readableArtifactPath(artifacts.markdown?.path || remoteSmokeMarkdownPath),
+    screenshotPath: readableArtifactPath(artifacts.screenshotLatest?.path || remoteSmokeScreenshotPath),
+    runDir: latestReport?.runDir || '',
+    deviceSerial: latestReport?.deviceSerial || report?.deviceSerial || '',
+    scenarioCount: Array.isArray(latestReport?.scenarios) ? latestReport.scenarios.length : 0,
+    keyEventCount: Array.isArray(latestReport?.keyEvents) ? latestReport.keyEvents.length : 0,
+    crashDetected: latestReport?.crashCheck?.crashDetected === true,
+    replacesRealRemoteAcceptance: latestReport?.boundary?.replacesRealRemoteAcceptance === true,
+    replacesC920Acceptance: latestReport?.boundary?.replacesC920Acceptance === true,
+    boundary: boundaryLines(latestReport)
+  }
+}
+
 function buildRemoteSmokeEvidence(report) {
   const source = report?.remoteSmokeEvidence || {}
   const remoteSmokeExitCode = report?.remoteSmokeExitCode
+  const latestReport = readJson(remoteSmokeJsonPath)
+  if (!source.status && latestReport) {
+    return remoteSmokeEvidenceFromLatest(report, latestReport)
+  }
+
   return {
     status: source.status || (remoteSmokeExitCode === 99 ? 'skipped' : 'missing'),
     exitCode: source.exitCode ?? remoteSmokeExitCode ?? '',
@@ -395,13 +439,7 @@ function buildRemoteSmokeEvidence(report) {
     crashDetected: source.crashDetected === true,
     replacesRealRemoteAcceptance: source.replacesRealRemoteAcceptance === true,
     replacesC920Acceptance: source.replacesC920Acceptance === true,
-    boundary: Array.isArray(source.boundary) && source.boundary.length
-      ? source.boundary
-      : [
-        'ADB remote smoke proves only remote keyevent navigation, launch/focus state, screenshot capture, and filtered crash-log state.',
-        'It does not replace physical remote-control hand-feel acceptance.',
-        'It does not replace C920 real preview, microphone input, or USB hotplug acceptance.'
-      ]
+    boundary: boundaryLines(source)
   }
 }
 
