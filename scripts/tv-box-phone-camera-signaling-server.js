@@ -146,6 +146,24 @@ function publicBaseUrlFromRequest(request) {
   return `${proto}://${host}`
 }
 
+function signalingUrlFromBaseUrl(baseUrl) {
+  const url = new URL(String(baseUrl || '').replace(/\/$/, '') || 'http://127.0.0.1')
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+  url.pathname = '/phone-camera/signaling'
+  url.search = ''
+  url.hash = ''
+  return url.toString()
+}
+
+function isSecureBrowserOrigin(value) {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || ['localhost', '127.0.0.1', '::1'].includes(url.hostname)
+  } catch {
+    return false
+  }
+}
+
 function getLanHints() {
   const hints = []
   for (const addresses of Object.values(os.networkInterfaces())) {
@@ -564,6 +582,12 @@ function createSignalingServer(options = {}) {
     return `${String(baseUrl).replace(/\/$/, '')}/phone-camera?room=${roomCode}`
   }
 
+  function buildSignalingUrl(request) {
+    if (options.publicSignalingUrl) return options.publicSignalingUrl
+    const baseUrl = options.publicBaseUrl || publicBaseUrlFromRequest(request)
+    return signalingUrlFromBaseUrl(baseUrl)
+  }
+
   function handleRoomCreate(peer, payload, request) {
     if (payload.role !== 'tv') {
       send(peer, makeError('room_create_role_invalid', 'Only TV can create a room.', false))
@@ -604,13 +628,20 @@ function createSignalingServer(options = {}) {
     peer.roomCode = roomCode
     rooms.set(roomCode, room)
 
+    const signalingUrl = buildSignalingUrl(request)
     send(peer, {
       type: 'room.created',
       roomCode,
       roomCodeSource: requestedRoomCode ? 'tv_requested' : 'server_generated',
       expiresAtUtc: room.expiresAtUtc,
       pairUrl: room.pairUrl,
-      signalingUrl: `ws://${request.headers.host || '127.0.0.1'}/phone-camera/signaling`,
+      signalingUrl,
+      secureContext: {
+        phoneCameraRequiresSecureContext: true,
+        pairUrlBrowserSecure: isSecureBrowserOrigin(room.pairUrl),
+        signalingUrlSecure: signalingUrl.startsWith('wss://'),
+        note: '真实手机浏览器采集摄像头/麦克风通常需要 HTTPS 页面和 WSS 信令；HTTP 局域网入口只适合本地调试或 App 包装。'
+      },
       ttlSeconds: roomTtlSeconds
     })
   }
@@ -840,6 +871,7 @@ async function main() {
   if (lanHints.length > 0) {
     console.log(`LAN hints: ${lanHints.map((ip) => `http://${ip}:${port}/phone-camera`).join(', ')}`)
   }
+  console.log('Secure-context note: real phone browsers usually require HTTPS/WSS for camera and microphone permission; use a trusted LAN certificate, tunnel/reverse proxy, or phone app for field acceptance.')
   console.log('Boundary: signaling only; real pass still requires TV native WebRTC receiver, phone capture, first frame, audio, stats, reconnect, and privacy-stop evidence.')
 
   process.on('SIGINT', async () => {
@@ -862,5 +894,6 @@ if (require.main === module) {
 module.exports = {
   createSignalingServer,
   buildPhoneCameraHtml,
+  signalingUrlFromBaseUrl,
   SIGNALING_MESSAGE_REQUIREMENTS
 }

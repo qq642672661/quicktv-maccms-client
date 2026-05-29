@@ -326,6 +326,31 @@ async function main() {
     if (health.rooms.length !== 1 || !health.rooms[0].tvConnected) fail('healthz did not expose the TV room')
     steps.push(['healthz_room_snapshot', 'pass', `${health.rooms.length} room`])
 
+    const secureService = createSignalingServer({
+      publicBaseUrl: 'https://hello-tv.local',
+      roomTtlSeconds: 600,
+      codeGenerator: () => '135790',
+      logger: { log() {}, info() {}, warn() {}, error() {} }
+    })
+    let secureTv = null
+    try {
+      await secureService.listen(0, '127.0.0.1')
+      const secureAddress = secureService.address()
+      const secureWsUrl = `ws://127.0.0.1:${secureAddress.port}/phone-camera/signaling`
+      secureTv = await new WsProbe('secure_tv', secureWsUrl).open()
+      secureTv.send({ type: 'room.create', role: 'tv', deviceId: 'mitv-azfp0', appVersion: '1.0.5', roomCode: '135790' })
+      const secureCreated = await secureTv.waitFor('room.created')
+      if (secureCreated.pairUrl !== 'https://hello-tv.local/phone-camera?room=135790') fail(`secure pairUrl mismatch: ${secureCreated.pairUrl}`)
+      if (secureCreated.signalingUrl !== 'wss://hello-tv.local/phone-camera/signaling') fail(`secure signalingUrl mismatch: ${secureCreated.signalingUrl}`)
+      if (!secureCreated.secureContext?.phoneCameraRequiresSecureContext) fail('secureContext must state that phone camera requires a secure context')
+      if (secureCreated.secureContext?.pairUrlBrowserSecure !== true) fail('HTTPS pairUrl must be browser-secure')
+      if (secureCreated.secureContext?.signalingUrlSecure !== true) fail('HTTPS signalingUrl must be WSS')
+      steps.push(['https_public_base_uses_wss', 'pass', secureCreated.signalingUrl])
+    } finally {
+      if (secureTv) secureTv.close()
+      await secureService.close()
+    }
+
     const duplicateTv = await new WsProbe('duplicate_tv', wsUrl).open()
     probes.push(duplicateTv)
     duplicateTv.send({ type: 'room.create', role: 'tv', deviceId: 'mitv-duplicate', appVersion: '1.0.5', roomCode: '482913' })
