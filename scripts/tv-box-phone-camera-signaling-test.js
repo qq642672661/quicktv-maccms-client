@@ -327,7 +327,7 @@ async function main() {
     steps.push(['healthz_room_snapshot', 'pass', `${health.rooms.length} room`])
 
     const secureService = createSignalingServer({
-      publicBaseUrl: 'https://hello-tv.local',
+      publicBaseUrl: 'https://hello-tv.local/phone-camera',
       roomTtlSeconds: 600,
       codeGenerator: () => '135790',
       logger: { log() {}, info() {}, warn() {}, error() {} }

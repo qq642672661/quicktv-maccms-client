@@ -163,6 +163,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
 - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
 - \`tv-box-phone-camera-capture-test-latest.md/json\`: 手机采集端页面回归，证明房间码、getUserMedia、RTCPeerConnection、停止按钮和 HTTPS/WSS 安全边界已固化。
+- \`tv-box-phone-camera-readiness-latest.md/json\`: 手机当电视摄像头现场准备度，证明 HTTPS/WSS、手机入口、信令健康检查和电视端房间创建参数已准备好。
 - \`tv-box-phone-camera-signaling-test-latest.md/json\`: 局域网 WebSocket 信令服务回归，证明房间码、单手机配对、offer/answer/ICE、keepalive、stats 和挂断关闭房间可跑通。
 - \`tv-box-phone-camera-scenarios-test-latest.md/json\`: 手机当电视摄像头合同场景回归，覆盖扫码首帧、权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁。
 - \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。
@@ -223,6 +224,7 @@ run_and_capture "Hardware compatibility profile" "$BUNDLE_DIR/tv-box-hardware-pr
 run_and_capture "C920 arrival operation card" "$BUNDLE_DIR/tv-box-c920-arrival-card.txt" npm run -s tv-box:c920-arrival-card
 run_and_capture "Phone camera contract" "$BUNDLE_DIR/tv-box-phone-camera-contract.txt" npm run -s tv-box:phone-camera-contract
 run_and_capture "Phone camera capture page regression" "$BUNDLE_DIR/tv-box-phone-camera-capture-test.txt" npm run -s tv-box:phone-camera-capture-test
+run_and_capture "Phone camera field readiness" "$BUNDLE_DIR/tv-box-phone-camera-readiness.txt" npm run -s tv-box:phone-camera-readiness
 run_and_capture "Phone camera LAN signaling regression" "$BUNDLE_DIR/tv-box-phone-camera-signaling-test.txt" npm run -s tv-box:phone-camera-signaling-test
 run_and_capture "Phone camera scenarios regression" "$BUNDLE_DIR/tv-box-phone-camera-scenarios-test.txt" npm run -s tv-box:phone-camera-scenarios-test
 run_and_capture "Preflight summary" "$BUNDLE_DIR/tv-box-preflight.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" "$ROOT_DIR/scripts/tv-box-preflight.sh"
@@ -254,6 +256,8 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.m
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.json" "tv-box-phone-camera-contract-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-capture-test-latest.md" "tv-box-phone-camera-capture-test-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-capture-test-latest.json" "tv-box-phone-camera-capture-test-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-readiness-latest.md" "tv-box-phone-camera-readiness-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-readiness-latest.json" "tv-box-phone-camera-readiness-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-signaling-test-latest.md" "tv-box-phone-camera-signaling-test-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-signaling-test-latest.json" "tv-box-phone-camera-signaling-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-scenarios-test-latest.md" "tv-box-phone-camera-scenarios-test-latest.md"
@@ -262,6 +266,8 @@ copy_if_exists "$REPORT_DIR/tv-box-phone-camera-contract-latest.md" "tv-box-phon
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-contract-latest.json" "tv-box-phone-camera-contract-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-capture-test-latest.md" "tv-box-phone-camera-capture-test-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-capture-test-latest.json" "tv-box-phone-camera-capture-test-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-readiness-latest.md" "tv-box-phone-camera-readiness-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-readiness-latest.json" "tv-box-phone-camera-readiness-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-signaling-test-latest.md" "tv-box-phone-camera-signaling-test-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-signaling-test-latest.json" "tv-box-phone-camera-signaling-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.md" "tv-box-phone-camera-scenarios-test-latest.md"

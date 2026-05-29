@@ -44,6 +44,7 @@ run_step "TV-box next-step scenarios regression syntax" bash -n scripts/tv-box-n
 run_step "TV-box phone camera contract syntax" node --check scripts/tv-box-phone-camera-contract.js
 run_step "TV-box phone camera capture page regression syntax" node --check scripts/tv-box-phone-camera-capture-test.js
 run_step "TV-box phone camera pairing smoke syntax" bash -n scripts/tv-box-phone-camera-pair-smoke.sh
+run_step "TV-box phone camera readiness syntax" node --check scripts/tv-box-phone-camera-readiness.js
 run_step "TV-box phone camera WebRTC SDK gate syntax" node --check scripts/tv-box-webrtc-sdk-gate.js
 run_step "TV-box phone camera signaling server syntax" node --check scripts/tv-box-phone-camera-signaling-server.js
 run_step "TV-box phone camera signaling regression syntax" node --check scripts/tv-box-phone-camera-signaling-test.js
@@ -74,6 +75,7 @@ run_step "Compatibility summary" npm run tv-box:compatibility-summary
 run_step "Hardware compatibility profile" npm run tv-box:hardware-profile
 run_step "Phone camera contract" npm run tv-box:phone-camera-contract
 run_step "Phone camera capture page regression" npm run tv-box:phone-camera-capture-test
+run_step "Phone camera field readiness" npm run tv-box:phone-camera-readiness
 run_step "Phone camera LAN signaling regression" npm run tv-box:phone-camera-signaling-test
 run_step "Phone camera scenarios regression" npm run tv-box:phone-camera-scenarios-test
 run_step "Phone camera WebRTC SDK gate" npm run tv-box:webrtc-sdk-gate

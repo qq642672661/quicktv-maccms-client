@@ -96,6 +96,7 @@ jobs:
             reports/tv-box-c920-arrival-card.html
             reports/tv-box-phone-camera-contract-latest.*
             reports/tv-box-phone-camera-capture-test-latest.*
+            reports/tv-box-phone-camera-readiness-latest.*
             reports/tv-box-phone-camera-signaling-test-latest.*
             reports/tv-box-phone-camera-scenarios-test-latest.*
             reports/tv-box-webrtc-sdk-gate-latest.*

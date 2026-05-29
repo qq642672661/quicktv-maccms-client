@@ -6,6 +6,8 @@ const os = require('os')
 const DEFAULT_PORT = Number(process.env.PHONE_CAMERA_SIGNALING_PORT || process.env.PORT || 17891)
 const DEFAULT_HOST = process.env.PHONE_CAMERA_SIGNALING_HOST || '0.0.0.0'
 const DEFAULT_ROOM_TTL_SECONDS = Number(process.env.PHONE_CAMERA_ROOM_TTL_SECONDS || 600)
+const DEFAULT_PUBLIC_BASE_URL = process.env.PHONE_CAMERA_PUBLIC_BASE_URL || process.env.TV_BOX_PHONE_CAMERA_PUBLIC_BASE_URL || ''
+const DEFAULT_PUBLIC_SIGNALING_URL = process.env.PHONE_CAMERA_PUBLIC_SIGNALING_URL || process.env.TV_BOX_PHONE_CAMERA_PUBLIC_SIGNALING_URL || ''
 
 const SIGNALING_MESSAGE_REQUIREMENTS = {
   'room.create': ['role', 'deviceId', 'appVersion'],
@@ -151,6 +153,20 @@ function signalingUrlFromBaseUrl(baseUrl) {
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.pathname = '/phone-camera/signaling'
   url.search = ''
+  url.hash = ''
+  return url.toString()
+}
+
+function phoneCameraPairUrlFromBaseUrl(baseUrl, roomCode) {
+  const url = new URL(String(baseUrl || '').replace(/\/$/, '') || 'http://127.0.0.1')
+  const normalizedPath = url.pathname.replace(/\/$/, '')
+  if (!normalizedPath || normalizedPath === '/') {
+    url.pathname = '/phone-camera'
+  } else if (!normalizedPath.endsWith('/phone-camera')) {
+    url.pathname = `${normalizedPath}/phone-camera`
+  }
+  url.search = ''
+  url.searchParams.set('room', roomCode)
   url.hash = ''
   return url.toString()
 }
@@ -579,7 +595,7 @@ function createSignalingServer(options = {}) {
 
   function buildPairUrl(roomCode, request) {
     const baseUrl = options.publicBaseUrl || publicBaseUrlFromRequest(request)
-    return `${String(baseUrl).replace(/\/$/, '')}/phone-camera?room=${roomCode}`
+    return phoneCameraPairUrlFromBaseUrl(baseUrl, roomCode)
   }
 
   function buildSignalingUrl(request) {
@@ -859,7 +875,10 @@ function createSignalingServer(options = {}) {
 }
 
 async function main() {
-  const service = createSignalingServer()
+  const service = createSignalingServer({
+    publicBaseUrl: DEFAULT_PUBLIC_BASE_URL || undefined,
+    publicSignalingUrl: DEFAULT_PUBLIC_SIGNALING_URL || undefined
+  })
   await service.listen(DEFAULT_PORT, DEFAULT_HOST)
   const address = service.address()
   const port = typeof address === 'object' && address ? address.port : DEFAULT_PORT
@@ -868,6 +887,10 @@ async function main() {
   console.log('QuickTV phone camera LAN signaling service is running.')
   console.log(`Health: http://127.0.0.1:${port}/healthz`)
   console.log(`WebSocket: ws://127.0.0.1:${port}/phone-camera/signaling`)
+  if (DEFAULT_PUBLIC_BASE_URL) {
+    console.log(`Public phone entry: ${phoneCameraPairUrlFromBaseUrl(DEFAULT_PUBLIC_BASE_URL, '000000').replace('000000', '<room>')}`)
+    console.log(`Public signaling: ${DEFAULT_PUBLIC_SIGNALING_URL || signalingUrlFromBaseUrl(DEFAULT_PUBLIC_BASE_URL)}`)
+  }
   if (lanHints.length > 0) {
     console.log(`LAN hints: ${lanHints.map((ip) => `http://${ip}:${port}/phone-camera`).join(', ')}`)
   }
@@ -895,5 +918,6 @@ module.exports = {
   createSignalingServer,
   buildPhoneCameraHtml,
   signalingUrlFromBaseUrl,
+  phoneCameraPairUrlFromBaseUrl,
   SIGNALING_MESSAGE_REQUIREMENTS
 }
