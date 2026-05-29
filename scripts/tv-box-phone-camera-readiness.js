@@ -15,9 +15,13 @@ const reportDir = process.env.REPORT_DIR || path.join(rootDir, 'reports')
 const outputJsonPath = process.env.TV_BOX_PHONE_CAMERA_READINESS_JSON || path.join(reportDir, 'tv-box-phone-camera-readiness-latest.json')
 const outputMarkdownPath = process.env.TV_BOX_PHONE_CAMERA_READINESS_MD || path.join(reportDir, 'tv-box-phone-camera-readiness-latest.md')
 const outputOnsiteCardPath = process.env.TV_BOX_PHONE_CAMERA_ONSITE_CARD_HTML || path.join(reportDir, 'tv-box-phone-camera-onsite-card.html')
-const defaultPairBaseUrl = process.env.TV_BOX_PHONE_CAMERA_PAIR_BASE_URL ||
-  process.env.VITE_PHONE_CAMERA_PAIR_BASE_URL ||
-  'https://quicktv.local/phone-camera'
+const defaultPairBaseUrlValue = 'https://quicktv.local/phone-camera'
+const configuredPairBaseUrl = [
+  ['TV_BOX_PHONE_CAMERA_PAIR_BASE_URL', process.env.TV_BOX_PHONE_CAMERA_PAIR_BASE_URL],
+  ['VITE_PHONE_CAMERA_PAIR_BASE_URL', process.env.VITE_PHONE_CAMERA_PAIR_BASE_URL]
+].find(([, value]) => String(value || '').trim())
+const defaultPairBaseUrl = configuredPairBaseUrl?.[1] || defaultPairBaseUrlValue
+const pairBaseUrlSource = configuredPairBaseUrl?.[0] || 'built_in_default'
 const defaultProfileId = process.env.TV_BOX_PHONE_CAMERA_PROFILE_ID ||
   process.env.VITE_PHONE_CAMERA_PROFILE_ID ||
   'default_720p_15'
@@ -48,6 +52,33 @@ function normalizePairBaseUrl(value) {
 
 function isLocalHost(hostname) {
   return ['localhost', '127.0.0.1', '::1'].includes(String(hostname || '').toLowerCase())
+}
+
+function buildFieldReachability(pairBaseUrl, source) {
+  const parsed = new URL(pairBaseUrl)
+  const hostname = parsed.hostname.toLowerCase()
+  const isQuickTvDefault = hostname === 'quicktv.local'
+  const isLocalDomain = hostname.endsWith('.local')
+  const defaultOrLocalPlaceholder = source === 'built_in_default' || isQuickTvDefault || isLocalDomain
+
+  return {
+    status: defaultOrLocalPlaceholder ? 'needs_phone_dns_https_proof' : 'configured_entry_still_needs_real_phone_proof',
+    pairBaseUrlSource: source,
+    hostname,
+    defaultPairBaseUrl: defaultPairBaseUrlValue,
+    usesDefaultOrLocalPlaceholder: defaultOrLocalPlaceholder,
+    provesFieldPhoneReachability: false,
+    requiresPhoneDnsHttpsProof: true,
+    detail: defaultOrLocalPlaceholder
+      ? `${pairBaseUrl} 是默认/局域网占位入口；必须用现场手机证明 DNS、HTTPS 证书和扫码首开都可用。`
+      : `${pairBaseUrl} 已配置为自定义入口；自动检查仍不能代替真实手机扫码首开证据。`,
+    requiredEvidence: [
+      '手机扫码首开成功截图，包含地址栏域名',
+      '手机浏览器 HTTPS 证书/安全锁状态截图',
+      '手机摄像头和麦克风权限已允许截图',
+      '手机端本地预览与电视端首帧照片或短视频'
+    ]
+  }
 }
 
 function isBrowserSecureUrl(value) {
@@ -258,6 +289,15 @@ function htmlEscape(value) {
 }
 
 function buildMarkdown(report) {
+  const reachabilityRows = [
+    ['入口来源', report.fieldReachability.pairBaseUrlSource],
+    ['主机名', report.fieldReachability.hostname],
+    ['是否默认/局域网占位入口', report.fieldReachability.usesDefaultOrLocalPlaceholder ? 'yes' : 'no'],
+    ['自动证明手机现场可达', report.fieldReachability.provesFieldPhoneReachability ? 'yes' : 'no'],
+    ['需要手机 DNS/HTTPS 证据', report.fieldReachability.requiresPhoneDnsHttpsProof ? 'yes' : 'no'],
+    ['说明', report.fieldReachability.detail]
+  ]
+
   return `# 手机当电视摄像头现场准备度
 
 - 生成时间 UTC: \`${report.generatedAtUtc}\`
@@ -271,6 +311,12 @@ function buildMarkdown(report) {
 ## 准备度检查
 
 ${markdownTable(report.checks.map((check) => [check.id, check.status, check.required ? 'yes' : 'no', check.detail]), ['检查', '状态', '必需', '证据'])}
+
+## 现场手机可达性
+
+${markdownTable(reachabilityRows, ['项目', '值'])}
+
+必须由现场手机补齐：${report.fieldReachability.requiredEvidence.join('；')}
 
 ## 现场命令
 
@@ -288,8 +334,10 @@ function buildOnsiteCardHtml(report) {
   const statusClass = report.status === 'pass' ? 'ok' : report.status === 'warn' ? 'warn' : 'fail'
   const failedChecks = report.checks.filter((check) => check.status !== 'pass')
   const evidenceItems = [
+    '手机扫码首开成功截图，包含地址栏、域名和 HTTPS 证书安全状态',
     '电视端房间码/二维码照片',
     '手机端摄像头和麦克风权限截图',
+    '手机端本地预览截图',
     '电视端首帧照片或短视频',
     '电视端收到声音的业务证据',
     'session.stats JSON 或维护码照片',
@@ -297,6 +345,7 @@ function buildOnsiteCardHtml(report) {
   ]
   const steps = [
     `工程电脑启动信令：${report.fieldCommands.startSignaling}`,
+    `手机先直接打开扫码 URL，确认不是 DNS 或 HTTPS 证书错误页：${report.inputs.pairUrl}`,
     `电视盒子打开配对页：${report.fieldCommands.androidPairSmoke}`,
     `手机扫码打开：${report.inputs.pairUrl}`,
     '手机允许摄像头和麦克风，屏幕上必须能看到本地预览。',
@@ -344,6 +393,7 @@ function buildOnsiteCardHtml(report) {
       <p>手机扫码 URL：<code>${htmlEscape(report.inputs.pairUrl)}</code></p>
       <p>信令 URL：<code>${htmlEscape(report.inputs.signalingUrl)}</code></p>
       <p>媒体档位：<code>${htmlEscape(report.inputs.profileId)}</code></p>
+      <p>现场手机可达性：<code>${htmlEscape(report.fieldReachability.status)}</code></p>
     </section>
 
     <section class="panel">
@@ -354,6 +404,7 @@ function buildOnsiteCardHtml(report) {
     <section class="panel guard">
       <h2>不能误判通过</h2>
       <ul>
+        <li><code>quicktv.local</code> 是默认安全占位域名；没有手机 DNS、HTTPS 证书和首开截图时，不能说手机现场可达。</li>
         <li>手机扫码页能打开，只说明入口存在，不等于手机权限通过。</li>
         <li>信令 room.create 成功，只说明房间码和 WebSocket 可用，不等于电视有画面。</li>
         <li>只有电视上看到真实首帧、收到声音、持续上报 stats、可重连且手机停止按钮有效，才能写入 pass。</li>
@@ -391,11 +442,13 @@ async function main() {
   const pairIsSecure = isBrowserSecureUrl(pairBaseUrl)
   const signalingIsSecure = isSecureSignalingUrl(signalingUrl)
   const insecureAllowed = allowInsecure && !pairIsSecure
+  const fieldReachability = buildFieldReachability(pairBaseUrl, pairBaseUrlSource)
 
   addCheck(checks, 'pair_base_url_parseable', pairParsed.pathname.endsWith('/phone-camera'), pairBaseUrl)
   addCheck(checks, 'pair_entry_secure_context', pairIsSecure || insecureAllowed, pairIsSecure ? 'HTTPS/localhost 安全上下文' : `非安全入口: ${pairBaseUrl}`, !insecureAllowed)
   addCheck(checks, 'signaling_url_secure', signalingIsSecure || insecureAllowed, signalingIsSecure ? signalingUrl : `非安全信令: ${signalingUrl}`, !insecureAllowed)
   addCheck(checks, 'https_pair_uses_wss', pairParsed.protocol !== 'https:' || signalingParsed.protocol === 'wss:', signalingUrl)
+  addCheck(checks, 'phone_dns_https_field_proof', !fieldReachability.usesDefaultOrLocalPlaceholder, fieldReachability.detail, false)
   addCheck(checks, 'room_code_six_digits', /^[0-9]{6}$/.test(defaultRoomCode), defaultRoomCode)
   addCheck(checks, 'profile_capped_for_tv_box', ['mvp_480p_15', 'default_720p_15', 'lab_720p_30'].includes(defaultProfileId), defaultProfileId)
 
@@ -453,6 +506,7 @@ async function main() {
     projectRoot: rootDir,
     inputs: {
       pairBaseUrl,
+      pairBaseUrlSource,
       pairUrl,
       signalingUrl,
       roomCode: defaultRoomCode,
@@ -460,6 +514,7 @@ async function main() {
       allowInsecure
     },
     checks,
+    fieldReachability,
     fieldCommands: {
       startSignaling: `PHONE_CAMERA_PUBLIC_BASE_URL=${pairBaseUrl} npm run tv-box:phone-camera-signaling`,
       androidPairSmoke: 'BOX_IP=<盒子IP> npm run tv-box:phone-camera-pair-smoke',
@@ -467,8 +522,10 @@ async function main() {
       fallbackUsbCamera: 'C920 PRO 到货后执行 npm run tv-box:c920-arrived'
     },
     acceptanceBoundary: {
-      provesSecureEntryConfiguration: failed.length === 0 && warned.length === 0,
+      provesSecureEntryConfiguration: failed.length === 0,
       provesLocalSignalingServiceCanStart: true,
+      provesFieldPhoneReachability: fieldReachability.provesFieldPhoneReachability,
+      requiresPhoneDnsHttpsProof: fieldReachability.requiresPhoneDnsHttpsProof,
       provesPhoneCapturePermissions: false,
       provesTvNativeWebrtcFirstFrame: false,
       provesTvAudioReceiving: false,

@@ -165,8 +165,8 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
 - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
 - \`tv-box-phone-camera-capture-test-latest.md/json\`: 手机采集端页面回归，证明房间码、getUserMedia、RTCPeerConnection、停止按钮和 HTTPS/WSS 安全边界已固化。
-- \`tv-box-phone-camera-readiness-latest.md/json\`: 手机当电视摄像头现场准备度，证明 HTTPS/WSS、手机入口、信令健康检查和电视端房间创建参数已准备好。
-- \`handoff-PHONE_CAMERA_ONSITE_CARD.html\`: 手机当电视摄像头现场操作卡，现场按启动信令、电视配对、手机扫码、首帧/音频/stats/重连/停止证据闭环处理。
+- \`tv-box-phone-camera-readiness-latest.md/json\`: 手机当电视摄像头现场准备度，证明 HTTPS/WSS、手机入口、信令健康检查和电视端房间创建参数已准备好；不证明默认 \`quicktv.local\` 已被现场手机解析和信任。
+- \`handoff-PHONE_CAMERA_ONSITE_CARD.html\`: 手机当电视摄像头现场操作卡，现场按启动信令、手机 DNS/HTTPS 首开、电视配对、手机扫码、首帧/音频/stats/重连/停止证据闭环处理。
 - \`tv-box-phone-camera-signaling-test-latest.md/json\`: 局域网 WebSocket 信令服务回归，证明房间码、单手机配对、offer/answer/ICE、keepalive、stats 和挂断关闭房间可跑通。
 - \`tv-box-phone-camera-scenarios-test-latest.md/json\`: 手机当电视摄像头合同场景回归，覆盖扫码首帧、权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁。
 - \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。

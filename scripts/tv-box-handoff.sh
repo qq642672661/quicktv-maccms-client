@@ -502,7 +502,7 @@ HelloTV 电视盒子交付包 - 先看这里
 2. 如果只想教家人怎么用，双击 OPERATION_CARD.html，直接打印或贴在电视旁。
 3. 不知道该买哪种盒子、遥控器、USB 摄像头或麦克风时，双击 HARDWARE_SELECTION_CARD.html 打印选型卡。
 4. C920 PRO 到货前或现场开工前，先打开 tv-box-c920-onsite-prep-latest.md；到货后再双击 C920_ARRIVAL_CARD.html 看接线、验收命令、失败分流和不能关闭的边界；看见真实画面、确认麦克风和热插拔后，再按 tv-box-c920-confirm-latest.md 写入 pass/fail。
-5. 手机当电视摄像头还在开发/验收时，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md，看 WebRTC 房间码、手机采集页、信令、隐私和现场验收边界；tv-box-phone-camera-readiness-latest.md 先看 HTTPS/WSS 和房间创建准备度，tv-box-phone-camera-capture-test-latest.md 只证明手机页面具备 getUserMedia/offer/停止按钮，tv-box-phone-camera-signaling-test-latest.md 只证明局域网信令层，不证明真实首帧。
+5. 手机当电视摄像头还在开发/验收时，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md，看 WebRTC 房间码、手机采集页、信令、隐私和现场验收边界；tv-box-phone-camera-readiness-latest.md 先看 HTTPS/WSS、手机 DNS/证书首开和房间创建准备度，tv-box-phone-camera-capture-test-latest.md 只证明手机页面具备 getUserMedia/offer/停止按钮，tv-box-phone-camera-signaling-test-latest.md 只证明局域网信令层，不证明真实首帧。
 6. 安装前双击 SITE_READINESS_CARD.html，看当前应先发包、授权、安装还是补证据。
 7. 测完真实盒子后，双击 FIELD_RETURN_CARD.html，按卡片把 JSON、照片、日志和排障包发给工程人员。
 8. 回传证据不要散发：把 JSON、维护码照片、INSTALL_LOG.txt 或排障包、异常照片放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command 生成 zip。
@@ -760,7 +760,7 @@ cat > "$HANDOFF_DIR/QUICK_START.zh-CN.md" <<QUICKSTART
 - 菜单/信息/帮助键：帮助/自检。
 
 安装完成后打开 \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`，按清单打勾再交付；不知道盒子、遥控器、USB 摄像头或麦克风该怎么选时，先打开 \`HARDWARE_SELECTION_CARD.html\` 给采购/现场看，再打开 \`tv-box-hardware-profile-latest.md\` 看机器生成的风险标记。
-如果现场要试“手机当电视摄像头”，先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\` 和 \`tv-box-phone-camera-readiness-latest.md\`；这条路线按手机采集、局域网 WebSocket 信令、电视盒子原生 WebRTC 接收端验收，不把手机误当系统 Camera2 摄像头，且普通局域网 HTTP 入口不能当成真实手机权限通过。
+如果现场要试“手机当电视摄像头”，先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\` 和 \`tv-box-phone-camera-readiness-latest.md\`；这条路线按手机采集、局域网 WebSocket 信令、电视盒子原生 WebRTC 接收端验收，不把手机误当系统 Camera2 摄像头，且默认 \`quicktv.local\`、普通局域网 HTTP 入口或二维码页打开都不能当成真实手机权限和电视首帧通过。
 测过真实盒子后，现场人员可先打开 \`FIELD_WIZARD_OFFLINE.html\`，不用 npm 也能先套用一键模板、修正不符合项，再下载 JSON/Markdown/env 记录；工程人员单份 JSON 用 \`npm run tv-box:field-import -- <现场下载的JSON>\` 自动导入，多份 JSON 放入 \`reports/tv-box-field-inbox/\` 后用 \`npm run tv-box:field-inbox\` 批量导入，也可拿到 env 后运行 \`BOX_IP=<盒子IP> npm run tv-box:field-record\`，把盒子、遥控器、摄像头和麦克风结果写入 \`tv-box-field-record-latest.md\` 与 \`tv-box-field-matrix.csv\`；再运行或查看自动生成的 \`tv-box-compatibility-summary-latest.md\`，快速区分推荐组合、核心可用组合、待修复组合和待补测组合。多人多盒复测时打开 \`FIELD_COMPATIBILITY_MATRIX.zh-CN.md\` 按模板统一记录。
 发回现场证据前，先打开 \`FIELD_RETURN_CARD.html\`，按“必须发回 4 样”检查 JSON、维护码照片、INSTALL_LOG/support zip 和异常按键照片，避免工程人员拿到不完整证据。工程人员收到整个目录或 zip 后先运行 \`npm run tv-box:return-inbox -- <现场回传目录或zip>\`，确认齐全后再加 \`--append\` 写入兼容性矩阵。
 现场人员不会压缩文件时，把所有证据放进 \`FIELD_RETURN\` 文件夹，Windows 双击 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\`，macOS 双击 \`PACK_FIELD_RETURN_ON_MAC.command\`；生成的 \`HelloTV-field-return-*.zip\` 直接发给工程人员。
