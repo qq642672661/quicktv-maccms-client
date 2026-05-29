@@ -9,6 +9,9 @@ on:
       - "codex/**"
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   tv-box-check:
     name: Build, audit, and package TV-box APK
