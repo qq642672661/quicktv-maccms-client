@@ -712,11 +712,16 @@ ${nextActions.map((item) => `- ${item}`).join('\n')}
 fs.writeFileSync(latestMarkdownPath, markdown)
 NODE
 
+run_capture "Write C920 arrival operation card" "$RUN_DIR/arrival-card.log" \
+  node scripts/tv-box-c920-arrival-card.js || true
+
 popd >/dev/null
 
 echo
 echo "C920 PRO acceptance report: $LATEST_MD"
 echo "Machine-readable report: $LATEST_JSON"
+echo "C920 arrival card: $REPORT_DIR/tv-box-c920-arrival-card-latest.md"
+echo "Printable C920 arrival card: $REPORT_DIR/tv-box-c920-arrival-card.html"
 echo "Logs: $RUN_DIR"
 
 if [[ "$camera_smoke_status" -ne 0 ]]; then

@@ -92,6 +92,8 @@ jobs:
             reports/tv-box-field-matrix.csv
             reports/tv-box-compatibility-summary-latest.*
             reports/tv-box-hardware-profile-latest.*
+            reports/tv-box-c920-arrival-card-latest.*
+            reports/tv-box-c920-arrival-card.html
             reports/tv-box-phone-camera-contract-latest.*
             reports/tv-box-phone-camera-scenarios-test-latest.*
             reports/tv-box-easy-run-latest.*

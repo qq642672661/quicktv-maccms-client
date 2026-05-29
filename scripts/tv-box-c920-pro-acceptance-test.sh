@@ -272,6 +272,9 @@ function readJson(name) {
 
 const report = readJson('tv-box-c920-pro-acceptance-latest.json')
 const record = readJson('tv-box-field-record-latest.json')
+const card = readJson('tv-box-c920-arrival-card-latest.json')
+const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.md'), 'utf8')
+const cardHtml = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card.html'), 'utf8')
 
 assert.equal(report.status, 'needs_camera_follow_up')
 assert.equal(report.cameraSmokeExitCode, 42)
@@ -301,6 +304,11 @@ assert.equal(record.checks.cameraPermission, 'pass')
 assert.equal(record.checks.recordAudioPermission, 'pass')
 assert.equal(record.matrix.appendRow, false)
 assert.match(record.notes, /CameraService Number of camera devices=0/)
+assert.equal(card.status, 'usb_seen_camera_hal_missing')
+assert.equal(card.checklist.usbVideoDetected, true)
+assert.match(cardMarkdown, /只有电视上看到 C920 PRO 真实画面/)
+assert.match(cardMarkdown, /带独立供电 USB Hub/)
+assert.match(cardHtml, /打印 C920 到货操作卡/)
 NODE
 
 echo "C920 PRO acceptance failure self-test passed."
