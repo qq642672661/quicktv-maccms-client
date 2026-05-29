@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 const fs = require('fs')
+const crypto = require('crypto')
 const http = require('http')
+const net = require('net')
 const path = require('path')
 const { createSignalingServer } = require('./tv-box-phone-camera-signaling-server')
 
@@ -45,14 +47,185 @@ function httpJson(url) {
   })
 }
 
+function encodeClientFrame(data, opcode = 0x1) {
+  const payload = Buffer.from(String(data))
+  let header
+
+  if (payload.length < 126) {
+    header = Buffer.alloc(2)
+    header[1] = 0x80 | payload.length
+  } else if (payload.length < 65536) {
+    header = Buffer.alloc(4)
+    header[1] = 0x80 | 126
+    header.writeUInt16BE(payload.length, 2)
+  } else {
+    header = Buffer.alloc(10)
+    header[1] = 0x80 | 127
+    header.writeBigUInt64BE(BigInt(payload.length), 2)
+  }
+
+  header[0] = 0x80 | opcode
+  const mask = crypto.randomBytes(4)
+  const masked = Buffer.from(payload)
+  for (let index = 0; index < masked.length; index += 1) {
+    masked[index] ^= mask[index % 4]
+  }
+
+  return Buffer.concat([header, mask, masked])
+}
+
+function decodeServerFrames(buffer) {
+  const frames = []
+  let offset = 0
+
+  while (offset + 2 <= buffer.length) {
+    const byte1 = buffer[offset]
+    const byte2 = buffer[offset + 1]
+    const opcode = byte1 & 0x0f
+    const masked = (byte2 & 0x80) !== 0
+    let length = byte2 & 0x7f
+    let cursor = offset + 2
+
+    if (length === 126) {
+      if (cursor + 2 > buffer.length) break
+      length = buffer.readUInt16BE(cursor)
+      cursor += 2
+    } else if (length === 127) {
+      if (cursor + 8 > buffer.length) break
+      const bigLength = buffer.readBigUInt64BE(cursor)
+      if (bigLength > BigInt(Number.MAX_SAFE_INTEGER)) fail('WebSocket test frame is too large')
+      length = Number(bigLength)
+      cursor += 8
+    }
+
+    const maskOffset = masked ? 4 : 0
+    if (cursor + maskOffset + length > buffer.length) break
+
+    let payload = buffer.subarray(cursor + maskOffset, cursor + maskOffset + length)
+    if (masked) {
+      const mask = buffer.subarray(cursor, cursor + 4)
+      payload = Buffer.from(payload)
+      for (let index = 0; index < payload.length; index += 1) {
+        payload[index] ^= mask[index % 4]
+      }
+    }
+
+    frames.push({ opcode, payload })
+    offset = cursor + maskOffset + length
+  }
+
+  return {
+    frames,
+    rest: buffer.subarray(offset)
+  }
+}
+
+class NodeWsFallback {
+  static CONNECTING = 0
+  static OPEN = 1
+  static CLOSING = 2
+  static CLOSED = 3
+
+  constructor(url) {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'ws:') fail(`fallback WebSocket only supports ws:// URLs: ${url}`)
+    this.url = url
+    this.readyState = NodeWsFallback.CONNECTING
+    this.listeners = { open: [], message: [], error: [], close: [] }
+    this.buffer = Buffer.alloc(0)
+    this.handshakeComplete = false
+    this.socket = net.createConnection(Number(parsed.port || 80), parsed.hostname)
+    const key = crypto.randomBytes(16).toString('base64')
+
+    this.socket.on('connect', () => {
+      this.socket.write([
+        `GET ${parsed.pathname}${parsed.search} HTTP/1.1`,
+        `Host: ${parsed.host}`,
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        `Sec-WebSocket-Key: ${key}`,
+        'Sec-WebSocket-Version: 13',
+        '',
+        ''
+      ].join('\r\n'))
+    })
+    this.socket.on('data', (chunk) => this.handleData(chunk))
+    this.socket.on('error', (error) => this.emit('error', { message: error.message, error }))
+    this.socket.on('close', () => {
+      this.readyState = NodeWsFallback.CLOSED
+      this.emit('close', {})
+    })
+  }
+
+  addEventListener(type, listener, options = {}) {
+    const wrapped = options.once
+      ? (event) => {
+        this.listeners[type] = this.listeners[type].filter((item) => item !== wrapped)
+        listener(event)
+      }
+      : listener
+    this.listeners[type].push(wrapped)
+  }
+
+  emit(type, event) {
+    for (const listener of [...(this.listeners[type] || [])]) {
+      listener(event)
+    }
+  }
+
+  handleData(chunk) {
+    this.buffer = Buffer.concat([this.buffer, chunk])
+
+    if (!this.handshakeComplete) {
+      const marker = this.buffer.indexOf('\r\n\r\n')
+      if (marker < 0) return
+      const head = this.buffer.subarray(0, marker).toString('utf8')
+      this.buffer = this.buffer.subarray(marker + 4)
+      if (!head.startsWith('HTTP/1.1 101')) {
+        this.readyState = NodeWsFallback.CLOSED
+        this.emit('error', { message: `WebSocket handshake failed: ${head.split('\r\n')[0]}` })
+        return
+      }
+      this.handshakeComplete = true
+      this.readyState = NodeWsFallback.OPEN
+      this.emit('open', {})
+    }
+
+    const decoded = decodeServerFrames(this.buffer)
+    this.buffer = decoded.rest
+    for (const frame of decoded.frames) {
+      if (frame.opcode === 0x1) {
+        this.emit('message', { data: frame.payload.toString('utf8') })
+      } else if (frame.opcode === 0x8) {
+        this.readyState = NodeWsFallback.CLOSED
+        this.socket.end()
+      }
+    }
+  }
+
+  send(data) {
+    if (this.readyState !== NodeWsFallback.OPEN) fail('fallback WebSocket is not open')
+    this.socket.write(encodeClientFrame(data))
+  }
+
+  close() {
+    if (this.readyState === NodeWsFallback.OPEN) {
+      this.readyState = NodeWsFallback.CLOSING
+      this.socket.write(encodeClientFrame('', 0x8))
+    }
+    this.socket.end()
+  }
+}
+
+const WebSocketImpl = typeof WebSocket === 'function' ? WebSocket : NodeWsFallback
+const WS_OPEN = WebSocketImpl.OPEN ?? 1
+const WS_CONNECTING = WebSocketImpl.CONNECTING ?? 0
+
 class WsProbe {
   constructor(name, url) {
-    if (typeof WebSocket !== 'function') {
-      fail('Node.js WebSocket global is unavailable; use Node 22+ for this test.')
-    }
     this.name = name
     this.url = url
-    this.ws = new WebSocket(url)
+    this.ws = new WebSocketImpl(url)
     this.messages = []
     this.waiters = []
 
@@ -64,7 +237,7 @@ class WsProbe {
   }
 
   async open() {
-    if (this.ws.readyState === WebSocket.OPEN) return this
+    if (this.ws.readyState === WS_OPEN) return this
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`${this.name} open timeout`)), 2000)
       this.ws.addEventListener('open', () => {
@@ -112,7 +285,7 @@ class WsProbe {
   }
 
   close() {
-    if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+    if (this.ws.readyState === WS_OPEN || this.ws.readyState === WS_CONNECTING) {
       this.ws.close()
     }
   }
