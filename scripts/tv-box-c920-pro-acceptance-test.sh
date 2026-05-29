@@ -142,6 +142,40 @@ case "$args" in
     echo "fake inspect"
     ;;
   *"tv-box:smoke"*)
+    node - "$report_dir" <<'NODE'
+const fs = require('fs')
+const path = require('path')
+const reportDir = process.argv[2]
+const screenshotPath = path.join(reportDir, 'tv-box-remote-smoke-latest.png')
+fs.writeFileSync(screenshotPath, 'fake-png')
+const report = {
+  status: 'pass',
+  exitCode: 0,
+  deviceSerial: '192.168.10.122:5555',
+  runDir: path.join(reportDir, 'tv-box-remote-smoke', 'fake-run'),
+  boundary: {
+    replacesRealRemoteAcceptance: false,
+    replacesC920Acceptance: false
+  },
+  crashCheck: {
+    crashDetected: false
+  },
+  scenarios: [
+    { id: 'live_help_menu_home' },
+    { id: 'search_history_rescue' },
+    { id: 'classic_home_rescue' },
+    { id: 'camera_setup_navigation' }
+  ],
+  keyEvents: Array.from({ length: 36 }, (_, index) => ({ keyCode: index })),
+  artifacts: {
+    json: { path: path.join(reportDir, 'tv-box-remote-smoke-latest.json'), exists: true },
+    markdown: { path: path.join(reportDir, 'tv-box-remote-smoke-latest.md'), exists: true },
+    screenshotLatest: { path: screenshotPath, exists: true }
+  }
+}
+fs.writeFileSync(path.join(reportDir, 'tv-box-remote-smoke-latest.json'), `${JSON.stringify(report, null, 2)}\n`)
+fs.writeFileSync(path.join(reportDir, 'tv-box-remote-smoke-latest.md'), '# fake remote smoke\n')
+NODE
     echo "fake remote smoke"
     ;;
   *"tv-box:camera-smoke"*)
@@ -284,6 +318,12 @@ assert.equal(report.procurement.purchaseChannel, '京东自营')
 assert.equal(report.procurement.expectedArrivalDate, '2026-05-30')
 assert.equal(report.physicalStatus.status, 'inserted')
 assert.match(report.physicalStatus.label, /已插入 C920/)
+assert.equal(report.remoteSmokeEvidence.status, 'pass')
+assert.equal(report.remoteSmokeEvidence.scenarioCount, 4)
+assert.equal(report.remoteSmokeEvidence.keyEventCount, 36)
+assert.equal(report.remoteSmokeEvidence.crashDetected, false)
+assert.equal(report.remoteSmokeEvidence.replacesC920Acceptance, false)
+assert.equal(report.remoteSmokeEvidence.screenshotPath, 'tv-box-remote-smoke-latest.png')
 assert.equal(report.cameraSmokeExitCode, 42)
 assert.equal(report.cameraService.cameraCount, '0')
 assert.equal(report.fieldDecision.level, 'usb_seen_camera_hal_missing')
@@ -338,6 +378,8 @@ assert.match(cardMarkdown, /C920_MIC_BUSINESS_INPUT/)
 assert.match(cardMarkdown, /C920_HOTPLUG_RETEST/)
 assert.match(cardMarkdown, /npm run tv-box:return-inbox/)
 assert.match(cardMarkdown, /Fake UVC Camera|Logitech/)
+assert.match(cardMarkdown, /ADB 遥控器冒烟证据/)
+assert.match(cardMarkdown, /tv-box-remote-smoke-latest\.png/)
 assert.match(cardHtml, /打印 C920 到货操作卡/)
 assert.match(cardHtml, /C920 回传证据文件名/)
 assert.match(cardHtml, /SUPPORT_CODE_C920/)

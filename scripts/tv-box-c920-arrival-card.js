@@ -379,6 +379,32 @@ function normalizeFieldResultsForDecision(fieldResults, decisionLevel) {
   }
 }
 
+function buildRemoteSmokeEvidence(report) {
+  const source = report?.remoteSmokeEvidence || {}
+  const remoteSmokeExitCode = report?.remoteSmokeExitCode
+  return {
+    status: source.status || (remoteSmokeExitCode === 99 ? 'skipped' : 'missing'),
+    exitCode: source.exitCode ?? remoteSmokeExitCode ?? '',
+    reportPath: source.reportPath || '',
+    markdownPath: source.markdownPath || '',
+    screenshotPath: source.screenshotPath || '',
+    runDir: source.runDir || '',
+    deviceSerial: source.deviceSerial || report?.deviceSerial || '',
+    scenarioCount: source.scenarioCount ?? 0,
+    keyEventCount: source.keyEventCount ?? 0,
+    crashDetected: source.crashDetected === true,
+    replacesRealRemoteAcceptance: source.replacesRealRemoteAcceptance === true,
+    replacesC920Acceptance: source.replacesC920Acceptance === true,
+    boundary: Array.isArray(source.boundary) && source.boundary.length
+      ? source.boundary
+      : [
+        'ADB remote smoke proves only remote keyevent navigation, launch/focus state, screenshot capture, and filtered crash-log state.',
+        'It does not replace physical remote-control hand-feel acceptance.',
+        'It does not replace C920 real preview, microphone input, or USB hotplug acceptance.'
+      ]
+  }
+}
+
 function buildCard(report) {
   const physicalStatus = readPhysicalStatus(report)
   const decision = buildDecision(report, physicalStatus)
@@ -451,6 +477,7 @@ function buildCard(report) {
       usbAudioIncreased: report?.baselineComparison?.signals?.usbAudioIncreased,
       audioInputChanged: report?.baselineComparison?.signals?.audioInputChanged
     },
+    remoteSmokeEvidence: buildRemoteSmokeEvidence(report),
     evidenceReturn: buildEvidenceReturnChecklist(boxIp, command),
     closeGuard: [
       '只有电视上看到 C920 PRO 真实画面，FIELD_CAMERA_PREVIEW 才能记 pass。',
@@ -484,6 +511,19 @@ function buildMarkdown(card) {
     ['FIELD_CAMERA_PREVIEW', resultLabel(card.fieldResults.cameraPreview)],
     ['FIELD_AUDIO_INPUT', resultLabel(card.fieldResults.audioInput)],
     ['FIELD_USB_HOTPLUG', resultLabel(card.fieldResults.usbHotplug)]
+  ]
+
+  const remoteSmokeRows = [
+    ['状态', card.remoteSmokeEvidence.status],
+    ['退出码', card.remoteSmokeEvidence.exitCode],
+    ['设备', card.remoteSmokeEvidence.deviceSerial || 'unknown'],
+    ['场景数 / keyevent 数', `${card.remoteSmokeEvidence.scenarioCount} / ${card.remoteSmokeEvidence.keyEventCount}`],
+    ['捕获 fatal/JS 运行时异常', card.remoteSmokeEvidence.crashDetected ? 'yes' : 'no'],
+    ['JSON 报告', card.remoteSmokeEvidence.reportPath || '未生成'],
+    ['Markdown 报告', card.remoteSmokeEvidence.markdownPath || '未生成'],
+    ['截图', card.remoteSmokeEvidence.screenshotPath || '未生成'],
+    ['替代真实遥控器验收', card.remoteSmokeEvidence.replacesRealRemoteAcceptance ? 'yes' : 'no'],
+    ['替代 C920 实物验收', card.remoteSmokeEvidence.replacesC920Acceptance ? 'yes' : 'no']
   ]
 
   const evidenceReturnRows = card.evidenceReturn.items.map((item) => [
@@ -541,6 +581,12 @@ ${card.hardwareEvidence.usbDeviceSummaries.length ? card.hardwareEvidence.usbDev
 - 新增 USB 音频: \`${yesNo(card.baselineComparison.usbAudioIncreased)}\`
 - 音频输入数量变化: \`${yesNo(card.baselineComparison.audioInputChanged)}\`
 
+## ADB 遥控器冒烟证据
+
+${makeTable(remoteSmokeRows, ['证据', '值'])}
+
+${card.remoteSmokeEvidence.boundary.map((item) => `- ${item}`).join('\n')}
+
 ## 不能关闭的边界
 
 ${card.closeGuard.map((item) => `- ${item}`).join('\n')}
@@ -565,6 +611,7 @@ ${makeTable(evidenceReturnRows, ['文件名', '关闭要求', '证明什么', 'p
 function buildHtml(card) {
   const branchItems = card.branchSteps.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
   const guardItems = card.closeGuard.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
+  const remoteSmokeBoundaryItems = card.remoteSmokeEvidence.boundary.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
   const evidenceRows = card.evidenceReturn.items.map((item) => `<tr><th>${htmlEscape(item.fileName)}</th><td>${htmlEscape(item.requiredForClose ? '必须' : '失败/unknown 时必须')}</td><td>${htmlEscape(item.proves)}</td><td>${htmlEscape(item.passRule)}</td></tr>`).join('\n')
   const usbDeviceItems = card.hardwareEvidence.usbDeviceSummaries.length
     ? card.hardwareEvidence.usbDeviceSummaries.map((item) => `<li>${htmlEscape(item)}</li>`).join('\n')
@@ -576,6 +623,18 @@ function buildHtml(card) {
     ['电视真实画面', yesNo(card.checklist.realPreviewConfirmed)],
     ['麦克风业务输入', yesNo(card.checklist.audioConfirmed)],
     ['USB 热插拔', yesNo(card.checklist.hotplugConfirmed)]
+  ].map(([label, value]) => `<tr><th>${htmlEscape(label)}</th><td>${htmlEscape(value)}</td></tr>`).join('\n')
+  const remoteSmokeRows = [
+    ['状态', card.remoteSmokeEvidence.status],
+    ['退出码', card.remoteSmokeEvidence.exitCode],
+    ['设备', card.remoteSmokeEvidence.deviceSerial || 'unknown'],
+    ['场景数 / keyevent 数', `${card.remoteSmokeEvidence.scenarioCount} / ${card.remoteSmokeEvidence.keyEventCount}`],
+    ['捕获 fatal/JS 运行时异常', card.remoteSmokeEvidence.crashDetected ? 'yes' : 'no'],
+    ['JSON 报告', card.remoteSmokeEvidence.reportPath || '未生成'],
+    ['Markdown 报告', card.remoteSmokeEvidence.markdownPath || '未生成'],
+    ['截图', card.remoteSmokeEvidence.screenshotPath || '未生成'],
+    ['替代真实遥控器验收', card.remoteSmokeEvidence.replacesRealRemoteAcceptance ? 'yes' : 'no'],
+    ['替代 C920 实物验收', card.remoteSmokeEvidence.replacesC920Acceptance ? 'yes' : 'no']
   ].map(([label, value]) => `<tr><th>${htmlEscape(label)}</th><td>${htmlEscape(value)}</td></tr>`).join('\n')
 
   return `<!doctype html>
@@ -626,6 +685,9 @@ function buildHtml(card) {
     <h2>USB Host 清单</h2>
     <p>${htmlEscape(card.hardwareEvidence.usbDeviceSummary)}</p>
     <ul>${usbDeviceItems}</ul>
+    <h2>ADB 遥控器冒烟证据</h2>
+    <table>${remoteSmokeRows}</table>
+    <ul>${remoteSmokeBoundaryItems}</ul>
     <h2>不能关闭的边界</h2>
     <ul>${guardItems}</ul>
     <h2>C920 回传证据文件名</h2>
