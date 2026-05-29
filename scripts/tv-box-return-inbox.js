@@ -370,8 +370,47 @@ npm run tv-box:return-inbox -- ~/Downloads/HelloTV现场回传.zip
 \`\`\`bash
 npm run tv-box:return-inbox -- --append
 \`\`\`
+
+C920 PRO 到货接入回传时，除上面 4 样通用证据外，还应按到货卡固定文件名补齐：
+
+- C920_PREVIEW_TV_SCREEN.jpg/mp4
+- C920_MIC_BUSINESS_INPUT.mp4/txt
+- C920_HOTPLUG_RETEST.jpg/txt
+- SUPPORT_CODE_C920.jpg
 `
   fs.writeFileSync(readmePath, readme)
+}
+
+function normalizeFileStem(name) {
+  return path.basename(name, path.extname(name)).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
+function hasC920Text(value) {
+  return /(^|[^a-z0-9])c\s*920([^a-z0-9]|$)|logitech.{0,40}c\s*920|罗技.{0,20}c\s*920/i.test(String(value || ''))
+}
+
+function recordMentionsC920(record) {
+  const env = sourceEnvFromRecord(record)
+  return hasC920Text([
+    env.FIELD_CAMERA_MODEL,
+    env.FIELD_MICROPHONE_MODEL,
+    env.FIELD_LOCATION,
+    env.FIELD_NOTES,
+    record && record.scenarioId,
+    record && record.tool
+  ].join(' '))
+}
+
+function classifyC920Evidence(info) {
+  const stem = normalizeFileStem(info.name)
+  if (stem === 'c920_preview_tv_screen') return 'c920PreviewEvidence'
+  if (stem === 'c920_mic_business_input') return 'c920MicrophoneEvidence'
+  if (stem === 'c920_hotplug_retest') return 'c920HotplugEvidence'
+  if (stem === 'support_code_c920' || stem === 'c920_support_code') return 'c920SupportCodePhotos'
+  if (hasC920Text(stem) && /(preview|tv_screen|screen|camera|摄像头|预览|画面)/i.test(info.name)) return 'c920PreviewEvidence'
+  if (hasC920Text(stem) && /(mic|microphone|audio|business_input|麦克风|音频|声音)/i.test(info.name)) return 'c920MicrophoneEvidence'
+  if (hasC920Text(stem) && /(hotplug|retest|usb|拔插|热插拔|复测)/i.test(info.name)) return 'c920HotplugEvidence'
+  return ''
 }
 
 function classifyFiles(files, skipped) {
@@ -381,6 +420,11 @@ function classifyFiles(files, skipped) {
     installLogs: [],
     supportBundles: [],
     supportCodePhotos: [],
+    c920ContextFiles: [],
+    c920PreviewEvidence: [],
+    c920MicrophoneEvidence: [],
+    c920HotplugEvidence: [],
+    c920SupportCodePhotos: [],
     issueEvidence: [],
     genericImages: [],
     otherLogs: [],
@@ -395,14 +439,24 @@ function classifyFiles(files, skipped) {
     if (lower.endsWith('.json')) {
       const record = readJson(filePath)
       if (isFieldWizardRecord(record)) {
+        const c920Context = recordMentionsC920(record)
         evidence.fieldJsons.push({
           ...info,
+          c920Context,
           problematicFields: collectProblematicFields(record),
           closure: buildFieldJsonClosure(record, info)
         })
+        if (c920Context) evidence.c920ContextFiles.push(info)
       } else {
         evidence.rejectedJsons.push({ ...info, reason: record.error ? `JSON 解析失败: ${record.error}` : '不是现场验收 JSON' })
       }
+      continue
+    }
+
+    const c920EvidenceType = classifyC920Evidence(info)
+    if (c920EvidenceType) {
+      evidence[c920EvidenceType].push(info)
+      if (c920EvidenceType === 'c920SupportCodePhotos') evidence.supportCodePhotos.push(info)
       continue
     }
 
@@ -462,9 +516,19 @@ function buildEvidenceChecks(evidence) {
   const failedFields = problematicFields.filter((field) => field.value === 'fail')
   const issueEvidenceRequired = problematicFields.length > 0
   const hasSupportCodePhoto = evidence.supportCodePhotos.length > 0
-  const hasAnyPhoto = hasSupportCodePhoto || evidence.genericImages.length > 0 || evidence.issueEvidence.some((item) => /\.(jpg|jpeg|png|heic|webp|bmp|gif)$/i.test(item.name))
+  const hasC920Photo = [
+    ...evidence.c920PreviewEvidence,
+    ...evidence.c920HotplugEvidence,
+    ...evidence.c920SupportCodePhotos
+  ].some((item) => /\.(jpg|jpeg|png|heic|webp|bmp|gif)$/i.test(item.name))
+  const hasAnyPhoto = hasSupportCodePhoto || hasC920Photo || evidence.genericImages.length > 0 || evidence.issueEvidence.some((item) => /\.(jpg|jpeg|png|heic|webp|bmp|gif)$/i.test(item.name))
   const hasInstallLogOrSupportBundle = evidence.installLogs.length > 0 || evidence.supportBundles.length > 0
   const hasIssueEvidence = evidence.issueEvidence.length > 0
+  const c920ContextDetected = evidence.c920ContextFiles.length > 0
+    || evidence.c920PreviewEvidence.length > 0
+    || evidence.c920MicrophoneEvidence.length > 0
+    || evidence.c920HotplugEvidence.length > 0
+    || evidence.c920SupportCodePhotos.length > 0
 
   const checks = [
     {
@@ -509,12 +573,52 @@ function buildEvidenceChecks(evidence) {
     }
   ]
 
+  if (c920ContextDetected) {
+    checks.push(
+      {
+        id: 'c920_preview_tv_screen',
+        title: 'C920 电视真实预览证据',
+        status: evidence.c920PreviewEvidence.length > 0 ? 'pass' : 'missing',
+        evidence: evidence.c920PreviewEvidence.length
+          ? `${evidence.c920PreviewEvidence.length} 个 C920_PREVIEW_TV_SCREEN.jpg/mp4 或同义文件`
+          : '未找到 C920_PREVIEW_TV_SCREEN.jpg/mp4；不能只用 USB 线索或 Activity 打开冒充真实画面'
+      },
+      {
+        id: 'c920_mic_business_input',
+        title: 'C920 麦克风业务输入证据',
+        status: evidence.c920MicrophoneEvidence.length > 0 ? 'pass' : 'missing',
+        evidence: evidence.c920MicrophoneEvidence.length
+          ? `${evidence.c920MicrophoneEvidence.length} 个 C920_MIC_BUSINESS_INPUT.mp4/txt 或同义文件`
+          : '未找到 C920_MIC_BUSINESS_INPUT.mp4/txt；需要证明声音进入录音/互动课等业务链路'
+      },
+      {
+        id: 'c920_hotplug_retest',
+        title: 'C920 USB 热插拔复测证据',
+        status: evidence.c920HotplugEvidence.length > 0 ? 'pass' : 'missing',
+        evidence: evidence.c920HotplugEvidence.length
+          ? `${evidence.c920HotplugEvidence.length} 个 C920_HOTPLUG_RETEST.jpg/txt 或同义文件`
+          : '未找到 C920_HOTPLUG_RETEST.jpg/txt；需要证明拔插后仍可识别并预览'
+      },
+      {
+        id: 'c920_support_code_photo',
+        title: 'C920 维护码照片',
+        status: evidence.c920SupportCodePhotos.length > 0 ? 'pass' : evidence.supportCodePhotos.length > 0 ? 'needs_manual_review' : 'missing',
+        evidence: evidence.c920SupportCodePhotos.length
+          ? `${evidence.c920SupportCodePhotos.length} 张 SUPPORT_CODE_C920.jpg 或同义照片`
+          : evidence.supportCodePhotos.length > 0
+            ? '已有维护码照片，但文件名不是 SUPPORT_CODE_C920.jpg；需要人工确认它属于本次 C920 到货验收'
+            : '未找到 SUPPORT_CODE_C920.jpg'
+      }
+    )
+  }
+
   return {
     checks,
     problematicFields,
     unknownFields,
     failedFields,
-    issueEvidenceRequired
+    issueEvidenceRequired,
+    c920ContextDetected
   }
 }
 
@@ -708,6 +812,21 @@ function buildNextActions(report) {
   }
   if (byId.unknown_closure?.status === 'needs_follow_up') {
     actions.push('把 unknown 字段改成 pass/fail/skip/na；不能用 unknown 关闭真实盒子验收。')
+  }
+  if (byId.c920_preview_tv_screen?.status === 'missing') {
+    actions.push('C920 到货验收缺少电视真实预览证据；让现场补发 C920_PREVIEW_TV_SCREEN.jpg/mp4。')
+  }
+  if (byId.c920_mic_business_input?.status === 'missing') {
+    actions.push('C920 到货验收缺少麦克风业务输入证据；让现场补发 C920_MIC_BUSINESS_INPUT.mp4/txt。')
+  }
+  if (byId.c920_hotplug_retest?.status === 'missing') {
+    actions.push('C920 到货验收缺少 USB 热插拔复测证据；让现场补发 C920_HOTPLUG_RETEST.jpg/txt。')
+  }
+  if (byId.c920_support_code_photo?.status === 'missing') {
+    actions.push('C920 到货验收缺少维护码照片；让现场补发 SUPPORT_CODE_C920.jpg。')
+  }
+  if (byId.c920_support_code_photo?.status === 'needs_manual_review') {
+    actions.push('已有维护码照片但未按 SUPPORT_CODE_C920.jpg 命名；人工确认属于本次 C920 后再关闭或重命名归档。')
   }
   if (report.fieldInboxRun.exitCode && report.fieldInboxRun.exitCode !== 0) {
     actions.push('现场 JSON 通过回传扫描但导入 dry-run 失败；打开 tv-box-return-inbox-latest.md 查看 stdout/stderr。')
@@ -906,6 +1025,7 @@ function main() {
     unknownFields: checkBundle.unknownFields,
     failedFields: checkBundle.failedFields,
     issueEvidenceRequired: checkBundle.issueEvidenceRequired,
+    c920ContextDetected: checkBundle.c920ContextDetected,
     readiness,
     closure,
     fieldInboxRun,
