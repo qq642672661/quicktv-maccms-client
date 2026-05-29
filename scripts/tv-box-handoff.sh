@@ -72,6 +72,9 @@ COMPLETION_AUDIT_JSON="$REPORT_DIR/tv-box-completion-audit-latest.json"
 COMPLETION_AUDIT_MD="$REPORT_DIR/tv-box-completion-audit-latest.md"
 HANDOFF_HTML_SMOKE_JSON="$REPORT_DIR/tv-box-handoff-html-smoke-latest.json"
 HANDOFF_HTML_SMOKE_MD="$REPORT_DIR/tv-box-handoff-html-smoke-latest.md"
+REMOTE_SMOKE_JSON="$REPORT_DIR/tv-box-remote-smoke-latest.json"
+REMOTE_SMOKE_MD="$REPORT_DIR/tv-box-remote-smoke-latest.md"
+REMOTE_SMOKE_SCREENSHOT="$REPORT_DIR/tv-box-remote-smoke-latest.png"
 PREFLIGHT_JSON="$REPORT_DIR/tv-box-preflight-latest.json"
 PREFLIGHT_MD="$REPORT_DIR/tv-box-preflight-latest.md"
 AUTHORIZATION_JSON="$REPORT_DIR/tv-box-authorization-latest.json"
@@ -487,6 +490,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "uxAudit": "npm run tv-box:ux-audit",
     "commandCenter": "npm run tv-box:command-center",
     "siteReadiness": "npm run tv-box:site-readiness",
+    "remoteSmoke": "BOX_IP=<box-ip> npm run tv-box:smoke",
     "cameraSmoke": "BOX_IP=<box-ip> npm run tv-box:camera-smoke",
     "fullCheck": "npm run tv-box:check"
   }
@@ -530,10 +534,12 @@ HelloTV 电视盒子交付包 - 先看这里
 现场发回资料前，先打开 FIELD_RETURN_CARD.html，对照“必须发回 4 样”和“不要留 unknown”逐项核对。
 如果要一次性发回证据，把所有材料放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command；生成的 HelloTV-field-return-*.zip 直接发给工程人员。
 工程人员可打开 tv-box-easy-run-latest.md，快速确认本次一键安装沉淀了哪些报告、交付包、排障包和下一步动作。
+插上 C920 PRO 后，工程人员可先执行 BOX_IP=<盒子IP> npm run tv-box:smoke，生成 tv-box-remote-smoke-latest.md/json/png；它只证明 ADB 遥控器冒烟、截图、焦点和日志，不替代真实遥控器手感、C920 真实画面、麦克风和热插拔验收。
 
 工程人员命令：
 BOX_IP=<盒子IP> npm run tv-box:easy
 BOX_IP=<盒子IP> npm run tv-box:authorize
+BOX_IP=<盒子IP> npm run tv-box:smoke
 BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy
 BOX_IP=<盒子IP> npm run tv-box:field-wizard
 npm run tv-box:field-wizard-html
@@ -3064,6 +3070,18 @@ fi
 
 if [[ -f "$HANDOFF_HTML_SMOKE_MD" ]]; then
   cp "$HANDOFF_HTML_SMOKE_MD" "$HANDOFF_DIR/tv-box-handoff-html-smoke-latest.md"
+fi
+
+if [[ -f "$REMOTE_SMOKE_JSON" ]]; then
+  cp "$REMOTE_SMOKE_JSON" "$HANDOFF_DIR/tv-box-remote-smoke-latest.json"
+fi
+
+if [[ -f "$REMOTE_SMOKE_MD" ]]; then
+  cp "$REMOTE_SMOKE_MD" "$HANDOFF_DIR/tv-box-remote-smoke-latest.md"
+fi
+
+if [[ -f "$REMOTE_SMOKE_SCREENSHOT" ]]; then
+  cp "$REMOTE_SMOKE_SCREENSHOT" "$HANDOFF_DIR/tv-box-remote-smoke-latest.png"
 fi
 
 if [[ -f "$UX_AUDIT_JSON" ]]; then
