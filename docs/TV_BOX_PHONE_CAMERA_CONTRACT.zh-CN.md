@@ -28,14 +28,17 @@ QuickTVUI 官方仓库目前没有发现手机摄像头直连电视端的 WebRTC
 
 ```bash
 npm run tv-box:phone-camera-contract
+npm run tv-box:phone-camera-scenarios-test
 ```
 
 它会输出：
 
 - `reports/tv-box-phone-camera-contract-latest.md`
 - `reports/tv-box-phone-camera-contract-latest.json`
+- `reports/tv-box-phone-camera-scenarios-test-latest.md`
+- `reports/tv-box-phone-camera-scenarios-test-latest.json`
 
-这两份报告会被交付包和排障包带走，后续开发 Android 原生接收端、手机采集端、信令服务和现场验收矩阵都必须对齐同一份合同。
+这些报告会被交付包和排障包带走。场景回归会用合成信令验证扫码首帧、房间过期、手机权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁；它不代替真实 WebRTC 首帧，但能防止合同字段、状态机和合规边界漂移。后续开发 Android 原生接收端、手机采集端、信令服务和现场验收矩阵都必须对齐同一份合同。
 
 ## 路线边界
 

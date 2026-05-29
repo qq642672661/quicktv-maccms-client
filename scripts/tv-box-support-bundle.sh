@@ -154,24 +154,25 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`tv-box-command-center-support.md/json\`: 排障包视角交付总控，集中列出应发哪个包、SHA、readiness、未闭环项和下一步。
 - \`tv-box-site-readiness-support.md/json/html\`: 现场开工判定卡，告诉现场先授权、安装、补证据还是工程修复。
 - \`adb-devices.txt\`: ADB 连接状态。
-	- \`device-facts.txt\`: 已连接盒子的型号、Android 版本、feature、USB 快照、当前前台 Activity、Camera appops 和 Record audio appops。
+- \`device-facts.txt\`: 已连接盒子的型号、Android 版本、feature、USB 快照、当前前台 Activity、Camera appops 和 Record audio appops。
 - \`logcat-tail.txt\`: 最近系统日志，已连接设备时生成。
 - \`handoff-START_HERE.html\`: 给现场人员双击打开的离线大字安装首页。
 - \`handoff-OPERATION_CARD.html\`: 给家人/长辈/小孩看的可打印大字操作卡。
 - \`handoff-HARDWARE_SELECTION_CARD.html\`: 给采购、现场安装和维护人员看的可打印硬件选型卡。
-  - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
-  - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
-  - \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。
-  - \`handoff-FIELD_RETURN_CARD.html\`: 现场发回证据前的核对卡，要求 JSON、维护码照片、日志/排障包和异常照片齐全。
-  - \`handoff-FIELD_RETURN-README.zh-CN.txt\`: 现场回传文件夹说明。
-  - \`handoff-PACK_FIELD_RETURN_ON_MAC.command\` / \`handoff-PACK_FIELD_RETURN_ON_WINDOWS.bat\`: 现场一键打包回传证据。
-  - \`handoff-README_FIRST.txt\`: 文件管理器里最容易识别的纯文本入口。
-  - \`handoff-QUICK_START.zh-CN.md\`: 给现场人员的 3 步安装说明。
-  - \`handoff-PRE_INSTALL_CHECKLIST.zh-CN.md\`: 安装前自检卡，确认网络、IP、RSA 授权和交付文件没拆散。
-  - \`handoff-FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`: 现场安装后逐项打勾的验收清单。
-  - \`handoff-FIELD_COMPATIBILITY_MATRIX.zh-CN.md\`: 多款盒子、遥控器和摄像头复测时统一记录的兼容性矩阵。
-  - \`handoff-MANIFEST.json\`: 当前交付包清单，存在交付包时复制。
-	  - \`tv-box-field-record-latest.md/json\`: 最近一次实机兼容性记录。
+- \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
+- \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
+- \`tv-box-phone-camera-scenarios-test-latest.md/json\`: 手机当电视摄像头合同场景回归，覆盖扫码首帧、权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁。
+- \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。
+- \`handoff-FIELD_RETURN_CARD.html\`: 现场发回证据前的核对卡，要求 JSON、维护码照片、日志/排障包和异常照片齐全。
+- \`handoff-FIELD_RETURN-README.zh-CN.txt\`: 现场回传文件夹说明。
+- \`handoff-PACK_FIELD_RETURN_ON_MAC.command\` / \`handoff-PACK_FIELD_RETURN_ON_WINDOWS.bat\`: 现场一键打包回传证据。
+- \`handoff-README_FIRST.txt\`: 文件管理器里最容易识别的纯文本入口。
+- \`handoff-QUICK_START.zh-CN.md\`: 给现场人员的 3 步安装说明。
+- \`handoff-PRE_INSTALL_CHECKLIST.zh-CN.md\`: 安装前自检卡，确认网络、IP、RSA 授权和交付文件没拆散。
+- \`handoff-FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`: 现场安装后逐项打勾的验收清单。
+- \`handoff-FIELD_COMPATIBILITY_MATRIX.zh-CN.md\`: 多款盒子、遥控器和摄像头复测时统一记录的兼容性矩阵。
+- \`handoff-MANIFEST.json\`: 当前交付包清单，存在交付包时复制。
+- \`tv-box-field-record-latest.md/json\`: 最近一次实机兼容性记录。
 - \`tv-box-field-wizard-latest.md/json/env\`: 中文现场验收向导记录，可复用字段再次写入矩阵。
 - \`tv-box-field-wizard-offline.html\`: 源码报告目录里的离线现场验收表。
 - \`tv-box-field-import-latest.md/json/env\`: 离线 JSON 导入记录，确认现场下载文件如何进入累计矩阵。
@@ -180,15 +181,15 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`tv-box-return-inbox-scenarios-test-latest.md/json\`: 合成现场回传质检场景回归，证明缺维护码照片、照片需人工确认、unknown 未闭环、失败带证据和 ready_to_close 这几类不会误收或误关闭。
 - \`tv-box-field-scenarios-test-latest.md/json\`: 合成现场验收场景回归，证明全通过、无摄像头核心可用、遥控失败和 unknown 未闭环这 4 类判定不会漂移。
 - \`tv-box-field-matrix.csv\`: 多次实机记录追加表。
-	  - \`tv-box-hardware-profile-latest.md/json\`: 硬件兼容性画像，给出盒子、遥控器、USB 摄像头、麦克风的推荐规格、当前风险和现场下一步。
-	  - \`tv-box-compatibility-summary-latest.md/json\`: 兼容性自动汇总，区分推荐、待修复和待补测组合。
-	  - \`tv-box-easy-run-latest.md/json\`: 收集排障包时已有的一键安装自动沉淀摘要，保持主交付 latest 语义不被覆盖。
-	  - \`tv-box-completion-audit-latest.md/json\`: 完成度证据审计，集中标记哪些能力已由源码/报告/交付包证明，哪些仍需真实盒子验收。
-	  - \`tv-box-ux-audit-latest.md/json\`: 长辈/小孩遥控器 UX 独立审计，证明简易首页、帮助、自检、遥控练习、现场验收、摄像头、直播救援和退出确认没有漂移。
-	  - \`tv-box-easy-run-support.md/json\`: 排障包本次生成的 support 视角摘要，集中列出交付包、readiness 和下一步。
-	  - \`tv-box-site-readiness-support.md/json/html\`: 排障包本次生成的现场开工判定卡。
-	  - \`handoff-WINDOWS_HELP.zh-CN.md\`: Windows 双击安装失败时按错误代码排障。
-  - \`handoff-INSTALL_SUPPORT.zh-CN.md\`: 只拿到交付包时，现场失败应发给维护人员的信息清单。
+- \`tv-box-hardware-profile-latest.md/json\`: 硬件兼容性画像，给出盒子、遥控器、USB 摄像头、麦克风的推荐规格、当前风险和现场下一步。
+- \`tv-box-compatibility-summary-latest.md/json\`: 兼容性自动汇总，区分推荐、待修复和待补测组合。
+- \`tv-box-easy-run-latest.md/json\`: 收集排障包时已有的一键安装自动沉淀摘要，保持主交付 latest 语义不被覆盖。
+- \`tv-box-completion-audit-latest.md/json\`: 完成度证据审计，集中标记哪些能力已由源码/报告/交付包证明，哪些仍需真实盒子验收。
+- \`tv-box-ux-audit-latest.md/json\`: 长辈/小孩遥控器 UX 独立审计，证明简易首页、帮助、自检、遥控练习、现场验收、摄像头、直播救援和退出确认没有漂移。
+- \`tv-box-easy-run-support.md/json\`: 排障包本次生成的 support 视角摘要，集中列出交付包、readiness 和下一步。
+- \`tv-box-site-readiness-support.md/json/html\`: 排障包本次生成的现场开工判定卡。
+- \`handoff-WINDOWS_HELP.zh-CN.md\`: Windows 双击安装失败时按错误代码排障。
+- \`handoff-INSTALL_SUPPORT.zh-CN.md\`: 只拿到交付包时，现场失败应发给维护人员的信息清单。
 - \`handoff-latest-archive.txt\`: 当前可直接发给现场人员的交付压缩包路径。
 - \`handoff-latest-archive.sha256\`: 当前交付压缩包的 SHA256，便于确认远程传输没损坏。
 SUMMARY
@@ -217,6 +218,7 @@ run_and_capture "Field acceptance scenarios regression" "$BUNDLE_DIR/tv-box-fiel
 run_and_capture "Compatibility summary" "$BUNDLE_DIR/tv-box-compatibility-summary.txt" env TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" npm run -s tv-box:compatibility-summary
 run_and_capture "Hardware compatibility profile" "$BUNDLE_DIR/tv-box-hardware-profile.txt" env TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" TV_BOX_FIELD_RECORD_JSON="$REPORT_DIR/tv-box-field-record-latest.json" TV_BOX_COMPATIBILITY_SUMMARY_JSON="$REPORT_DIR/tv-box-compatibility-summary-latest.json" npm run -s tv-box:hardware-profile
 run_and_capture "Phone camera contract" "$BUNDLE_DIR/tv-box-phone-camera-contract.txt" npm run -s tv-box:phone-camera-contract
+run_and_capture "Phone camera scenarios regression" "$BUNDLE_DIR/tv-box-phone-camera-scenarios-test.txt" npm run -s tv-box:phone-camera-scenarios-test
 run_and_capture "Preflight summary" "$BUNDLE_DIR/tv-box-preflight.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" "$ROOT_DIR/scripts/tv-box-preflight.sh"
 run_and_capture "Standalone handoff archive self-test" "$BUNDLE_DIR/handoff-standalone-test.txt" env REPORT_DIR="$REPORT_DIR" npm run -s tv-box:handoff-standalone-test
 run_and_capture "Handoff HTML smoke test" "$BUNDLE_DIR/handoff-html-smoke.txt" env REPORT_DIR="$REPORT_DIR" npm run -s tv-box:handoff-html-smoke
@@ -238,6 +240,12 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_AV_TEST_HARDWARE.zh-CN.md" "ha
 copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md" "handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.md" "tv-box-phone-camera-contract-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.json" "tv-box-phone-camera-contract-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-scenarios-test-latest.md" "tv-box-phone-camera-scenarios-test-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-scenarios-test-latest.json" "tv-box-phone-camera-scenarios-test-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-contract-latest.md" "tv-box-phone-camera-contract-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-contract-latest.json" "tv-box-phone-camera-contract-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.md" "tv-box-phone-camera-scenarios-test-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.json" "tv-box-phone-camera-scenarios-test-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/FIELD_WIZARD_OFFLINE.html" "handoff-FIELD_WIZARD_OFFLINE.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/README_FIRST.txt" "handoff-README_FIRST.txt"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/QUICK_START.zh-CN.md" "handoff-QUICK_START.zh-CN.md"

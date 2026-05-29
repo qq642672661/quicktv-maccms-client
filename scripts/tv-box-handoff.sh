@@ -50,6 +50,8 @@ AV_TEST_HARDWARE_PLAN_MD="$ROOT_DIR/docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 PHONE_CAMERA_CONTRACT_SOURCE_MD="$ROOT_DIR/docs/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 PHONE_CAMERA_CONTRACT_JSON="$REPORT_DIR/tv-box-phone-camera-contract-latest.json"
 PHONE_CAMERA_CONTRACT_MD="$REPORT_DIR/tv-box-phone-camera-contract-latest.md"
+PHONE_CAMERA_SCENARIOS_JSON="$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.json"
+PHONE_CAMERA_SCENARIOS_MD="$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.md"
 EASY_SUMMARY_JSON="$REPORT_DIR/tv-box-easy-run-latest.json"
 EASY_SUMMARY_MD="$REPORT_DIR/tv-box-easy-run-latest.md"
 COMPLETION_AUDIT_JSON="$REPORT_DIR/tv-box-completion-audit-latest.json"
@@ -121,6 +123,8 @@ cp "$APK_PATH" "$HANDOFF_DIR/HelloTV-debug.apk"
 
 (cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-contract >/dev/null)
 
+(cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-scenarios-test >/dev/null)
+
 HANDOFF_ARCHIVE_PATH=""
 if command -v zip >/dev/null 2>&1; then
   HANDOFF_ARCHIVE_PATH="$REPORT_DIR/tv-box-handoff-latest.zip"
@@ -190,6 +194,14 @@ fi
 
 if [[ -f "$PHONE_CAMERA_CONTRACT_MD" ]]; then
   cp "$PHONE_CAMERA_CONTRACT_MD" "$HANDOFF_DIR/tv-box-phone-camera-contract-latest.md"
+fi
+
+if [[ -f "$PHONE_CAMERA_SCENARIOS_JSON" ]]; then
+  cp "$PHONE_CAMERA_SCENARIOS_JSON" "$HANDOFF_DIR/tv-box-phone-camera-scenarios-test-latest.json"
+fi
+
+if [[ -f "$PHONE_CAMERA_SCENARIOS_MD" ]]; then
+  cp "$PHONE_CAMERA_SCENARIOS_MD" "$HANDOFF_DIR/tv-box-phone-camera-scenarios-test-latest.md"
 fi
 
 if [[ -f "$EASY_SUMMARY_JSON" ]]; then
@@ -305,6 +317,8 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "phoneCameraContract": "TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md",
     "phoneCameraContractMarkdown": "tv-box-phone-camera-contract-latest.md",
     "phoneCameraContractJson": "tv-box-phone-camera-contract-latest.json",
+    "phoneCameraScenariosMarkdown": "tv-box-phone-camera-scenarios-test-latest.md",
+    "phoneCameraScenariosJson": "tv-box-phone-camera-scenarios-test-latest.json",
     "fieldAcceptanceChecklist": "FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md",
     "fieldReturnCard": "FIELD_RETURN_CARD.zh-CN.md",
     "fieldReturnCardHtml": "FIELD_RETURN_CARD.html",
@@ -368,6 +382,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "compatibilitySummary": "npm run tv-box:compatibility-summary",
     "hardwareProfile": "npm run tv-box:hardware-profile",
     "phoneCameraContract": "npm run tv-box:phone-camera-contract",
+    "phoneCameraScenariosRegression": "npm run tv-box:phone-camera-scenarios-test",
     "easySummary": "npm run tv-box:easy-summary",
     "completionAudit": "npm run tv-box:completion-audit",
     "handoffHtmlSmoke": "npm run tv-box:handoff-html-smoke",
