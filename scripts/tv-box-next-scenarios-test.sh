@@ -173,6 +173,26 @@ MD
 HTML
 }
 
+write_c920_arrival_card() {
+  local status="${TV_BOX_FAKE_C920_STATUS:-not_run_yet}"
+  cat > "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" <<JSON
+{
+  "status": "$status",
+  "primaryAction": "到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance。",
+  "command": "BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance",
+  "procurement": {
+    "purchaseChannel": "京东自营",
+    "expectedArrivalDate": "2026-05-30"
+  }
+}
+JSON
+  cat > "$REPORT_DIR/tv-box-c920-arrival-card-latest.md" <<MD
+# Fake C920 arrival card
+
+- status: \`$status\`
+MD
+}
+
 case "$script_name" in
   tv-box:authorize)
     write_authorization
@@ -185,6 +205,9 @@ case "$script_name" in
     ;;
   tv-box:site-readiness)
     write_site_readiness
+    ;;
+  tv-box:c920-arrival-card)
+    write_c920_arrival_card
     ;;
   tv-box:easy)
     write_handoff_markers
@@ -295,20 +318,6 @@ run_scenario() {
   printf 'fake support archive\n' > "$scenario_report_dir/fake-support.zip"
   printf '%s\n' "$scenario_report_dir/fake-handoff.zip" > "$scenario_report_dir/tv-box-handoff-latest-archive.txt"
   printf '%s\n' "$scenario_report_dir/fake-support.zip" > "$scenario_report_dir/tv-box-support-latest-archive.txt"
-  if [[ -n "$c920_status" ]]; then
-    cat > "$scenario_report_dir/tv-box-c920-arrival-card-latest.json" <<JSON
-{
-  "status": "$c920_status",
-  "primaryAction": "到货后先直插小米盒子 USB 口，再执行 BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance。",
-  "command": "BOX_IP=192.0.2.10 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance",
-  "procurement": {
-    "purchaseChannel": "京东自营",
-    "expectedArrivalDate": "2026-05-30"
-  }
-}
-JSON
-  fi
-
   set +e
   PATH="$FAKE_BIN:$PATH" \
   REPORT_DIR="$scenario_report_dir" \
@@ -317,6 +326,7 @@ JSON
   NEXT_ALLOW_INSTALL="$allow_install" \
   NEXT_BUILD_DELIVERY="$build_delivery" \
   RUN_CAMERA_SMOKE=true \
+  TV_BOX_FAKE_C920_STATUS="$c920_status" \
   TV_BOX_FAKE_AUTH_STATUS="$auth_status" \
   TV_BOX_FAKE_PREFLIGHT_VERDICT="$preflight_verdict" \
   TV_BOX_FAKE_COMMAND_STATUS="$command_status" \

@@ -260,6 +260,7 @@ echo "包名：$PACKAGE_NAME"
 
 run_npm_step "ADB/RSA 授权助手" "tv-box:authorize"
 AUTH_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-authorization-latest.json" "status")"
+run_npm_step "C920 到货接入卡" "tv-box:c920-arrival-card"
 
 if [[ "$AUTH_STATUS" == "ready_for_install" ]]; then
   C920_STATUS="$(json_value_or_empty "$REPORT_DIR/tv-box-c920-arrival-card-latest.json" "status")"

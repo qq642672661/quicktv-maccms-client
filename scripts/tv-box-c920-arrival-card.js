@@ -8,6 +8,7 @@ const acceptanceJsonPath = process.env.TV_BOX_C920_ACCEPTANCE_JSON || path.join(
 const outputJsonPath = process.env.TV_BOX_C920_ARRIVAL_CARD_JSON || path.join(reportDir, 'tv-box-c920-arrival-card-latest.json')
 const outputMarkdownPath = process.env.TV_BOX_C920_ARRIVAL_CARD_MD || path.join(reportDir, 'tv-box-c920-arrival-card-latest.md')
 const outputHtmlPath = process.env.TV_BOX_C920_ARRIVAL_CARD_HTML || path.join(reportDir, 'tv-box-c920-arrival-card.html')
+const procurementStatePath = process.env.TV_BOX_C920_PROCUREMENT_JSON || path.join(rootDir, 'tv-box-field-state', 'c920-procurement.json')
 
 function readJson(filePath) {
   try {
@@ -121,12 +122,30 @@ function physicalStatusLabel(value) {
 }
 
 function readProcurement(report) {
+  const state = readJson(procurementStatePath) || {}
+  const stateProcurement = state.procurement || state
   const procurement = report?.procurement || {}
   return {
-    purchaseChannel: process.env.C920_PURCHASE_CHANNEL || procurement.purchaseChannel || procurement.channel || '',
-    expectedArrivalDate: process.env.C920_EXPECTED_ARRIVAL_DATE || procurement.expectedArrivalDate || '',
-    note: process.env.C920_PURCHASE_NOTE || procurement.note || ''
+    purchaseChannel: process.env.C920_PURCHASE_CHANNEL || stateProcurement.purchaseChannel || stateProcurement.channel || procurement.purchaseChannel || procurement.channel || '',
+    expectedArrivalDate: process.env.C920_EXPECTED_ARRIVAL_DATE || stateProcurement.expectedArrivalDate || procurement.expectedArrivalDate || '',
+    note: process.env.C920_PURCHASE_NOTE || stateProcurement.note || procurement.note || '',
+    statePath: procurementStatePath,
+    stateExists: fs.existsSync(procurementStatePath)
   }
+}
+
+function readPhysicalStatus(report) {
+  const state = readJson(procurementStatePath) || {}
+  const stateStatus = state.physicalStatus || state.status
+  const reportStatus = report?.physicalStatus?.status || report?.physicalStatus
+  const envStatus = normalizePhysicalStatus(process.env.C920_PHYSICAL_STATUS)
+  const normalizedReportStatus = normalizePhysicalStatus(reportStatus)
+  const normalizedStateStatus = normalizePhysicalStatus(stateStatus)
+
+  if (envStatus !== 'unknown') return envStatus
+  if (normalizedReportStatus !== 'unknown') return normalizedReportStatus
+  if (normalizedStateStatus !== 'unknown') return normalizedStateStatus
+  return 'unknown'
 }
 
 function noNewHardwareSignal(report) {
@@ -273,7 +292,7 @@ function buildAcceptanceCommand(boxIp) {
 }
 
 function buildCard(report) {
-  const physicalStatus = normalizePhysicalStatus(process.env.C920_PHYSICAL_STATUS || report?.physicalStatus?.status || report?.physicalStatus)
+  const physicalStatus = readPhysicalStatus(report)
   const decision = buildDecision(report, physicalStatus)
   const procurement = readProcurement(report)
   const checklist = decision.checklist || {}
@@ -378,6 +397,7 @@ function buildMarkdown(card) {
 - 最简状态输入: 待到货用 \`C920_PHYSICAL_STATUS=已采购待到货\`；到货未插用 \`C920_PHYSICAL_STATUS=已到货未插入\`；已插好用 \`C920_PHYSICAL_STATUS=已插入\`
 - 采购渠道: ${card.procurement.purchaseChannel || '未记录'}
 - 预计到货: ${card.procurement.expectedArrivalDate || '未记录'}
+- 采购状态源: \`${card.procurement.stateExists ? card.procurement.statePath : '未配置'}\`
 - 标题: ${card.title}
 - 说明: ${card.summary}
 - 一键命令: \`${card.command}\`
@@ -467,6 +487,7 @@ function buildHtml(card) {
     <p>物理状态：${htmlEscape(card.physicalStatusLabel)}；原始判定：${htmlEscape(card.sourceStatus)}</p>
     <p>最简状态输入：待到货用 <code>C920_PHYSICAL_STATUS=已采购待到货</code>；到货未插用 <code>C920_PHYSICAL_STATUS=已到货未插入</code>；已插好用 <code>C920_PHYSICAL_STATUS=已插入</code>。</p>
     <p>采购渠道：${htmlEscape(card.procurement.purchaseChannel || '未记录')}；预计到货：${htmlEscape(card.procurement.expectedArrivalDate || '未记录')}</p>
+    <p>采购状态源：${htmlEscape(card.procurement.stateExists ? card.procurement.statePath : '未配置')}</p>
     <div class="action">
       <strong>先做三步</strong>
       <ol>
