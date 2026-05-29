@@ -1,6 +1,5 @@
-import { defineComponent, h, nextTick, onMounted, ref, renderSlot, toRaw, watch, reactive } from 'vue'
-import { ESApp, Native, registerElement } from '@extscreen/es3-vue'
-import _ from 'lodash';
+import { defineComponent, h, ref } from 'vue'
+import { ESApp, Native } from '@extscreen/es3-vue'
 
 function registerTabPaneViewComponent(app: ESApp) {
   const QTTabPaneViewImpl = defineComponent({
@@ -75,13 +74,8 @@ function registerTABSViewComponent(app: ESApp) {
       const viewRef = ref()
       const swiperRef = ref()
       const currentIndex = ref(0)
-      const updateIndex = ref(0)
       let recordContentNode: Array<any> = []
       let currentArr: Array<any> = []
-      watch(() => props.data, (hs) => {
-
-      }, { deep: true })
-      onMounted(() => {})
       context.expose({
         viewRef,
       })
@@ -89,7 +83,7 @@ function registerTABSViewComponent(app: ESApp) {
       const renderNav = (childNode) => {
         const children: any = [];
         let i: number =  -1
-        childNode.map((item: any, index: number) => {
+        childNode.map((item: any) => {
           if(item.type.props && item.type.props.tagName.default === 'tab-pane'){
             i++
             const itemNode = buildNavItemNode(item,i)
@@ -147,13 +141,13 @@ function registerTABSViewComponent(app: ESApp) {
         )
       }
       // 渲染swiper节点
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const renderContent = (childNode) => {
         const children: any = [];
-        const newChildren: any = [];
         let i: number =  -1
         recordContentNode = []
         currentArr = []
-        childNode.map((item: any, index: number) => {
+        childNode.map((item: any) => {
           if(item.type.props && item.type.props.tagName.default === 'tab-pane'){
             i++
             const itemNode = buildContentNode(item,i)
@@ -199,7 +193,7 @@ function registerTABSViewComponent(app: ESApp) {
           currentArr
         )
       }
-      const buildContentNode = (item, index?) => {
+      const buildContentNode = (item) => {
         return h(
           'ViewPagerItem',
           {
@@ -210,12 +204,8 @@ function registerTABSViewComponent(app: ESApp) {
         )
       }
       return () => {
-        nextTick(() => {
-          console.log('tabs render end ')
-        })
         const children = context.slots.default && context.slots.default()
         let navNode: any
-        let contentNode: any
         if(children!.length > 0){
           navNode = renderNav(children)
           // contentNode = renderContent(children)
