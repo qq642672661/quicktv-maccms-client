@@ -110,26 +110,25 @@ function fieldScenariosRegressionPassed(report) {
 }
 
 function returnInboxScenariosRegressionPassed(report) {
-  const requiredIds = new Set([
-    'complete_ready',
-    'missing_support_code_photo',
-    'ambiguous_photo_manual_review',
-    'unknown_without_issue_evidence',
-    'failure_with_issue_evidence'
-  ])
   const expectedClosure = {
     complete_ready: 'ready_to_close',
     missing_support_code_photo: 'needs_site_follow_up',
     ambiguous_photo_manual_review: 'needs_site_follow_up',
     unknown_without_issue_evidence: 'needs_site_follow_up',
-    failure_with_issue_evidence: 'needs_fix'
+    failure_with_issue_evidence: 'needs_fix',
+    c920_complete_ready: 'ready_to_close',
+    c920_missing_preview_evidence: 'needs_site_follow_up',
+    c920_missing_microphone_evidence: 'needs_site_follow_up',
+    c920_missing_hotplug_evidence: 'needs_site_follow_up',
+    c920_missing_support_code_evidence: 'needs_site_follow_up'
   }
+  const requiredIds = new Set(Object.keys(expectedClosure))
   const scenarios = Array.isArray(report?.scenarios) ? report.scenarios : []
   const scenarioIds = new Set(scenarios.map((scenario) => scenario.id))
   return report?.status === 'pass' &&
-    scenarios.length === requiredIds.size &&
+    scenarios.length >= requiredIds.size &&
     [...requiredIds].every((id) => scenarioIds.has(id)) &&
-    scenarios.every((scenario) => scenario.readiness === scenario.expectedReadiness &&
+    scenarios.filter((scenario) => requiredIds.has(scenario.id)).every((scenario) => scenario.readiness === scenario.expectedReadiness &&
       scenario.closureStatus === scenario.expectedClosureStatus &&
       scenario.closureStatus === expectedClosure[scenario.id] &&
       scenario.strictExitCode === scenario.expectedStrictExitCode)
@@ -363,7 +362,7 @@ function main() {
     'return_inbox_scenarios_regression',
     '现场回传收件箱证据规则回归',
     returnInboxScenariosRegressionPassed(returnInboxScenarios) && handoffReturnInboxScenariosJson.exists && handoffReturnInboxScenariosMd.exists ? 'proven' : returnInboxScenariosJson.exists ? 'failed' : 'missing',
-    `status=${returnInboxScenarios?.status || 'missing'}, scenarios=${Array.isArray(returnInboxScenarios?.scenarios) ? returnInboxScenarios.scenarios.length : 0}, completeReady=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'complete_ready' && item.closureStatus === 'ready_to_close') === true}, missingSupportCode=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'missing_support_code_photo' && item.closureStatus === 'needs_site_follow_up') === true}, ambiguousPhoto=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'ambiguous_photo_manual_review' && item.closureStatus === 'needs_site_follow_up') === true}, unknownOpen=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'unknown_without_issue_evidence' && item.closureStatus === 'needs_site_follow_up') === true}, failureEvidence=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'failure_with_issue_evidence' && item.closureStatus === 'needs_fix') === true}, handoffJson=${handoffReturnInboxScenariosJson.exists}, handoffMd=${handoffReturnInboxScenariosMd.exists}`,
+    `status=${returnInboxScenarios?.status || 'missing'}, scenarios=${Array.isArray(returnInboxScenarios?.scenarios) ? returnInboxScenarios.scenarios.length : 0}, completeReady=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'complete_ready' && item.closureStatus === 'ready_to_close') === true}, missingSupportCode=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'missing_support_code_photo' && item.closureStatus === 'needs_site_follow_up') === true}, ambiguousPhoto=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'ambiguous_photo_manual_review' && item.closureStatus === 'needs_site_follow_up') === true}, unknownOpen=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'unknown_without_issue_evidence' && item.closureStatus === 'needs_site_follow_up') === true}, failureEvidence=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'failure_with_issue_evidence' && item.closureStatus === 'needs_fix') === true}, c920CompleteReady=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'c920_complete_ready' && item.closureStatus === 'ready_to_close') === true}, c920MissingPreview=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'c920_missing_preview_evidence' && item.closureStatus === 'needs_site_follow_up') === true}, c920MissingMicrophone=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'c920_missing_microphone_evidence' && item.closureStatus === 'needs_site_follow_up') === true}, c920MissingHotplug=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'c920_missing_hotplug_evidence' && item.closureStatus === 'needs_site_follow_up') === true}, c920MissingSupportCode=${returnInboxScenarios?.scenarios?.some((item) => item.id === 'c920_missing_support_code_evidence' && item.closureStatus === 'needs_site_follow_up') === true}, handoffJson=${handoffReturnInboxScenariosJson.exists}, handoffMd=${handoffReturnInboxScenariosMd.exists}`,
     '如果失败或缺失，运行 npm run tv-box:return-inbox-scenarios-test 后重新生成 npm run tv-box:handoff。'
   ))
   requirements.push(makeRequirement(
