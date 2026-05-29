@@ -3,13 +3,66 @@ set -euo pipefail
 
 PACKAGE_NAME="${PACKAGE_NAME:-com.quicktvui.hellotv}"
 MAIN_ACTIVITY="${MAIN_ACTIVITY:-com.quicktvui.hellotv/.MainActivity}"
+BOX_IP="${BOX_IP:-}"
 DEVICE_SERIAL="${DEVICE_SERIAL:-}"
 LOG_SECONDS="${LOG_SECONDS:-8}"
+BOX_TARGET=""
 
 adb_cmd=(adb)
-if [[ -n "$DEVICE_SERIAL" ]]; then
+
+normalize_box_target() {
+  local target="$1"
+  if [[ "$target" == *":"* ]]; then
+    printf '%s' "$target"
+  else
+    printf '%s:5555' "$target"
+  fi
+}
+
+select_device() {
+  if [[ -n "$BOX_IP" ]]; then
+    BOX_TARGET="$(normalize_box_target "$BOX_IP")"
+    echo
+    echo "== Connect TV box =="
+    adb connect "$BOX_TARGET" || true
+  fi
+
+  echo
+  echo "== Connected devices =="
+  adb devices -l
+
+  local devices
+  devices="$(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')"
+  local device_count
+  device_count="$(printf '%s\n' "$devices" | sed '/^$/d' | wc -l | tr -d ' ')"
+
+  if [[ "$device_count" -eq 0 ]]; then
+    echo "ERROR: No authorized Android TV/box device found. Run: adb connect <box-ip>:5555" >&2
+    if adb devices | awk 'NR > 1 && ($2 == "unauthorized" || $2 == "offline") { found = 1 } END { exit found ? 0 : 1 }'; then
+      echo "A device is visible but not ready. Confirm the RSA authorization dialog on the TV box, or reconnect network debugging." >&2
+    fi
+    exit 1
+  fi
+
+  if [[ -z "$DEVICE_SERIAL" && -n "$BOX_TARGET" ]] && printf '%s\n' "$devices" | grep -Fxq "$BOX_TARGET"; then
+    DEVICE_SERIAL="$BOX_TARGET"
+  elif [[ -z "$DEVICE_SERIAL" && -n "$BOX_TARGET" ]]; then
+    echo "ERROR: Target TV box is not authorized or online: $BOX_TARGET" >&2
+    adb devices -l >&2
+    exit 1
+  fi
+
+  if [[ -z "$DEVICE_SERIAL" ]]; then
+    if [[ "$device_count" -gt 1 ]]; then
+      echo "ERROR: Multiple Android devices are connected. Run with DEVICE_SERIAL=<serial> or BOX_IP=<box-ip>." >&2
+      adb devices -l >&2
+      exit 1
+    fi
+    DEVICE_SERIAL="$(printf '%s\n' "$devices" | sed '/^$/d' | sed -n '1p')"
+  fi
+
   adb_cmd+=( -s "$DEVICE_SERIAL" )
-fi
+}
 
 run_adb() {
   "${adb_cmd[@]}" "$@"
@@ -24,27 +77,11 @@ if ! command -v adb >/dev/null 2>&1; then
   exit 1
 fi
 
-echo
-echo "== Connected devices =="
-adb devices
-
-device_count=$(adb devices | awk 'NR > 1 && $2 == "device" { count++ } END { print count + 0 }')
-if [[ "$device_count" -eq 0 ]]; then
-  echo "ERROR: No authorized Android TV/box device found. Run: adb connect <box-ip>:5555" >&2
-  if adb devices | awk 'NR > 1 && ($2 == "unauthorized" || $2 == "offline") { found = 1 } END { exit found ? 0 : 1 }'; then
-    echo "A device is visible but not ready. Confirm the RSA authorization dialog on the TV box, or reconnect network debugging." >&2
-  fi
-  exit 1
-fi
-
-if [[ -z "$DEVICE_SERIAL" && "$device_count" -gt 1 ]]; then
-  echo "ERROR: Multiple Android devices are connected. Run with DEVICE_SERIAL=<serial>." >&2
-  adb devices -l >&2
-  exit 1
-fi
+select_device
 
 echo
 echo "== Device facts =="
+echo "Device: $DEVICE_SERIAL"
 run_adb shell getprop ro.product.model | tr -d '\r'
 run_adb shell getprop ro.build.version.sdk | tr -d '\r'
 run_adb shell pm list features | tr -d '\r' | grep -E 'leanback|camera|television|usb.host' || true
