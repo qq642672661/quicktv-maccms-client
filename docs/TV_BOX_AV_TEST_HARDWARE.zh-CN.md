@@ -114,6 +114,20 @@ C920_PHYSICAL_STATUS=已到货未插入 npm run tv-box:c920-arrival-card
 npm run tv-box:c920-arrived
 ```
 
+如果运行后电视上已经确认 C920 真实画面、C920 麦克风业务输入和 USB 热插拔都通过，用确认写入器把人工结果补进验收链路：
+
+```bash
+C920_CONFIRM_ALL_PASS=true npm run tv-box:c920-confirm
+```
+
+如果某项失败或不适用，逐项写入，例如麦克风失败时：
+
+```bash
+C920_CONFIRM_VIDEO=pass C920_CONFIRM_MIC=fail C920_CONFIRM_HOTPLUG=pass C920_CONFIRM_SUPPORT_CODE=pass npm run tv-box:c920-confirm
+```
+
+不带确认参数时，`npm run tv-box:c920-confirm` 只生成 `reports/tv-box-c920-confirm-latest.md/json` 提醒该补哪些现场确认，不会修改验收结论。
+
 验收报告会额外生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并列出 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数。首次未插摄像头运行时会保存 `reports/tv-box-c920-pro-baseline.json` 到货前基线；后续插上 C920 后重跑，会自动对比是否新增 USB 视频、Camera2 摄像头和 USB 音频。它们用于判断是 USB 供电、盒子固件/Camera HAL、AudioManager 还是业务预览问题；但只有 Camera2/CameraService 枚举和电视真实画面一起成立，才算摄像头业务通过。
 
 到货现场如果只想看一张大字操作卡，运行：

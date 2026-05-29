@@ -165,6 +165,20 @@ npm run tv-box:c920-prep
 
 `tv-box:c920-arrived` 默认使用当前小米盒子 `192.168.10.122`，默认把 C920 标记为已插入，并自动读取 `tv-box-field-state/c920-procurement.json` 里的京东自营和预计到货日。换盒子时才需要加 `BOX_IP=<盒子IP>`；如果预计到货日还没到，它会只提示等待，不会误跑实体摄像头验收，避免把“未到货/未插入”误判为 USB 或 Camera2 故障。确认已经提前到货并插好时，可加 `C920_ARRIVED_ALLOW_EARLY=true` 强制执行。底层仍然调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，所以完整采集和关闭边界不变。
 
+如果第一次运行后电视已经看到 C920 真实画面、麦克风业务输入和热插拔都确认通过，用确认写入器把人工结果写回兼容性记录，避免非交互自动化把关键项留成 `unknown`：
+
+```bash
+C920_CONFIRM_ALL_PASS=true npm run tv-box:c920-confirm
+```
+
+如果某项失败或暂不适用，逐项写入，不要为了关闭而全填 pass：
+
+```bash
+C920_CONFIRM_VIDEO=pass C920_CONFIRM_MIC=fail C920_CONFIRM_HOTPLUG=pass C920_CONFIRM_SUPPORT_CODE=pass npm run tv-box:c920-confirm
+```
+
+不带确认参数时，`npm run tv-box:c920-confirm` 只生成 `reports/tv-box-c920-confirm-latest.md/json`，告诉现场下一条该怎么写；它不会误改验收结果。
+
 C920 验收报告还会生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并汇总 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数；首次未插摄像头运行时会保存 `reports/tv-box-c920-pro-baseline.json` 到货前基线，后续插上 C920 会自动对比是否新增 USB 视频、Camera2 摄像头和 USB 音频。上述证据用于排障，不替代 Camera2/CameraService 枚举和电视真实画面确认。已采购但未到货时，可把采购渠道和预计到货日写进操作卡，避免把未插入基线误读成故障：
 
 ```bash

@@ -40,6 +40,8 @@ run_step "TV-box handoff HTML smoke syntax" node --check scripts/tv-box-handoff-
 run_step "TV-box hardware profile syntax" node --check scripts/tv-box-hardware-profile.js
 run_step "C920 acceptance failure self-test syntax" bash -n scripts/tv-box-c920-pro-acceptance-test.sh
 run_step "C920 arrival operation card syntax" node --check scripts/tv-box-c920-arrival-card.js
+run_step "C920 confirmation writer syntax" bash -n scripts/tv-box-c920-confirm.sh
+run_step "C920 confirmation self-test syntax" bash -n scripts/tv-box-c920-confirm-test.sh
 run_step "C920 onsite prep card syntax" node --check scripts/tv-box-c920-onsite-prep.js
 run_step "C920 onsite prep self-test syntax" bash -n scripts/tv-box-c920-onsite-prep-test.sh
 run_step "TV-box next-step scenarios regression syntax" bash -n scripts/tv-box-next-scenarios-test.sh
@@ -58,6 +60,8 @@ run_step "Remote navigation self-test" npm run -s tv-box:remote-test
 run_step "Easy installer failure self-test" ./scripts/tv-box-easy-failure-test.sh
 run_step "C920 acceptance failure self-test" npm run -s tv-box:c920-acceptance-test
 run_step "C920 arrival operation card" npm run -s tv-box:c920-arrival-card
+run_step "C920 confirmation card" npm run -s tv-box:c920-confirm
+run_step "C920 confirmation self-test" npm run -s tv-box:c920-confirm-test
 run_step "C920 onsite prep card" npm run -s tv-box:c920-prep
 run_step "C920 onsite prep self-test" npm run -s tv-box:c920-prep-test
 run_step "ESLint" npm run lint

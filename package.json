@@ -19,6 +19,8 @@
     "tv-box:c920-acceptance-test": "./scripts/tv-box-c920-pro-acceptance-test.sh",
     "tv-box:c920-arrived": "./scripts/tv-box-c920-arrived.sh",
     "tv-box:c920-arrival-card": "node ./scripts/tv-box-c920-arrival-card.js",
+    "tv-box:c920-confirm": "./scripts/tv-box-c920-confirm.sh",
+    "tv-box:c920-confirm-test": "./scripts/tv-box-c920-confirm-test.sh",
     "tv-box:c920-prep": "node ./scripts/tv-box-c920-onsite-prep.js",
     "tv-box:c920-prep-test": "./scripts/tv-box-c920-onsite-prep-test.sh",
     "tv-box:camera-smoke": "./scripts/tv-box-camera-smoke.sh",
