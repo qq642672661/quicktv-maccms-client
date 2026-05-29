@@ -35,6 +35,36 @@ const officialReferences = [
     title: 'Android UsbConstants',
     url: 'https://developer.android.com/reference/android/hardware/usb/UsbConstants',
     note: 'USB class constants include video and audio classes, useful for spotting UVC and USB microphone hints.'
+  },
+  {
+    title: 'Android External USB Cameras',
+    url: 'https://source.android.com/docs/core/camera/external-usb-cameras',
+    note: 'External USB cameras depend on UVC plus device-side camera provider and HAL support before apps can open them through Camera2.'
+  },
+  {
+    title: 'Logitech C920s Pro HD Webcam',
+    url: 'https://www.logitech.com/en-us/products/webcams/c920s-pro-hd-webcam.960-001257.html',
+    note: 'Reference 1080p USB webcam for the primary Camera2/UVC smoke matrix.'
+  },
+  {
+    title: 'Logitech C270 HD Webcam',
+    url: 'https://www.logitech.com/en-us/products/webcams/c270-hd-webcam.960-000694.html',
+    note: 'Reference 720p USB webcam for low-bandwidth fallback testing on older boxes.'
+  },
+  {
+    title: 'Jabra Speak 510',
+    url: 'https://www.jabra.com/business/speakerphones/jabra-speak-series/jabra-speak-510',
+    note: 'Reference USB speakerphone for separating microphone/audio input compatibility from camera compatibility.'
+  },
+  {
+    title: 'Jabra Speak2 40',
+    url: 'https://www.jabra.com/business/speakerphones/jabra-speak-series/jabra-speak2-40',
+    note: 'Current-generation USB speakerphone alternative when Speak 510 is unavailable.'
+  },
+  {
+    title: 'Jabra Speak2 55',
+    url: 'https://www.jabra.com/business/speakerphones/jabra-speak-series/jabra-speak2-55',
+    note: 'Current-generation USB/Bluetooth speakerphone alternative for interaction and call tests.'
   }
 ]
 
@@ -289,14 +319,58 @@ function buildRecommendedSpec(buildConfig) {
       '数字键不是硬性要求，但有数字键时 1-6 可直达首页入口，直播 1-9 可直达频道，7/8 可做收藏操作。'
     ],
     camera: [
-      '优先 UVC USB 摄像头；能被 Android Camera2 枚举到才算可预览。',
+      '优先常见 UVC USB 摄像头；第一轮建议用 Logitech C920s/C920 Pro HD 做 1080p 主测，用 Logitech C270 做 720p 低规格备测。',
+      '能被 Android Camera2 枚举到才算可预览；只被 USB 层看到还不能算摄像头业务通过。',
       '如果 dumpsys usb 能看到 USB 视频设备但 Camera2 看不到摄像头，说明硬件插上了，但盒子固件/Camera HAL 暂未开放给 App。',
       '摄像头权限必须可授权；摄像头缺失时不阻塞看电视，应在现场验收表里填 na。'
     ],
     microphone: [
-      '麦克风可来自盒子内置、遥控器、USB 摄像头内置麦或单独 USB 麦。',
+      '麦克风可来自盒子内置、遥控器、USB 摄像头内置麦或单独 USB 麦；互动课/视频通话建议单独准备 Jabra Speak 510 UC、Jabra Speak2 40/55 或同类免驱 USB Audio Class 会议麦克风。',
       '音频输入需通过 AudioManager 识别，并能授权 RECORD_AUDIO。',
       '没有麦克风不影响直播/点播；语音搜索或视频通话才把录音权限作为强要求。'
+    ]
+  }
+}
+
+function buildTestHardwareKit() {
+  return {
+    required: [
+      {
+        name: 'Logitech C920s / C920 Pro HD',
+        role: '1080p 主摄像头',
+        reason: '作为第一台真实 UVC 摄像头，验证 Camera2 外接摄像头枚举、预览、权限和后续扫码/互动课画面质量。',
+        passCriteria: 'cameraCount 或 externalCameraCount 大于 0，CameraPreviewActivity 能显示真实画面。'
+      },
+      {
+        name: 'Logitech C270',
+        role: '720p 兼容性备机',
+        reason: '当 C920s 在旧盒子上不稳定时，用更低规格摄像头判断是否是带宽/供电/编码能力问题。',
+        passCriteria: 'C920s 失败时，C270 能被 Camera2 枚举或至少在 USB 层稳定出现。'
+      },
+      {
+        name: '带独立供电 USB Hub',
+        role: '供电与多设备组合测试',
+        reason: '排除小米盒子 USB 口供电不足；摄像头和 USB 麦克风同时接入时尤其需要。',
+        passCriteria: '摄像头 + USB 音频同时插入后不反复掉线，doctor/inspect 证据稳定。'
+      }
+    ],
+    audio: [
+      {
+        name: 'Jabra Speak 510 UC / Jabra Speak2 40/55 或同类免驱 USB Audio Class 会议麦克风',
+        role: '音频输入主测',
+        reason: '把音频输入从摄像头里拆出来，单独验证 AudioManager、RECORD_AUDIO 和视频通话/互动课语音链路。',
+        passCriteria: 'audioInputDeviceCount 增加，RECORD_AUDIO 可授权。'
+      }
+    ],
+    defer: [
+      '4K 摄像头先暂缓；旧 Android TV、USB 2.0、供电和解码压力都会增加变量。',
+      '需要厂商专用驱动、手机 App 或云台控制软件的摄像头不作为第一轮基准。',
+      'C920e 等商务型号如麦克风默认关闭，需先确认能用电脑工具开启；否则仍要配独立 USB 麦克风。'
+    ],
+    connectionTopologies: [
+      '单摄像头：Logitech C920s 或 C270 -> 小米盒子 USB 口。',
+      '供电稳定：摄像头 -> 带独立供电 USB Hub -> 小米盒子 USB 口。',
+      '互动课组合：摄像头 + Jabra Speak 510 UC / Speak2 40/55 -> 带独立供电 USB Hub -> 小米盒子 USB 口。'
     ]
   }
 }
@@ -359,6 +433,24 @@ ${device.riskFlags.length ? markdownList(device.riskFlags.map((flag) => `\`${fla
 ## 下一步
 
 ${markdownList(device.nextActions)}
+
+## 测试硬件采购清单
+
+### 第一优先级
+
+${markdownList(profile.testHardwareKit.required.map((item) => `${item.name}（${item.role}）：${item.reason} 通过标准：${item.passCriteria}`))}
+
+### 音频互动测试
+
+${markdownList(profile.testHardwareKit.audio.map((item) => `${item.name}（${item.role}）：${item.reason} 通过标准：${item.passCriteria}`))}
+
+### 暂缓采购
+
+${markdownList(profile.testHardwareKit.defer)}
+
+### 接线方式
+
+${markdownList(profile.testHardwareKit.connectionTopologies)}
 
 ## 推荐硬件规格
 
@@ -423,6 +515,7 @@ function main() {
     readiness: inspection?.readiness || null,
     currentDeviceProfile: buildDeviceProfile(inspection, fieldRecord),
     recommendedSpec: buildRecommendedSpec(androidBuild),
+    testHardwareKit: buildTestHardwareKit(),
     compatibilityPolicy: buildCompatibilityPolicy(),
     compatibilitySummary: compatibility ? {
       totalRecords: compatibility.totalRecords || 0,

@@ -159,6 +159,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-START_HERE.html\`: 给现场人员双击打开的离线大字安装首页。
 - \`handoff-OPERATION_CARD.html\`: 给家人/长辈/小孩看的可打印大字操作卡。
 - \`handoff-HARDWARE_SELECTION_CARD.html\`: 给采购、现场安装和维护人员看的可打印硬件选型卡。
+  - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
   - \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。
   - \`handoff-FIELD_RETURN_CARD.html\`: 现场发回证据前的核对卡，要求 JSON、维护码照片、日志/排障包和异常照片齐全。
   - \`handoff-FIELD_RETURN-README.zh-CN.txt\`: 现场回传文件夹说明。
@@ -231,6 +232,7 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff/START_HERE.html" "handoff-START_HERE.
 copy_if_exists "$REPORT_DIR/tv-box-handoff/OPERATION_CARD.html" "handoff-OPERATION_CARD.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/HARDWARE_SELECTION_CARD.html" "handoff-HARDWARE_SELECTION_CARD.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/HARDWARE_SELECTION_CARD.zh-CN.md" "handoff-HARDWARE_SELECTION_CARD.zh-CN.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_AV_TEST_HARDWARE.zh-CN.md" "handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/FIELD_WIZARD_OFFLINE.html" "handoff-FIELD_WIZARD_OFFLINE.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/README_FIRST.txt" "handoff-README_FIRST.txt"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/QUICK_START.zh-CN.md" "handoff-QUICK_START.zh-CN.md"

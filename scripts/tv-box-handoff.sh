@@ -46,6 +46,7 @@ COMPATIBILITY_SUMMARY_JSON="$REPORT_DIR/tv-box-compatibility-summary-latest.json
 COMPATIBILITY_SUMMARY_MD="$REPORT_DIR/tv-box-compatibility-summary-latest.md"
 HARDWARE_PROFILE_JSON="$REPORT_DIR/tv-box-hardware-profile-latest.json"
 HARDWARE_PROFILE_MD="$REPORT_DIR/tv-box-hardware-profile-latest.md"
+AV_TEST_HARDWARE_PLAN_MD="$ROOT_DIR/docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 EASY_SUMMARY_JSON="$REPORT_DIR/tv-box-easy-run-latest.json"
 EASY_SUMMARY_MD="$REPORT_DIR/tv-box-easy-run-latest.md"
 COMPLETION_AUDIT_JSON="$REPORT_DIR/tv-box-completion-audit-latest.json"
@@ -170,6 +171,10 @@ if [[ -f "$HARDWARE_PROFILE_MD" ]]; then
   cp "$HARDWARE_PROFILE_MD" "$HANDOFF_DIR/tv-box-hardware-profile-latest.md"
 fi
 
+if [[ -f "$AV_TEST_HARDWARE_PLAN_MD" ]]; then
+  cp "$AV_TEST_HARDWARE_PLAN_MD" "$HANDOFF_DIR/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
+fi
+
 if [[ -f "$EASY_SUMMARY_JSON" ]]; then
   cp "$EASY_SUMMARY_JSON" "$HANDOFF_DIR/tv-box-easy-run-latest.json"
 fi
@@ -279,6 +284,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "operationCardHtml": "OPERATION_CARD.html",
     "hardwareSelectionCard": "HARDWARE_SELECTION_CARD.zh-CN.md",
     "hardwareSelectionCardHtml": "HARDWARE_SELECTION_CARD.html",
+    "avTestHardwarePlan": "TV_BOX_AV_TEST_HARDWARE.zh-CN.md",
     "fieldAcceptanceChecklist": "FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md",
     "fieldReturnCard": "FIELD_RETURN_CARD.zh-CN.md",
     "fieldReturnCardHtml": "FIELD_RETURN_CARD.html",
@@ -662,6 +668,7 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 - 可打印操作卡: \`OPERATION_CARD.html\`
 - Markdown 操作卡: \`OPERATION_CARD.zh-CN.md\`
 - 硬件选型卡: \`HARDWARE_SELECTION_CARD.html\` / \`HARDWARE_SELECTION_CARD.zh-CN.md\`
+- 音视频测试硬件方案: \`TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`
 - 现场验收清单: \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`
 - 现场回传卡: \`FIELD_RETURN_CARD.html\` / \`FIELD_RETURN_CARD.zh-CN.md\`
 - 现场回传文件夹: \`FIELD_RETURN/README.zh-CN.txt\`
@@ -2025,6 +2032,14 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.zh-CN.md" <<'HARDWARECARD'
 4. USB 摄像头优先选常见 UVC 摄像头；插上 USB 只能证明硬件接入，必须能被 Android Camera2 枚举并打开预览才算可用。
 5. 麦克风可来自盒子内置、遥控器、USB 摄像头内置麦或单独 USB 麦；需要语音/通话时，必须确认音频输入和录音权限。
 
+## 建议测试套装
+
+- 主摄像头：Logitech C920s / C920 Pro HD，用来测 1080p UVC、Camera2 枚举、真实预览和扫码/互动课画面。
+- 兼容性备机：Logitech C270，用来测 720p 低带宽场景；C920s 不稳定时用它判断是否是带宽、供电或固件问题。
+- 音频输入：Jabra Speak 510 UC / Speak2 40/55 或同类免驱 USB Audio Class 会议麦克风，用来单独验证 AudioManager 和 RECORD_AUDIO；如果 510 缺货，优先买 Speak2 40/55 或同级 USB 会议麦。
+- 供电与扩展：带独立供电 USB Hub；摄像头和 USB 麦克风同时插入时优先用 Hub，避免盒子 USB 口供电不足。
+- 接线顺序：先摄像头直插盒子 USB 口，再测试“摄像头 -> 带供电 Hub -> 盒子”，最后测试“摄像头 + USB 麦克风 -> 带供电 Hub -> 盒子”。
+
 ## 不建议组合
 
 - 不能开启开发者选项或网络调试的盒子。
@@ -2052,6 +2067,7 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.zh-CN.md" <<'HARDWARECARD'
 ## 关联文件
 
 - `tv-box-hardware-profile-latest.md`: 机器生成的硬件兼容性画像和风险标记。
+- `TV_BOX_AV_TEST_HARDWARE.zh-CN.md`: 具体采购、接线、验收命令和故障分流方案。
 - `FIELD_WIZARD_OFFLINE.html`: 不用 npm 的离线现场验收表。
 - `FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md`: 安装完成后的逐项验收清单。
 - `FIELD_COMPATIBILITY_MATRIX.zh-CN.md`: 多款盒子/遥控器/摄像头/麦克风长期复测字段。
@@ -2218,6 +2234,9 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.html" <<'HARDWAREHTML'
           <li>强烈建议遥控器有 0、菜单、信息或帮助键之一。</li>
           <li>USB 摄像头优先选常见 UVC 型号；能被 Camera2 打开预览才算通过。</li>
           <li>需要语音/通话时，麦克风必须能被音频输入识别并授权录音。</li>
+          <li>测试主摄像头建议 Logitech C920s / C920 Pro HD；低规格备机建议 Logitech C270。</li>
+          <li>音频测试建议 Jabra Speak 510 UC / Speak2 40/55 或同类免驱 USB Audio Class 会议麦克风。</li>
+          <li>摄像头 + USB 麦克风组合测试时，优先使用带独立供电 USB Hub。</li>
         </ol>
       </div>
 
@@ -2258,6 +2277,7 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.html" <<'HARDWAREHTML'
         <h2>随包文件</h2>
         <ul>
           <li><a href="tv-box-hardware-profile-latest.md">tv-box-hardware-profile-latest.md</a>：机器生成的硬件风险画像。</li>
+          <li><a href="TV_BOX_AV_TEST_HARDWARE.zh-CN.md">TV_BOX_AV_TEST_HARDWARE.zh-CN.md</a>：具体采购、接线、验收命令和故障分流方案。</li>
           <li><a href="FIELD_WIZARD_OFFLINE.html">FIELD_WIZARD_OFFLINE.html</a>：不用 npm 的离线现场验收表。</li>
           <li><a href="FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md">FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md</a>：安装后逐项验收清单。</li>
           <li><a href="FIELD_COMPATIBILITY_MATRIX.zh-CN.md">FIELD_COMPATIBILITY_MATRIX.zh-CN.md</a>：长期复测字段。</li>

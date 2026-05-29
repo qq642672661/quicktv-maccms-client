@@ -192,7 +192,7 @@ BOX_IP=<盒子IP> npm run tv-box:inspect
 
 `tv-box:command-center` 会生成 `reports/tv-box-command-center-latest.md/json` 交付总控，把 releaseId、readiness、ADB/RSA 授权、APK/交付包/排障包 SHA、离线网页 smoke、现场验收场景回归、现场回传收件箱场景回归、现场回传收件箱、现场 JSON 收件箱、未闭环证据和“现场/工程/负责人下一步”集中到一页。给非技术安装人员或远程维护时，优先看这份总控，再按里面的 `START_HERE.html`、`FIELD_WIZARD_OFFLINE.html`、`FIELD_RETURN_CARD.html`、`npm run tv-box:return-inbox -- <现场回传目录或zip>`、`npm run tv-box:field-inbox`、`BOX_IP=<盒子IP> npm run tv-box:authorize`、`BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy` 执行。
 
-`tv-box:hardware-profile` 会生成 `reports/tv-box-hardware-profile-latest.md/json` 硬件兼容性画像，把当前 ADB/USB/Camera/Audio 证据、现场兼容性记录、推荐盒子/遥控器/USB 摄像头/麦克风规格和“未实机不可关闭”的判定规则放在一页。给采购或现场人员选盒子、摄像头、麦克风前，优先看这份画像；没有真实盒子时它会保持 `needs_real_box`，不会假装实机遥控器或摄像头已经验收。
+`tv-box:hardware-profile` 会生成 `reports/tv-box-hardware-profile-latest.md/json` 硬件兼容性画像，把当前 ADB/USB/Camera/Audio 证据、现场兼容性记录、推荐盒子/遥控器/USB 摄像头/麦克风规格和“未实机不可关闭”的判定规则放在一页。给采购或现场人员选盒子、摄像头、麦克风前，优先看这份画像和 `docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md`；当前建议用 Logitech C920s/C920 Pro HD 做主摄像头、Logitech C270 做低规格备机、Jabra Speak 510 UC / Speak2 40/55 或同类免驱 USB Audio Class 设备做音频输入、带独立供电 USB Hub 排除盒子供电问题。没有真实盒子时它会保持 `needs_real_box`，不会假装实机遥控器或摄像头已经验收。
 
 体检会检查遥控器导航自测、JDK/Android SDK、最新 APK 包信息、Leanback/摄像头/麦克风声明；连上盒子后还会检查设备型号、Android 版本、电视/摄像头/音频 feature、App 安装、摄像头与录音权限声明、Camera/Record audio appops、当前前台窗口和 resumed Activity。`tv-box:inspect` 会把同类证据写成机器可读 JSON，并额外输出 `readiness` 就绪度结论，说明当前是否可交付、是否还缺真实盒子验收、下一步该做什么，方便远程排障和 CI artifact 留存。
 
