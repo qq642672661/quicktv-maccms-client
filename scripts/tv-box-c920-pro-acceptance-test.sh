@@ -380,9 +380,9 @@ cat >"$TMP_ROOT/realtek-acceptance.json" <<'JSON'
     }
   },
   "fieldResults": {
-    "cameraPreview": "unknown",
-    "audioInput": "unknown",
-    "usbHotplug": "unknown"
+    "cameraPreview": "fail",
+    "audioInput": "fail",
+    "usbHotplug": "fail"
   },
   "baselineComparison": {
     "status": "compared",
@@ -575,6 +575,9 @@ const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-c
 assert.equal(card.status, 'c920_purchased_pending_arrival')
 assert.equal(card.sourceStatus, 'waiting_for_camera_or_usb_not_detected')
 assert.equal(card.physicalStatus, 'purchased_pending_arrival')
+assert.equal(card.fieldResults.cameraPreview, 'unknown')
+assert.equal(card.fieldResults.audioInput, 'unknown')
+assert.equal(card.fieldResults.usbHotplug, 'unknown')
 assert.deepEqual(card.physicalStatusInputHints.inserted, ['inserted', '已插入', '已接入'])
 assert.equal(card.procurement.purchaseChannel, '京东自营')
 assert.equal(card.procurement.expectedArrivalDate, '2026-05-30')
@@ -588,6 +591,8 @@ assert.match(cardMarkdown, /采购渠道: 京东自营/)
 assert.match(cardMarkdown, /预计到货: 2026-05-30/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已插入/)
 assert.match(cardMarkdown, /新增 USB 视频: `no`/)
+assert.match(cardMarkdown, /FIELD_CAMERA_PREVIEW \\| 未确认/)
+assert.doesNotMatch(cardMarkdown, /FIELD_CAMERA_PREVIEW \\| 失败/)
 NODE
 
 (
@@ -605,9 +610,11 @@ const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-c
 
 assert.equal(card.status, 'c920_not_inserted_baseline')
 assert.equal(card.physicalStatus, 'not_inserted')
+assert.equal(card.fieldResults.cameraPreview, 'unknown')
 assert.match(card.physicalStatusLabel, /未插入/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已到货未插入/)
 assert.match(cardMarkdown, /未插入摄像头时看到 USB 视频和 Camera2 为 0 是正常基线/)
+assert.match(cardMarkdown, /FIELD_CAMERA_PREVIEW \\| 未确认/)
 NODE
 
 echo "C920 PRO acceptance failure self-test passed."
