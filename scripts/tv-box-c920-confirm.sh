@@ -6,16 +6,24 @@ PROCUREMENT_JSON="${TV_BOX_C920_PROCUREMENT_JSON:-$ROOT_DIR/tv-box-field-state/c
 REPORT_DIR="${REPORT_DIR:-$ROOT_DIR/reports}"
 LATEST_JSON="$REPORT_DIR/tv-box-c920-confirm-latest.json"
 LATEST_MD="$REPORT_DIR/tv-box-c920-confirm-latest.md"
+PREP_JSON="${TV_BOX_C920_PREP_JSON:-$REPORT_DIR/tv-box-c920-onsite-prep-latest.json}"
 
 BOX_IP="${BOX_IP:-192.168.10.122}"
 DEVICE_SERIAL="${DEVICE_SERIAL:-}"
 CONFIRM_ALL_PASS="${C920_CONFIRM_ALL_PASS:-false}"
 CONFIRM_DRY_RUN="${C920_CONFIRM_DRY_RUN:-false}"
 CONFIRM_ALLOW_PARTIAL="${C920_CONFIRM_ALLOW_PARTIAL:-false}"
+CONFIRM_ALLOW_EARLY="${C920_CONFIRM_ALLOW_EARLY:-false}"
+CONFIRM_ALLOW_UNREADY="${C920_CONFIRM_ALLOW_UNREADY:-false}"
+CONFIRM_SKIP_PREFLIGHT="${C920_CONFIRM_SKIP_PREFLIGHT:-false}"
+CONFIRM_CURRENT_DATE="${C920_CONFIRM_CURRENT_DATE:-$(date +%F)}"
 VIDEO_RESULT="${C920_CONFIRM_VIDEO:-${C920_VIDEO:-}}"
 MIC_RESULT="${C920_CONFIRM_MIC:-${C920_MIC:-}}"
 HOTPLUG_RESULT="${C920_CONFIRM_HOTPLUG:-${C920_HOTPLUG:-}}"
 SUPPORT_CODE_RESULT="${C920_CONFIRM_SUPPORT_CODE:-${C920_SUPPORT_CODE:-}}"
+
+preflight_status=""
+preflight_reason=""
 
 json_value_or_empty() {
   local file_path="$1"
@@ -52,6 +60,9 @@ Options:
   --hotplug <result>      pass / fail / na / skip / unknown.
   --support-code <result> pass / fail / na / skip / unknown.
   --allow-partial         Run even if some fields are unknown.
+  --allow-early           Allow confirmation before the expected delivery date.
+  --allow-unready         Continue even when the C920 prep check is not ready.
+  --skip-preflight        Skip date, ADB, and target-box confirmation checks.
   --dry-run               Write the confirmation card without running acceptance.
 EOF
 }
@@ -74,6 +85,26 @@ normalize_result() {
     u|unknown|unk|未确认|'') printf 'unknown' ;;
     *) printf 'unknown' ;;
   esac
+}
+
+is_iso_date() {
+  [[ "${1:-}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+}
+
+read_prep_value() {
+  local key_path="$1"
+  [[ -f "$PREP_JSON" ]] || return 0
+  node -e '
+const fs = require("fs")
+try {
+  const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"))
+  const value = process.argv[2].split(".").reduce((current, key) => {
+    if (current === undefined || current === null) return undefined
+    return current[key]
+  }, data)
+  if (value !== undefined && value !== null) process.stdout.write(String(value))
+} catch {}
+' "$PREP_JSON" "$key_path"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -116,6 +147,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     --allow-partial)
       CONFIRM_ALLOW_PARTIAL=true
+      shift
+      ;;
+    --allow-early)
+      CONFIRM_ALLOW_EARLY=true
+      shift
+      ;;
+    --allow-unready)
+      CONFIRM_ALLOW_UNREADY=true
+      shift
+      ;;
+    --skip-preflight)
+      CONFIRM_SKIP_PREFLIGHT=true
       shift
       ;;
     --dry-run|--no-run)
@@ -166,7 +209,7 @@ write_report() {
   if [[ ${#missing[@]} -gt 0 ]]; then
     missing_json="$(node -e 'process.stdout.write(JSON.stringify(process.argv.slice(1)))' "${missing[@]}")"
   fi
-  node - "$LATEST_JSON" "$LATEST_MD" "$ROOT_DIR" "$REPORT_DIR" "$report_status" "$BOX_IP" "$DEVICE_SERIAL" "$VIDEO_RESULT" "$MIC_RESULT" "$HOTPLUG_RESULT" "$SUPPORT_CODE_RESULT" "$C920_PURCHASE_CHANNEL" "$C920_EXPECTED_ARRIVAL_DATE" "$C920_PURCHASE_NOTE" "$missing_json" <<'NODE'
+  node - "$LATEST_JSON" "$LATEST_MD" "$ROOT_DIR" "$REPORT_DIR" "$report_status" "$BOX_IP" "$DEVICE_SERIAL" "$VIDEO_RESULT" "$MIC_RESULT" "$HOTPLUG_RESULT" "$SUPPORT_CODE_RESULT" "$C920_PURCHASE_CHANNEL" "$C920_EXPECTED_ARRIVAL_DATE" "$C920_PURCHASE_NOTE" "$missing_json" "$CONFIRM_CURRENT_DATE" "$preflight_status" "$preflight_reason" "$PREP_JSON" <<'NODE'
 const fs = require('fs')
 const path = require('path')
 
@@ -185,7 +228,11 @@ const [
   purchaseChannel,
   expectedArrivalDate,
   purchaseNote,
-  missingJson
+  missingJson,
+  currentDate,
+  preflightStatus,
+  preflightReason,
+  prepJsonPath
 ] = process.argv.slice(2)
 
 function readJson(filePath) {
@@ -232,6 +279,12 @@ const report = {
     purchaseChannel,
     expectedArrivalDate,
     note: purchaseNote
+  },
+  preflight: {
+    currentDate,
+    status: preflightStatus || '',
+    reason: preflightReason || '',
+    reportPath: prepJsonPath
   },
   fieldInputs: {
     cameraPreview: videoResult,
@@ -288,9 +341,20 @@ const md = `# C920 PRO 人工确认写入卡
 
 ${status === 'needs_confirmation'
   ? `先看电视和现场证据，补齐这些确认项：${missing.join('、') || '无'}。\n\n全部确认通过时运行：\n\n\`\`\`bash\n${allPassCommand}\n\`\`\`\n\n如果有失败或不适用，用逐项命令：\n\n\`\`\`bash\n${report.commands.customTemplate}\n\`\`\``
+  : status === 'blocked_before_expected_arrival'
+    ? `C920 PRO 预计 \`${expectedArrivalDate || '未记录'}\` 到货，当前日期是 \`${currentDate || '未记录'}\`；为避免把“未到货/未插入”写成全通过，本次不写入兼容性记录。\n\n到货并插好后先运行：\n\n\`\`\`bash\nnpm run tv-box:c920-arrived\n\`\`\`\n\n如果确实提前到货且已经插好，可运行：\n\n\`\`\`bash\nC920_CONFIRM_ALLOW_EARLY=true C920_CONFIRM_ALL_PASS=true npm run tv-box:c920-confirm\n\`\`\``
+  : status === 'blocked_by_preflight'
+    ? `确认写入前置检查没有通过：${preflightReason || '状态未就绪'}。\n\n先查看：\`${path.relative(rootDir, prepJsonPath)}\`，处理盒子连接、ADB 授权或离线设备噪声后再运行确认命令。\n\n确实要强制继续时才加：\n\n\`\`\`bash\nC920_CONFIRM_ALLOW_UNREADY=true C920_CONFIRM_ALL_PASS=true npm run tv-box:c920-confirm\n\`\`\``
   : status === 'dry_run_ready_to_write'
     ? `这是 dry-run，没有写入真实验收。确认命令可用后去掉 \`C920_CONFIRM_DRY_RUN=true\` 或 \`--dry-run\` 再运行。`
     : `已把确认结果交给 C920 验收链路写入兼容性记录、硬件画像、完成度审计和到货卡。`}
+
+## 确认写入前置保护
+
+- 当前日期: \`${currentDate || '未记录'}\`
+- 前置检查状态: \`${preflightStatus || '未运行'}\`
+- 前置检查说明: ${preflightReason || '无'}
+- 前置检查报告: \`${path.relative(rootDir, prepJsonPath)}\`
 
 ## 不能误填 pass 的边界
 
@@ -329,6 +393,57 @@ if [[ "$status" == "dry_run_ready_to_write" ]]; then
   echo "C920 confirmation dry-run card: $LATEST_MD"
   echo "Status: $status"
   exit 0
+fi
+
+if ! is_truthy "$CONFIRM_SKIP_PREFLIGHT"; then
+  if is_iso_date "$C920_EXPECTED_ARRIVAL_DATE" \
+    && is_iso_date "$CONFIRM_CURRENT_DATE" \
+    && [[ "$CONFIRM_CURRENT_DATE" < "$C920_EXPECTED_ARRIVAL_DATE" ]] \
+    && ! is_truthy "$CONFIRM_ALLOW_EARLY"; then
+    preflight_status="waiting_for_delivery"
+    preflight_reason="预计 ${C920_EXPECTED_ARRIVAL_DATE} 到货，当前是 ${CONFIRM_CURRENT_DATE}；确认写入不会提前执行。"
+    write_report "blocked_before_expected_arrival"
+    echo "C920 confirmation blocked: $preflight_reason"
+    echo "Report: $LATEST_MD"
+    exit 0
+  fi
+
+  echo "== C920 确认前置检查 =="
+  if is_truthy "$CONFIRM_ALLOW_EARLY" \
+    && is_iso_date "$C920_EXPECTED_ARRIVAL_DATE" \
+    && [[ -z "${C920_PREP_CURRENT_DATE:-}" ]]; then
+    export C920_PREP_CURRENT_DATE="$C920_EXPECTED_ARRIVAL_DATE"
+  else
+    export C920_PREP_CURRENT_DATE="${C920_PREP_CURRENT_DATE:-$CONFIRM_CURRENT_DATE}"
+  fi
+
+  BOX_IP="$BOX_IP" \
+    REPORT_DIR="$REPORT_DIR" \
+    TV_BOX_C920_PROCUREMENT_JSON="$PROCUREMENT_JSON" \
+    TV_BOX_C920_PREP_JSON="$PREP_JSON" \
+    node "$ROOT_DIR/scripts/tv-box-c920-onsite-prep.js"
+
+  preflight_status="$(read_prep_value "result.status")"
+  preflight_reason="$(read_prep_value "result.reason")"
+  echo "C920 confirm preflight status: ${preflight_status:-unknown}"
+  [[ -z "$preflight_reason" ]] || echo "Reason: $preflight_reason"
+
+  case "$preflight_status" in
+    ready_to_plug_and_run|ready_to_plug_and_run_with_adb_noise)
+      ;;
+    *)
+      if ! is_truthy "$CONFIRM_ALLOW_UNREADY"; then
+        write_report "blocked_by_preflight"
+        echo "C920 confirmation blocked by preflight."
+        echo "Report: $LATEST_MD"
+        exit 0
+      fi
+      echo "C920_CONFIRM_ALLOW_UNREADY=true 已设置，继续写入确认。"
+      ;;
+  esac
+else
+  preflight_status="skipped"
+  preflight_reason="C920_CONFIRM_SKIP_PREFLIGHT=true"
 fi
 
 echo "== C920 PRO 人工确认写入 =="
