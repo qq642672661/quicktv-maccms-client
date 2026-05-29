@@ -315,6 +315,13 @@ function main() {
     'inspection.sourceContracts 覆盖 TvBoxModule、CameraPreviewActivity、音频输入和维护码字段。'
   ))
   requirements.push(makeRequirement(
+    'phone_camera_pairing_ui',
+    '手机当电视摄像头配对入口和验收边界',
+    allTruthy(sourceContracts, ['phoneCameraPairRoute', 'cameraPagePhoneCameraShortcut', 'phoneCameraPairPage', 'phoneCameraPairQrCode', 'phoneCameraPairRoomCode', 'phoneCameraPairRemoteActions', 'phoneCameraPairHelpKeys', 'phoneCameraPairPrivacyBoundary', 'phoneCameraPairNativeWebRtcBoundary']) ? 'proven' : 'missing',
+    'inspection.sourceContracts 覆盖 camera-setup 入口、phone_camera_pair 路由、二维码、6 位房间码、三个遥控动作、帮助救援、隐私边界和 WebRTC/Camera2 边界。',
+    '后续接入真实局域网信令与 Android 原生 WebRTC 接收端后，再用手机端权限截图、电视端首帧、session.stats 和断线重连证据关闭验收。'
+  ))
+  requirements.push(makeRequirement(
     'real_camera_acceptance',
     '真实摄像头/麦克风/USB 热插拔或无外设降级验收',
     realCameraAcceptanceProven ? 'proven' : 'needs_box',

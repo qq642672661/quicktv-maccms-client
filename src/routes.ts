@@ -161,6 +161,11 @@ const routes = [
     component: () => import('./pages/camera-setup/index.vue')
   },
   {
+    path: '/phone-camera-pair',
+    name: 'phone_camera_pair',
+    component: () => import('./pages/phone-camera-pair/index.vue')
+  },
+  {
     path: '/fullPlay',
     name: 'fullPlay',
     component: fullPlay

@@ -185,12 +185,29 @@ function buildAreas(inspection) {
         makeCheck('camera_help_keys', '摄像头页支持 0/6/帮助键回自检', sourceOk(contracts, 'cameraHelpKeys') && sourceOk(contracts, 'cameraSixKeyHelp'), 'remoteNumber === 6 / isRemoteHelpKey'),
         makeCheck('media_permissions', '摄像头页可一键请求摄像头和录音权限', has('src/pages/camera-setup/index.vue', 'requestTvBoxMediaPermissions') && has('src/pages/camera-setup/index.vue', '摄像头和麦克风权限已允许'), 'requestTvBoxMediaPermissions'),
         makeCheck('preview_test', '摄像头页有“测试摄像头”入口', has('src/pages/camera-setup/index.vue', '测试摄像头'), '测试摄像头'),
+        makeCheck('phone_camera_shortcut', '摄像头页有手机摄像头保底入口', sourceOk(contracts, 'cameraPagePhoneCameraShortcut'), 'launchPhoneCameraPair / 手机摄像头'),
         makeCheck('microphone_status', '摄像头页显示麦克风/音频输入状态', sourceOk(contracts, 'cameraPageMicrophoneStatus') && sourceOk(contracts, 'frontEndAudioInputDetection'), 'audioInputDeviceCount'),
         makeCheck('native_bridge', '原生桥检测 Camera2、USB 视频、音频输入和权限', sourceOk(contracts, 'nativeTvBoxModule') && sourceOk(contracts, 'nativeCameraPreviewActivity') && sourceOk(contracts, 'nativeAudioInputDetection'), 'TvBoxModule / CameraPreviewActivity'),
         makeCheck('optional_manifest', '摄像头、麦克风、USB Host、触屏均为可选能力，不阻塞安装', sourceOk(contracts, 'optionalExternalCamera') && sourceOk(contracts, 'optionalMicrophone') && sourceOk(contracts, 'optionalUsbHost') && sourceOk(contracts, 'optionalTouchscreen'), 'AndroidManifest optional features'),
         makeCheck('support_code_audio', '维护码包含音频输入状态', sourceOk(contracts, 'supportCodeAudioInput'), '音频输入')
       ],
       '真实预览和热插拔仍需 BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy。'
+    ),
+    makeArea(
+      'phone_camera_pairing',
+      '手机摄像头配对入口',
+      '没有实体摄像头或临时互动课的家庭用户',
+      [
+        makeCheck('phone_pair_route', '手机摄像头配对页路由存在', sourceOk(contracts, 'phoneCameraPairRoute'), 'phone_camera_pair'),
+        makeCheck('phone_pair_page', '配对页源码存在', sourceOk(contracts, 'phoneCameraPairPage'), 'src/pages/phone-camera-pair/index.vue'),
+        makeCheck('phone_pair_qr', '配对页显示二维码内容和扫码入口', sourceOk(contracts, 'phoneCameraPairQrCode'), 'qt-qr-code / pairUrl'),
+        makeCheck('phone_pair_room_code', '配对页生成 6 位房间码并提示过期时间', sourceOk(contracts, 'phoneCameraPairRoomCode'), 'generateRoomCode / ttlMinutes'),
+        makeCheck('phone_pair_three_actions', '配对页只暴露重新生成、返回摄像头、帮助自检三个遥控动作', sourceOk(contracts, 'phoneCameraPairRemoteActions'), '重新生成 / 返回摄像头 / 帮助自检'),
+        makeCheck('phone_pair_help_keys', '配对页支持 0/6/帮助键救援', sourceOk(contracts, 'phoneCameraPairHelpKeys'), 'remoteNumber === 6 / isRemoteHelpKey'),
+        makeCheck('phone_pair_privacy', '配对页明示默认不录制和小程序资质门禁', sourceOk(contracts, 'phoneCameraPairPrivacyBoundary'), '默认不录制 / 微信小程序推流'),
+        makeCheck('phone_pair_boundary', '配对页不把手机摄像头误说成系统 Camera2', sourceOk(contracts, 'phoneCameraPairNativeWebRtcBoundary'), '电视端原生 WebRTC 接收端 / 不伪装')
+      ],
+      '后续接入局域网信令和 Android 原生 WebRTC 接收端前，本页只证明入口和验收边界。'
     ),
     makeArea(
       'field_acceptance',

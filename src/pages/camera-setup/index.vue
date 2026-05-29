@@ -89,10 +89,10 @@
         eventFocus
         eventClick
         @focus="setActiveAction(3)"
-        @click="openSettings"
+        @click="launch.launchPhoneCameraPair()"
       >
         <qt-text class="camera-setup-button-key" text="4" gravity="center" :focusable="false" />
-        <qt-text class="camera-setup-button-text" text="打开权限设置" :focusable="false" />
+        <qt-text class="camera-setup-button-text" text="手机摄像头" :focusable="false" />
       </qt-view>
       <qt-view
         :class="['camera-setup-button secondary', { active: activeActionIndex === 4 }]"
@@ -102,10 +102,10 @@
         eventFocus
         eventClick
         @focus="setActiveAction(4)"
-        @click="launch.launchTvBoxHome()"
+        @click="openSettings"
       >
         <qt-text class="camera-setup-button-key" text="5" gravity="center" :focusable="false" />
-        <qt-text class="camera-setup-button-text" text="返回首页" :focusable="false" />
+        <qt-text class="camera-setup-button-text" text="权限设置" :focusable="false" />
       </qt-view>
     </qt-view>
   </qt-view>
@@ -215,14 +215,14 @@ const deviceHintText = computed(() => {
 const nextStepText = computed(() => {
   if (isChecking.value) return '请先等检测完成。'
   if (capabilities.value.source === 'fallback') return '当前不是电视盒子原生运行环境，可先打包 APK 后在盒子上复测。'
-  if (capabilities.value.hasAnyCamera === false && hasUsbVideoDevice.value) return '已看到 USB 摄像头硬件，先按“测试摄像头”；若打不开，换 UVC 摄像头或检查盒子固件。'
-  if (capabilities.value.hasAnyCamera === false) return '把 USB 摄像头插到盒子上，再按“重新检测”；没有摄像头也可以正常看电视。'
+  if (capabilities.value.hasAnyCamera === false && hasUsbVideoDevice.value) return '已看到 USB 摄像头硬件，先按“测试摄像头”；若打不开，可按 4 走手机摄像头保底路线。'
+  if (capabilities.value.hasAnyCamera === false) return '把 C920 插到盒子 USB 口后按“重新检测”；未接实体摄像头时可按 4 用手机摄像头。'
   if (capabilities.value.hasCameraPermission === false || capabilities.value.hasRecordAudioPermission === false) return '按遥控器 OK 选择“一键授权”；如果系统没有弹窗，再打开权限设置手动允许。'
-  return '摄像头和权限都已就绪，后续可接扫码登录、视频通话或体感互动。'
+  return '实体摄像头和权限已就绪；临时互动也可按 4 打开手机摄像头配对。返回键回首页。'
 })
 const supportCodeText = computed(() => formatTvBoxSupportCode(capabilities.value))
 
-const actionHandlers = [refreshCapabilities, requestPermission, openSystemCamera, openSettings, launch.launchTvBoxHome.bind(launch)]
+const actionHandlers = [refreshCapabilities, requestPermission, openSystemCamera, launch.launchPhoneCameraPair.bind(launch), openSettings]
 
 function formatFlag(value: boolean | null, yesText: string, noText: string): string {
   if (value === true) return yesText

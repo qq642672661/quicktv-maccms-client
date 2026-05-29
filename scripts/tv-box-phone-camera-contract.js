@@ -8,7 +8,7 @@ const outputJsonPath = process.env.TV_BOX_PHONE_CAMERA_CONTRACT_JSON || path.joi
 const outputMarkdownPath = process.env.TV_BOX_PHONE_CAMERA_CONTRACT_MD || path.join(reportDir, 'tv-box-phone-camera-contract-latest.md')
 
 const contract = {
-  version: '2026-05-29.1',
+  version: '2026-05-29.2',
   purpose: '手机采集摄像头和麦克风，电视盒子原生 WebRTC 接收；QuickTVUI 只负责遥控器友好的配对、状态、重试和降级。',
   defaultRoute: 'native_webrtc_receiver',
   nonGoals: [
@@ -120,7 +120,7 @@ const contract = {
     roomCodeMustExpire: true
   },
   implementationMilestones: [
-    { id: 'm1_contract_and_pairing_ui', label: '合同、配对页、房间码和状态文案', proof: 'tv-box:phone-camera-contract + QuickTVUI pairing page source check' },
+    { id: 'm1_contract_and_pairing_ui', label: '合同、配对页、房间码和状态文案', proof: 'tv-box:phone-camera-contract + phone_camera_pair source contracts + tv-box:ux-audit' },
     { id: 'm2_lan_signaling', label: '局域网 WebSocket 信令服务', proof: 'offer/answer/ICE contract test' },
     { id: 'm3_android_receiver', label: 'Android 原生 WebRTC 接收端', proof: '真实电视盒子首帧和 stats' },
     { id: 'm4_phone_capture', label: '手机采集端/PWA 或 App', proof: '手机权限、采集、停止按钮和弱网降级记录' },

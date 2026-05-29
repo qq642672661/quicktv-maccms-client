@@ -109,7 +109,7 @@ npm run dev
 - 直播页返回键优先关闭频道列表，再按返回到简易首页；首页再按返回会出现大字退出确认。
 - 搜索页、继续看页和“全部内容”原始首页在简易模式下都保留救援路径：按 0、菜单、信息、指南、设置或帮助键进入“帮助/自检”，“全部内容”页也支持 6 键自检，按返回最终回到简易首页。
 - 摄像头页支持能力检测、一键授权摄像头/麦克风、内置 Camera2 预览测试和系统权限入口，会显示真实摄像头数量、USB/UVC 视频设备数量、麦克风/音频输入数量；预览测试会优先选择可预览的外接摄像头，再回退到后置/前置/任意摄像头；没有摄像头或麦克风也不影响看电视。
-- 官方 QuickTVUI 仓库暂未提供手机摄像头 WebRTC 示例；“手机当电视摄像头”按 `docs/TV_BOX_REMOTE_CAMERA_PLAN.zh-CN.md` 的分层路线推进：默认推荐手机采集 + 电视端原生 WebRTC 接收，RTSP/RTMP + IJK 只作为同网预览 MVP，USB/UVC/Camera2 继续作为实体摄像头保底。微信小程序 `live-pusher` 可作为手机侧免安装入口，但需要服务类目、主体资质和接口权限审核，不能作为默认无门槛承诺。
+- 官方 QuickTVUI 仓库暂未提供手机摄像头 WebRTC 示例；“手机当电视摄像头”按 `docs/TV_BOX_REMOTE_CAMERA_PLAN.zh-CN.md` 的分层路线推进：默认推荐手机采集 + 电视端原生 WebRTC 接收，RTSP/RTMP + IJK 只作为同网预览 MVP，USB/UVC/Camera2 继续作为实体摄像头保底。电视端已经有 `phone_camera_pair` 配对入口，摄像头页按 4 可显示二维码和 6 位房间码；接入真实信令和 Android 原生 WebRTC 接收端前，这个入口只证明配对与验收边界，不证明真实首帧已经通过。微信小程序 `live-pusher` 可作为手机侧免安装入口，但需要服务类目、主体资质和接口权限审核，不能作为默认无门槛承诺。
 
 如需恢复原瀑布流首页启动，把 `.env.production` 或 `.env.local` 里的 `VITE_TV_BOX_SIMPLE_MODE=false`。
 
@@ -204,7 +204,7 @@ BOX_IP=<盒子IP> npm run tv-box:inspect
 
 `tv-box:hardware-profile` 会生成 `reports/tv-box-hardware-profile-latest.md/json` 硬件兼容性画像，把当前 ADB/USB/Camera/Audio 证据、现场兼容性记录、推荐盒子/遥控器/USB 摄像头/麦克风规格和“未实机不可关闭”的判定规则放在一页。给采购或现场人员选盒子、摄像头、麦克风前，优先看这份画像和 `docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md`；当前建议用 Logitech C920s/C920 Pro HD 做主摄像头、Logitech C270 做低规格备机、Jabra Speak 510 UC / Speak2 40/55 或同类免驱 USB Audio Class 设备做音频输入、带独立供电 USB Hub 排除盒子供电问题。没有真实盒子时它会保持 `needs_real_box`，不会假装实机遥控器或摄像头已经验收。
 
-`tv-box:phone-camera-contract` 会生成 `reports/tv-box-phone-camera-contract-latest.md/json`，把“手机采集 + 电视端原生 WebRTC 接收”的房间码、信令消息、状态机、媒体档位、隐私边界、降级路线和现场验收证据固化成机器可读合同；`tv-box:phone-camera-scenarios-test` 会生成 `reports/tv-box-phone-camera-scenarios-test-latest.md/json`，用合成信令回归扫码首帧、房间过期、手机权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁。交付包会同时带 `TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md`。后续做手机摄像头配对页、Android WebRTC 接收端、手机采集端或小程序入口，都按这份合同和场景回归验收，不把手机误说成系统 Camera2 摄像头。
+`tv-box:phone-camera-contract` 会生成 `reports/tv-box-phone-camera-contract-latest.md/json`，把“手机采集 + 电视端原生 WebRTC 接收”的房间码、信令消息、状态机、媒体档位、隐私边界、降级路线和现场验收证据固化成机器可读合同；`tv-box:phone-camera-scenarios-test` 会生成 `reports/tv-box-phone-camera-scenarios-test-latest.md/json`，用合成信令回归扫码首帧、房间过期、手机权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁。交付包会同时带 `TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md`。电视端 `phone_camera_pair` 页面已经把二维码、6 位房间码、重新生成、返回摄像头、帮助自检、默认不录制和小程序资质门禁固化进源码审计；后续做 Android WebRTC 接收端、手机采集端或小程序入口，都按这份合同和场景回归验收，不把手机误说成系统 Camera2 摄像头。
 
 体检会检查遥控器导航自测、JDK/Android SDK、最新 APK 包信息、Leanback/摄像头/麦克风声明；连上盒子后还会检查设备型号、Android 版本、电视/摄像头/音频 feature、App 安装、摄像头与录音权限声明、Camera/Record audio appops、当前前台窗口和 resumed Activity。`tv-box:inspect` 会把同类证据写成机器可读 JSON，并额外输出 `readiness` 就绪度结论，说明当前是否可交付、是否还缺真实盒子验收、下一步该做什么，方便远程排障和 CI artifact 留存。
 

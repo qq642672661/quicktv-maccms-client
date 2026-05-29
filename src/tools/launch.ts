@@ -348,6 +348,12 @@ class Launch {
     })
   }
 
+  launchPhoneCameraPair() {
+    this.router.push({
+      name: 'phone_camera_pair'
+    })
+  }
+
   //拼接快应用scheme
   buildScheme(esPackageName: string, from: string, url?: string, params?: object): string {
     let scheme = `esapp://action/start?es_pkg=${esPackageName}&from=${from}&splash=-1`

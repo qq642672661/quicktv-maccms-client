@@ -144,9 +144,26 @@ function sourceContracts() {
     fieldGuideRoute: hasText(path.join(rootDir, 'src/routes.ts'), "name: 'tv_box_field_guide'"),
     tvBoxExitRoute: hasText(path.join(rootDir, 'src/routes.ts'), "name: 'tv_box_exit'"),
     cameraSetupRoute: hasText(path.join(rootDir, 'src/routes.ts'), "name: 'camera_setup'"),
+    phoneCameraPairRoute: hasText(path.join(rootDir, 'src/routes.ts'), "name: 'phone_camera_pair'"),
     numericHomeBadges: hasText(path.join(rootDir, 'src/pages/tv-box-home/index.vue'), 'tv-box-home-card-key'),
     visibleHomeHelpCard: hasText(path.join(rootDir, 'src/pages/tv-box-home/index.vue'), '帮助自检'),
     numericCameraBadges: hasText(path.join(rootDir, 'src/pages/camera-setup/index.vue'), 'camera-setup-button-key'),
+    cameraPagePhoneCameraShortcut: hasText(path.join(rootDir, 'src/pages/camera-setup/index.vue'), 'launch.launchPhoneCameraPair') &&
+      hasText(path.join(rootDir, 'src/pages/camera-setup/index.vue'), '手机摄像头'),
+    phoneCameraPairPage: fs.existsSync(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue')),
+    phoneCameraPairQrCode: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'qt-qr-code') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'pairUrl'),
+    phoneCameraPairRoomCode: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'generateRoomCode') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'ttlMinutes'),
+    phoneCameraPairRemoteActions: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '重新生成') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '返回摄像头') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '帮助自检'),
+    phoneCameraPairHelpKeys: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'remoteNumber === 6') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'isRemoteHelpKey'),
+    phoneCameraPairPrivacyBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '默认不录制') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '微信小程序推流'),
+    phoneCameraPairNativeWebRtcBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '电视端原生 WebRTC 接收端') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '不会把手机伪装成系统摄像头'),
     zeroKeyHelp: hasText(path.join(rootDir, 'src/pages/tv-box-home/index.vue'), 'launch.launchTvBoxHelp()'),
     remoteHelpKeys: hasText(path.join(rootDir, 'src/tools/tv-box/remote-control.ts'), 'isRemoteHelpKey'),
     homeHelpKeys: hasText(path.join(rootDir, 'src/pages/tv-box-home/index.vue'), 'isRemoteHelpKey'),
