@@ -38,6 +38,7 @@ run_step "TV-box field wizard syntax" node --check scripts/tv-box-field-wizard.j
 run_step "TV-box field wizard offline HTML syntax" node --check scripts/tv-box-field-wizard-html.js
 run_step "TV-box handoff HTML smoke syntax" node --check scripts/tv-box-handoff-html-smoke.js
 run_step "TV-box hardware profile syntax" node --check scripts/tv-box-hardware-profile.js
+run_step "C920 acceptance failure self-test syntax" bash -n scripts/tv-box-c920-pro-acceptance-test.sh
 run_step "TV-box next-step scenarios regression syntax" bash -n scripts/tv-box-next-scenarios-test.sh
 run_step "TV-box phone camera contract syntax" node --check scripts/tv-box-phone-camera-contract.js
 run_step "TV-box release ledger syntax" node --check scripts/tv-box-release-ledger.js
@@ -45,6 +46,7 @@ run_step "TV-box site readiness syntax" node --check scripts/tv-box-site-readine
 run_step "TV-box UX audit syntax" node --check scripts/tv-box-ux-audit.js
 run_step "Remote navigation self-test" npm run -s tv-box:remote-test
 run_step "Easy installer failure self-test" ./scripts/tv-box-easy-failure-test.sh
+run_step "C920 acceptance failure self-test" npm run -s tv-box:c920-acceptance-test
 run_step "ESLint" npm run lint
 run_step "Android Java verification" ./scripts/android-verify.sh
 run_step "Debug APK build" npm run build-apk-debug

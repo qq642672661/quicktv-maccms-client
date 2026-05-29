@@ -16,6 +16,7 @@
     "tv-box:audit": "./scripts/tv-box-audit.sh",
     "tv-box:authorize": "./scripts/tv-box-authorize.sh",
     "tv-box:c920-acceptance": "./scripts/tv-box-c920-pro-acceptance.sh",
+    "tv-box:c920-acceptance-test": "./scripts/tv-box-c920-pro-acceptance-test.sh",
     "tv-box:camera-smoke": "./scripts/tv-box-camera-smoke.sh",
     "tv-box:command-center": "node ./scripts/tv-box-command-center.js",
     "tv-box:completion-audit": "node ./scripts/tv-box-completion-audit.js",

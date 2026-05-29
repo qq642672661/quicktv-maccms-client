@@ -5,6 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 source "$ROOT_DIR/scripts/android-env.sh"
 
+if [[ -n "${TV_BOX_TOOL_PATH:-}" ]]; then
+  export PATH="$TV_BOX_TOOL_PATH:$PATH"
+fi
+
 REPORT_DIR="${REPORT_DIR:-$ROOT_DIR/reports}"
 PACKAGE_NAME="${PACKAGE_NAME:-com.quicktvui.hellotv}"
 BOX_IP="${BOX_IP:-192.168.10.122}"
@@ -14,6 +18,8 @@ MICROPHONE_MODEL="${FIELD_MICROPHONE_MODEL:-Logitech C920 PRO built-in microphon
 RUN_REMOTE_SMOKE="${RUN_REMOTE_SMOKE:-true}"
 STRICT="${STRICT:-false}"
 INTERACTIVE="${INTERACTIVE:-auto}"
+
+export REPORT_DIR
 
 mkdir -p "$REPORT_DIR/tv-box-c920-pro-acceptance"
 
@@ -188,7 +194,7 @@ else
   FIELD_HISTORY_RESCUE_VALUE="${FIELD_HISTORY_RESCUE:-unknown}"
 fi
 
-field_notes="C920 PRO 到货接入验收；remote_smoke_exit=$remote_smoke_status，camera_smoke_exit=$camera_smoke_status，CameraService Number of camera devices=${camera_count:-unknown}，normal=${normal_camera_count:-unknown}。日志目录：$RUN_DIR。真实画面、音频输入和 USB 热插拔按本次 FIELD_* 结果判定；unknown 不可关闭。"
+field_notes="C920 PRO 到货接入验收；remote_smoke_exit=${remote_smoke_status}，camera_smoke_exit=${camera_smoke_status}，CameraService Number of camera devices=${camera_count:-unknown}，normal=${normal_camera_count:-unknown}。日志目录：${RUN_DIR}。真实画面、音频输入和 USB 热插拔按本次 FIELD_* 结果判定；unknown 不可关闭。"
 
 run_capture "Write C920 field record" "$RUN_DIR/field-record.log" \
   env \
@@ -234,11 +240,13 @@ run_capture "Refresh completion audit" "$RUN_DIR/completion-audit.log" npm run -
 run_capture "Refresh command center" "$RUN_DIR/command-center.log" npm run -s tv-box:command-center || true
 run_capture "Refresh release ledger" "$RUN_DIR/release-ledger.log" npm run -s tv-box:release-ledger || true
 
-node - "$LATEST_JSON" "$LATEST_MD" "$RUN_DIR" "$STAMP" "$BOX_IP" "$DEVICE_SERIAL" "$CAMERA_MODEL" "$camera_smoke_status" "$remote_smoke_status" "${camera_count:-unknown}" "${normal_camera_count:-unknown}" "$camera_preview_result" "$audio_input_result" "$usb_hotplug_result" <<'NODE'
+node - "$LATEST_JSON" "$LATEST_MD" "$REPORT_DIR" "$RUN_DIR" "$STAMP" "$BOX_IP" "$DEVICE_SERIAL" "$CAMERA_MODEL" "$camera_smoke_status" "$remote_smoke_status" "${camera_count:-unknown}" "${normal_camera_count:-unknown}" "$camera_preview_result" "$audio_input_result" "$usb_hotplug_result" <<'NODE'
 const fs = require('fs')
+const path = require('path')
 const [
   latestJsonPath,
   latestMarkdownPath,
+  reportDir,
   runDir,
   stamp,
   boxIp,
@@ -261,9 +269,9 @@ function readJson(filePath) {
   }
 }
 
-const fieldRecord = readJson('reports/tv-box-field-record-latest.json')
-const summary = readJson('reports/tv-box-compatibility-summary-latest.json')
-const audit = readJson('reports/tv-box-completion-audit-latest.json')
+const fieldRecord = readJson(path.join(reportDir, 'tv-box-field-record-latest.json'))
+const summary = readJson(path.join(reportDir, 'tv-box-compatibility-summary-latest.json'))
+const audit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
 const pass = cameraSmokeStatus === '0' && cameraPreviewResult === 'pass'
 const nextActions = []
 if (cameraSmokeStatus !== '0') {
