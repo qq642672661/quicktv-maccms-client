@@ -1,6 +1,12 @@
 import { ESDevelop } from '@extscreen/es3-core'
 import { ESNativeRouter, RouteLocationRaw, Router } from '@extscreen/es3-router'
 
+interface NativeLaunchParam {
+  key: string
+  value: any
+  type: string
+}
+
 export interface LaunchParams {
   //0：快应用之间跳转； 1： 快应用内部跳转； 3：第三方应用跳转
   type: string | number
@@ -28,11 +34,11 @@ export interface LaunchParams {
 
 class Launch {
   //内部路由
-  router: Router
+  router!: Router
   //跳转三方路由
-  nativeRouter: ESNativeRouter
+  nativeRouter!: ESNativeRouter
   //获取本地包名
-  develop: ESDevelop
+  develop!: ESDevelop
   allowClick = false
 
   init(...params: any[]): Promise<any> {
@@ -123,7 +129,7 @@ class Launch {
     if (typeof options !== 'string') {
       const type = options.type
       const packageName = options.packageName
-      let params = []
+      let params: NativeLaunchParam[] = []
       if (options.params && typeof options.params === 'string') {
         params = JSON.parse(options.params)
       }
@@ -148,7 +154,7 @@ class Launch {
    * @param packageName
    * @param params
    */
-  launchByUrl(url, isUseLocalPkg: boolean = true, packageName = '', params = []) {
+  launchByUrl(url, isUseLocalPkg: boolean = true, packageName = '', params: NativeLaunchParam[] = []) {
     if (!url) return
     const args: Array<any> = []
     args.push(['-d', url])
@@ -169,7 +175,7 @@ class Launch {
    * @param packageName
    * @param params
    */
-  launchByAction(action, packageName, params) {
+  launchByAction(action, packageName, params: NativeLaunchParam[]) {
     const args: Array<any> = []
     args.push(['-a', action])
     args.push(['-p', packageName])
@@ -182,7 +188,7 @@ class Launch {
    * @param packageName
    * @param params
    */
-  launchByActivity(activityPath, packageName, params) {
+  launchByActivity(activityPath, packageName, params: NativeLaunchParam[]) {
     const args: Array<any> = []
     if (activityPath) {
       args.push(['-n', activityPath])
@@ -197,7 +203,7 @@ class Launch {
    * @param args
    * @param params
    */
-  jumpNative(args: Array<any> = [], params = []) {
+  jumpNative(args: Array<any> = [], params: NativeLaunchParam[] = []) {
     let mArgs = args
     const mParam = this.buildParams(params)
     if (mParam && mParam.length > 0) {
@@ -210,8 +216,8 @@ class Launch {
    * build参数
    * @param params
    */
-  buildParams(params: []) {
-    const mParam = []
+  buildParams(params: NativeLaunchParam[]) {
+    const mParam: Array<any> = []
     if (params && params.length > 0) {
       for (const item of params) {
         const key = item['key']
@@ -229,8 +235,8 @@ class Launch {
    * @param value
    * @param type
    */
-  decodeParams(key, value, type) {
-    let param = []
+  decodeParams(key: string, value: any, type: string) {
+    let param: Array<any> = []
     switch (type.toLowerCase()) {
       case 'string':
         param = ['--es', key, value]
@@ -300,9 +306,45 @@ class Launch {
     })
   }
 
+  launchTvBoxHome() {
+    this.router.push({
+      name: 'tv_box_home'
+    })
+  }
+
+  launchTvBoxHelp() {
+    this.router.push({
+      name: 'tv_box_help'
+    })
+  }
+
+  launchTvBoxRemotePractice() {
+    this.router.push({
+      name: 'tv_box_remote_practice'
+    })
+  }
+
+  launchTvBoxFieldGuide() {
+    this.router.push({
+      name: 'tv_box_field_guide'
+    })
+  }
+
+  launchTvBoxExit() {
+    this.router.push({
+      name: 'tv_box_exit'
+    })
+  }
+
   launchLive() {
     this.router.push({
       name: 'live'
+    })
+  }
+
+  launchCameraSetup() {
+    this.router.push({
+      name: 'camera_setup'
     })
   }
 

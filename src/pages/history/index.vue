@@ -138,6 +138,8 @@ import { buildContents, buildEndContent } from './adapter/index'
 import { ContentType } from './adapter/interface'
 import historyManager from './api/index'
 import launch from '../../tools/launch'
+import BuildConfig from '../../config/build-config'
+import { isRemoteHelpKey, remoteNumberFromKeyCode } from '../../tools/tv-box/remote-control'
 import icEmpty from '../../assets/history/ic_empty.png'
 import icDelete from '../../assets/history/ic_delete.png'
 import themeConfig from '../../config/theme-config'
@@ -285,8 +287,15 @@ function clearPageData() {
 
 let oKCounter = 0
 function onKeyDown(keyEvent: ESKeyEvent) {
+  const keyCode = Number(keyEvent.keyCode)
+  const remoteNumber = remoteNumberFromKeyCode(keyCode)
+  if (BuildConfig.tvBoxSimpleMode && (remoteNumber === 0 || isRemoteHelpKey(keyCode))) {
+    launch.launchTvBoxHelp()
+    return
+  }
+
   if (lastFocusName === 'content') {
-    switch (keyEvent.keyCode) {
+    switch (keyCode) {
       case 82: // 菜单键
         isEditing.value = true
         break
@@ -321,7 +330,11 @@ function onBackPressed() {
     return
   }
 
-  router.back()
+  if (BuildConfig.tvBoxSimpleMode) {
+    launch.launchTvBoxHome()
+  } else {
+    router.back()
+  }
 }
 
 defineExpose({ onKeyDown, onBackPressed })

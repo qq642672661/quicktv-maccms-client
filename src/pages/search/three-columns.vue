@@ -39,8 +39,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { ESKeyEvent } from '@extscreen/es3-core'
 import { useESRouter } from '@extscreen/es3-router'
+import BuildConfig from '../../config/build-config'
 import themeConfig from '../../config/theme-config'
+import launch from '../../tools/launch'
+import { isRemoteHelpKey, remoteNumberFromKeyCode } from '../../tools/tv-box/remote-control'
 import searchKeyboard from './components/search-keyboard.vue'
 import searchKeyword from './components/search-keyword.vue'
 import searchContent from './components/search-content.vue'
@@ -127,14 +131,27 @@ function setLoading(b: boolean, full: boolean): void {
  */
 function onBackPressed() {
   if (curFocusName.value === 'searchKeyboard') {
-    router.back()
+    if (BuildConfig.tvBoxSimpleMode) {
+      launch.launchTvBoxHome()
+    } else {
+      router.back()
+    }
   } else {
     keyboardRef.value?.onBackPressed()
     curFocusName.value = 'searchKeyboard'
   }
 }
 
-defineExpose({ onBackPressed })
+function onKeyDown(keyEvent: ESKeyEvent) {
+  if (!BuildConfig.tvBoxSimpleMode) return
+  const keyCode = Number(keyEvent.keyCode)
+  const remoteNumber = remoteNumberFromKeyCode(keyCode)
+  if (remoteNumber === 0 || isRemoteHelpKey(keyCode)) {
+    launch.launchTvBoxHelp()
+  }
+}
+
+defineExpose({ onKeyDown, onBackPressed })
 </script>
 
 <style scoped lang="scss" src="./scss/search.scss"></style>

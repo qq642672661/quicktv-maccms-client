@@ -11,6 +11,7 @@ export default {
   isLowEndDev: false,
   packageName: envManager.appPackageName,
   requestBaseUrl: envManager.maccmsApiUrl,
+  tvBoxSimpleMode: envManager.tvBoxSimpleMode,
   tabContentPageSize: 10,
   defaultSourceUrl: '',
   

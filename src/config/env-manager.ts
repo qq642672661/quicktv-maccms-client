@@ -7,6 +7,7 @@ export interface EnvConfig {
   debugMode: boolean
   devServerHost: string
   devServerPort: number
+  tvBoxSimpleMode: boolean
 }
 
 class EnvironmentManager {
@@ -27,7 +28,8 @@ class EnvironmentManager {
       useMockData: env.VITE_USE_MOCK_DATA === 'true',
       debugMode: env.VITE_DEBUG_MODE === 'true',
       devServerHost: env.VITE_DEV_SERVER_HOST || '0.0.0.0',
-      devServerPort: parseInt(env.VITE_DEV_SERVER_PORT || '38989')
+      devServerPort: parseInt(env.VITE_DEV_SERVER_PORT || '38989'),
+      tvBoxSimpleMode: env.VITE_TV_BOX_SIMPLE_MODE !== 'false'
     }
   }
 
@@ -65,6 +67,10 @@ class EnvironmentManager {
 
   get devServerPort(): number {
     return this.config.devServerPort
+  }
+
+  get tvBoxSimpleMode(): boolean {
+    return this.config.tvBoxSimpleMode
   }
 
   isDevelopment(): boolean {

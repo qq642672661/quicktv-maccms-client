@@ -151,6 +151,8 @@ import gridItemHorizontal from '../../components/grid-item-horizontal.vue'
 import gridItemVertical from '../../components/grid-item-vertical.vue'
 import historyManager from './api/index'
 import launch from '../../tools/launch'
+import BuildConfig from '../../config/build-config'
+import { isRemoteHelpKey, remoteNumberFromKeyCode } from '../../tools/tv-box/remote-control'
 import icEmpty from '../../assets/history/ic_empty.png'
 import themeConfig from '../../config/theme-config'
 import config from './config'
@@ -369,8 +371,15 @@ function clearPageData() {
 let oKCounter = 0
 let leftCounter = 0
 function onKeyDown(keyEvent: ESKeyEvent) {
+  const keyCode = Number(keyEvent.keyCode)
+  const remoteNumber = remoteNumberFromKeyCode(keyCode)
+  if (BuildConfig.tvBoxSimpleMode && (remoteNumber === 0 || isRemoteHelpKey(keyCode))) {
+    launch.launchTvBoxHelp()
+    return
+  }
+
   if (lastFocusName === 'content') {
-    switch (keyEvent.keyCode) {
+    switch (keyCode) {
       case 82: // 菜单键
         isEditing.value = true
         break
@@ -383,7 +392,7 @@ function onKeyDown(keyEvent: ESKeyEvent) {
       default:
         oKCounter = 0
     }
-  } else if (lastFocusName === 'sidebar' && keyEvent.keyCode === 21) {
+  } else if (lastFocusName === 'sidebar' && keyCode === 21) {
     if ((leftCounter++, leftCounter > 10)) {
       toast.showToast('生成数据')
       leftCounter = 0
@@ -424,7 +433,11 @@ function onBackPressed() {
     return
   }
 
-  router.back()
+  if (BuildConfig.tvBoxSimpleMode) {
+    launch.launchTvBoxHome()
+  } else {
+    router.back()
+  }
 }
 
 defineExpose({ onESCreate, onKeyDown, onESResume, onBackPressed })

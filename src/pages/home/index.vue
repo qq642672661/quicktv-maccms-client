@@ -45,6 +45,8 @@ import icLiveBroadcastFocused from '../../assets/live/ic_live_broadcast_focused.
 import homeManager from './api'
 import WaterfallTabs from './components/waterfall-tabs.vue'
 import ThemeConfig from '../../config/theme-config'
+import BuildConfig from '../../config/build-config'
+import { isRemoteHelpKey, remoteNumberFromKeyCode } from '../../tools/tv-box/remote-control'
 
 const homeWaterTabRef = ref()
 let resourceImg = ref('')
@@ -72,6 +74,13 @@ const onESDestroy = () => {
   homeWaterTabRef.value?.onESDestroy()
 }
 const onKeyDown = (keyEvent: ESKeyEvent) => {
+  const keyCode = Number(keyEvent.keyCode)
+  const remoteNumber = remoteNumberFromKeyCode(keyCode)
+  if (BuildConfig.tvBoxSimpleMode && (remoteNumber === 0 || remoteNumber === 6 || isRemoteHelpKey(keyCode))) {
+    launch.launchTvBoxHelp()
+    return
+  }
+
   homeWaterTabRef.value?.onKeyDown(keyEvent)
 }
 const onKeyUp = (keyEvent: ESKeyEvent) => {
@@ -81,7 +90,12 @@ const onBackPressed = () => {
   if (homeWaterTabRef.value?.onBackPressed()) {
     return true
   }
+  if (BuildConfig.tvBoxSimpleMode) {
+    launch.launchTvBoxHome()
+    return true
+  }
   launch.launchExitDialog()
+  return true
 }
 
 const liveClick = () => {

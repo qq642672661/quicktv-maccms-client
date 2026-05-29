@@ -1,0 +1,102 @@
+name: TV Box Delivery Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - "codex/**"
+  workflow_dispatch:
+
+jobs:
+  tv-box-check:
+    name: Build, audit, and package TV-box APK
+    runs-on: macos-14
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Set up Java 17 for sdkmanager
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configure Android SDK paths
+        run: |
+          if [[ -z "${ANDROID_HOME:-}" && -n "${ANDROID_SDK_ROOT:-}" ]]; then
+            echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+            ANDROID_HOME="$ANDROID_SDK_ROOT"
+          fi
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Install Android SDK 31
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-31" "build-tools;31.0.0" "platform-tools"
+
+      - name: Set up Java 11 for Android Gradle Plugin
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Run TV-box local delivery gate
+        run: npm run tv-box:check
+
+      - name: Upload TV-box handoff and support bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tv-box-delivery
+          path: |
+            reports/tv-box-handoff
+            reports/tv-box-handoff-latest.zip
+            reports/tv-box-handoff-latest.*.sha256
+            reports/tv-box-handoff-latest-path.txt
+            reports/tv-box-handoff-latest-archive.txt
+            reports/tv-box-support
+            reports/tv-box-support-latest.zip
+            reports/tv-box-support-latest.*.sha256
+            reports/tv-box-support-latest-path.txt
+            reports/tv-box-support-latest-archive.txt
+            reports/tv-box-field-record-latest.*
+            reports/tv-box-field-import-latest.*
+            reports/tv-box-field-inbox-latest.*
+            reports/tv-box-field-inbox-imports
+            reports/tv-box-return-inbox-latest.*
+            reports/tv-box-return-inbox-json
+            reports/tv-box-return-inbox-scenarios-test-latest.*
+            reports/tv-box-field-return-packer-test-latest.*
+            reports/tv-box-field-return-packer-test
+            reports/tv-box-field-scenarios-test-latest.*
+            reports/tv-box-field-wizard-latest.*
+            reports/tv-box-field-wizard-offline.html
+            reports/tv-box-field-matrix.csv
+            reports/tv-box-compatibility-summary-latest.*
+            reports/tv-box-hardware-profile-latest.*
+            reports/tv-box-easy-run-latest.*
+            reports/tv-box-handoff-html-smoke-latest.*
+            reports/tv-box-ux-audit-latest.*
+            reports/tv-box-command-center-latest.*
+            reports/tv-box-preflight-latest.*
+            reports/tv-box-site-readiness-latest.*
+            reports/tv-box-site-readiness-card.html
+            reports/tv-box-completion-audit-latest.*
+            reports/tv-box-release-ledger-latest.*
+            reports/tv-box-release-ledger.jsonl
+          if-no-files-found: warn
