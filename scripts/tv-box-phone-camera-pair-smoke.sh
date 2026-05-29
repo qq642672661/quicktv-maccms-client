@@ -14,6 +14,8 @@ OUTPUT_MD="${TV_BOX_PHONE_CAMERA_PAIR_SMOKE_MD:-$REPORT_DIR/tv-box-phone-camera-
 OUTPUT_JSON="${TV_BOX_PHONE_CAMERA_PAIR_SMOKE_JSON:-$REPORT_DIR/tv-box-phone-camera-pair-smoke-latest.json}"
 SCREENSHOT_PATH="${TV_BOX_PHONE_CAMERA_PAIR_SMOKE_SCREENSHOT:-$REPORT_DIR/tv-box-phone-camera-pair-smoke-latest.png}"
 UI_XML_PATH="${TV_BOX_PHONE_CAMERA_PAIR_SMOKE_UI_XML:-$REPORT_DIR/tv-box-phone-camera-pair-smoke-latest.xml}"
+RECEIVER_SCREENSHOT_PATH="${TV_BOX_PHONE_CAMERA_RECEIVER_SMOKE_SCREENSHOT:-$REPORT_DIR/tv-box-phone-camera-receiver-smoke-latest.png}"
+RECEIVER_UI_XML_PATH="${TV_BOX_PHONE_CAMERA_RECEIVER_SMOKE_UI_XML:-$REPORT_DIR/tv-box-phone-camera-receiver-smoke-latest.xml}"
 BOX_TARGET=""
 adb_cmd=(adb)
 
@@ -85,9 +87,14 @@ current_activity_snapshot() {
 }
 
 require_text() {
-  local needle="$1"
-  local label="$2"
-  if ! grep -Fq "$needle" "$UI_XML_PATH"; then
+  require_file_text "$UI_XML_PATH" "$1" "$2"
+}
+
+require_file_text() {
+  local file_path="$1"
+  local needle="$2"
+  local label="$3"
+  if ! grep -Fq "$needle" "$file_path"; then
     echo "ERROR: phone camera pairing UI missing $label: $needle" >&2
     exit 1
   fi
@@ -149,9 +156,11 @@ require_text "一次性房间码，约 10 分钟内有效" "room TTL hint"
 require_text "现在只做三步" "three-step guide title"
 require_text "电视出现首帧后再记为通过" "first-frame acceptance boundary"
 require_text "验收边界" "acceptance boundary panel"
-require_text "不证明真实音视频已通过" "not-yet-proven boundary"
+require_text "电视端接收入口已接入 APK" "receiver entry boundary"
+require_text "WebRTC SDK 和真实首帧未闭环" "not-yet-proven boundary"
 require_text "默认不录制" "privacy boundary"
 require_text "微信小程序推流" "WeChat gated boundary"
+require_text "打开接收端" "open receiver action"
 require_text "重新生成" "regenerate action"
 require_text "返回摄像头" "back action"
 require_text "帮助自检" "help action"
@@ -162,12 +171,38 @@ if [[ -z "$ROOM_CODE" ]]; then
   exit 1
 fi
 
+echo
+echo "== Open native phone-camera receiver shell =="
+run_adb shell input keyevent KEYCODE_1
+sleep 4
+
+run_adb shell uiautomator dump /sdcard/hellotv-phone-camera-receiver.xml >/dev/null
+run_adb exec-out cat /sdcard/hellotv-phone-camera-receiver.xml > "$RECEIVER_UI_XML_PATH"
+run_adb exec-out screencap -p > "$RECEIVER_SCREENSHOT_PATH"
+
+if [[ ! -s "$RECEIVER_UI_XML_PATH" ]]; then
+  echo "ERROR: receiver UI XML evidence was not captured." >&2
+  exit 1
+fi
+
+if [[ ! -s "$RECEIVER_SCREENSHOT_PATH" ]]; then
+  echo "ERROR: receiver screenshot evidence was not captured." >&2
+  exit 1
+fi
+
+require_file_text "$RECEIVER_UI_XML_PATH" "手机摄像头电视接收端" "receiver activity title"
+require_file_text "$RECEIVER_UI_XML_PATH" "WebRTC SDK" "receiver WebRTC SDK status"
+require_file_text "$RECEIVER_UI_XML_PATH" "验收边界" "receiver acceptance boundary"
+require_file_text "$RECEIVER_UI_XML_PATH" "仍不能证明真实音视频通过" "receiver not-yet-proven boundary"
+
 SCREENSHOT_BYTES="$(wc -c < "$SCREENSHOT_PATH" | tr -d ' ')"
 UI_XML_BYTES="$(wc -c < "$UI_XML_PATH" | tr -d ' ')"
+RECEIVER_SCREENSHOT_BYTES="$(wc -c < "$RECEIVER_SCREENSHOT_PATH" | tr -d ' ')"
+RECEIVER_UI_XML_BYTES="$(wc -c < "$RECEIVER_UI_XML_PATH" | tr -d ' ')"
 FOCUS_SNAPSHOT="$(current_activity_snapshot)"
 GENERATED_AT_UTC="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
-node - "$OUTPUT_JSON" "$GENERATED_AT_UTC" "$DEVICE_SERIAL" "$ROOM_CODE" "$SCREENSHOT_PATH" "$SCREENSHOT_BYTES" "$UI_XML_PATH" "$UI_XML_BYTES" "$FOCUS_SNAPSHOT" <<'NODE'
+node - "$OUTPUT_JSON" "$GENERATED_AT_UTC" "$DEVICE_SERIAL" "$ROOM_CODE" "$SCREENSHOT_PATH" "$SCREENSHOT_BYTES" "$UI_XML_PATH" "$UI_XML_BYTES" "$RECEIVER_SCREENSHOT_PATH" "$RECEIVER_SCREENSHOT_BYTES" "$RECEIVER_UI_XML_PATH" "$RECEIVER_UI_XML_BYTES" "$FOCUS_SNAPSHOT" <<'NODE'
 const fs = require('fs')
 const [
   outputPath,
@@ -178,6 +213,10 @@ const [
   screenshotBytes,
   uiXmlPath,
   uiXmlBytes,
+  receiverScreenshotPath,
+  receiverScreenshotBytes,
+  receiverUiXmlPath,
+  receiverUiXmlBytes,
   focusSnapshot
 ] = process.argv.slice(2)
 
@@ -188,10 +227,18 @@ const report = {
   route: 'home_digit_4_to_camera_setup_digit_4_to_phone_camera_pair',
   roomCode,
   evidence: {
-    screenshotPath,
-    screenshotBytes: Number(screenshotBytes),
-    uiXmlPath,
-    uiXmlBytes: Number(uiXmlBytes),
+    pairPage: {
+      screenshotPath,
+      screenshotBytes: Number(screenshotBytes),
+      uiXmlPath,
+      uiXmlBytes: Number(uiXmlBytes)
+    },
+    receiverShell: {
+      screenshotPath: receiverScreenshotPath,
+      screenshotBytes: Number(receiverScreenshotBytes),
+      uiXmlPath: receiverUiXmlPath,
+      uiXmlBytes: Number(receiverUiXmlBytes)
+    },
     focusSnapshot
   },
   verifiedText: [
@@ -199,13 +246,18 @@ const report = {
     '扫码连接手机摄像头',
     '不会把手机伪装成系统摄像头',
     '电视出现首帧后再记为通过',
+    '电视端接收入口已接入 APK',
+    'WebRTC SDK 和真实首帧未闭环',
     '默认不录制',
     '微信小程序推流',
+    '打开接收端',
     '重新生成',
     '返回摄像头',
-    '帮助自检'
+    '帮助自检',
+    '手机摄像头电视接收端',
+    'WebRTC SDK'
   ],
-  boundary: 'This proves the TV pairing entry and remote operation path only. Real phone media acceptance still requires signaling, native WebRTC receiver, phone capture, first frame, audio, stats, reconnect, and privacy-stop evidence.'
+  boundary: 'This proves the TV pairing entry, remote operation path and native receiver shell only. Real phone media acceptance still requires WebRTC SDK integration, signaling, phone capture, first frame, audio, stats, reconnect, and privacy-stop evidence.'
 }
 
 fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`)
@@ -217,19 +269,22 @@ cat > "$OUTPUT_MD" <<MD
 - 生成时间 UTC: \`$GENERATED_AT_UTC\`
 - 状态: \`pass\`
 - 设备: \`$DEVICE_SERIAL\`
-- 路径: 首页按 4 -> 摄像头页按 4 -> 手机摄像头配对页
+- 路径: 首页按 4 -> 摄像头页按 4 -> 手机摄像头配对页 -> 按 1 打开原生接收端骨架
 - 房间码: \`$ROOM_CODE\`
-- 截图: \`$SCREENSHOT_PATH\` (${SCREENSHOT_BYTES} bytes)
-- UI XML: \`$UI_XML_PATH\` (${UI_XML_BYTES} bytes)
+- 配对页截图: \`$SCREENSHOT_PATH\` (${SCREENSHOT_BYTES} bytes)
+- 配对页 UI XML: \`$UI_XML_PATH\` (${UI_XML_BYTES} bytes)
+- 接收端截图: \`$RECEIVER_SCREENSHOT_PATH\` (${RECEIVER_SCREENSHOT_BYTES} bytes)
+- 接收端 UI XML: \`$RECEIVER_UI_XML_PATH\` (${RECEIVER_UI_XML_BYTES} bytes)
 
 ## 已验证
 
 - 页面显示“手机当电视摄像头”和“扫码连接手机摄像头”。
 - 页面显示二维码区域、6 位房间码、10 分钟有效提示。
 - 页面显示三步流程，并明确“电视出现首帧后再记为通过”。
-- 页面显示验收边界：未接入原生 WebRTC 接收端前，只证明配对入口，不证明真实音视频已通过。
+- 页面显示验收边界：电视端接收入口已接入 APK；WebRTC SDK 和真实首帧未闭环前，仍不能记为通过。
 - 页面显示隐私边界：默认不录制，微信小程序推流要等资质和权限通过。
-- 遥控器动作只暴露重新生成、返回摄像头、帮助自检。
+- 遥控器动作只暴露打开接收端、重新生成、返回摄像头、帮助自检。
+- 按 1 后可进入“手机摄像头电视接收端”原生 Activity，并显示 WebRTC SDK 状态和首帧验收边界。
 
 ## 当前前台
 

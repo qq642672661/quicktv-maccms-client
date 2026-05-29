@@ -90,6 +90,8 @@ public class TvBoxModule implements IEsModule {
             boolean isLeanbackDevice = hasFeature(packageManager, PackageManager.FEATURE_LEANBACK);
             boolean hasCameraPermission = hasCameraPermission();
             boolean hasRecordAudioPermission = hasRecordAudioPermission();
+            boolean hasPhoneCameraReceiver = hasPhoneCameraReceiverActivity();
+            boolean hasNativeWebRtcSdk = PhoneCameraWebRtcSupport.hasNativeWebRtcSdk();
             callback.put("success", true);
             callback.put("message", "");
             callback.put("hasAnyCamera", hasAnyCameraFeature || cameraInventory.cameraCount > 0);
@@ -105,6 +107,9 @@ public class TvBoxModule implements IEsModule {
             callback.put("usbAudioInputDeviceCount", audioInventory.usbAudioInputDeviceCount);
             callback.put("hasCameraPermission", hasCameraPermission);
             callback.put("hasRecordAudioPermission", hasRecordAudioPermission);
+            callback.put("hasPhoneCameraReceiver", hasPhoneCameraReceiver);
+            callback.put("hasNativeWebRtcSdk", hasNativeWebRtcSdk);
+            callback.put("phoneCameraReceiverReady", hasPhoneCameraReceiver && hasNativeWebRtcSdk);
             callback.put("isTvDevice", isLeanbackDevice);
             callback.put("isLeanbackLauncher", isLeanbackDevice);
             callback.put("androidSdk", Build.VERSION.SDK_INT);
@@ -122,6 +127,8 @@ public class TvBoxModule implements IEsModule {
                     + " hasUsbHost=" + hasUsbHost
                     + " hasCameraPermission=" + hasCameraPermission
                     + " hasRecordAudioPermission=" + hasRecordAudioPermission
+                    + " hasPhoneCameraReceiver=" + hasPhoneCameraReceiver
+                    + " hasNativeWebRtcSdk=" + hasNativeWebRtcSdk
                     + " isLeanbackDevice=" + isLeanbackDevice
                     + " appVersion=" + (packageInfo == null ? "" : packageInfo.versionName));
         } catch (Throwable error) {
@@ -211,6 +218,46 @@ public class TvBoxModule implements IEsModule {
         callback.sendSuccess();
     }
 
+    public void openPhoneCameraReceiver(EsPromise promise) {
+        PromiseHolder callback = PromiseHolder.create(promise);
+        try {
+            Intent intent = new Intent(context, PhoneCameraReceiverActivity.class);
+            intent.putExtra(PhoneCameraReceiverActivity.EXTRA_PROFILE_ID, "default_720p_15");
+            startActivity(intent);
+            callback.put("success", true);
+            callback.put("message", PhoneCameraWebRtcSupport.hasNativeWebRtcSdk()
+                    ? "已打开手机摄像头电视接收端"
+                    : "已打开手机摄像头电视接收端骨架；WebRTC SDK 和首帧验收仍未闭环");
+            callback.put("hasNativeWebRtcSdk", PhoneCameraWebRtcSupport.hasNativeWebRtcSdk());
+            callback.put("phoneCameraReceiverReady", hasPhoneCameraReceiverActivity() && PhoneCameraWebRtcSupport.hasNativeWebRtcSdk());
+        } catch (Throwable error) {
+            callback.put("success", false);
+            callback.put("message", error.getMessage() == null ? "无法打开手机摄像头电视接收端" : error.getMessage());
+            callback.put("hasNativeWebRtcSdk", PhoneCameraWebRtcSupport.hasNativeWebRtcSdk());
+            callback.put("phoneCameraReceiverReady", false);
+        }
+        callback.sendSuccess();
+    }
+
+    public void getPhoneCameraReceiverStatus(EsPromise promise) {
+        PromiseHolder callback = PromiseHolder.create(promise);
+        try {
+            boolean hasReceiver = hasPhoneCameraReceiverActivity();
+            boolean hasSdk = PhoneCameraWebRtcSupport.hasNativeWebRtcSdk();
+            callback.put("success", true);
+            callback.put("message", hasReceiver && hasSdk
+                    ? "手机摄像头接收端具备 SDK，仍需实机首帧验收"
+                    : "手机摄像头接收端骨架已存在，WebRTC SDK/首帧未闭环");
+            callback.put("hasPhoneCameraReceiver", hasReceiver);
+            callback.put("hasNativeWebRtcSdk", hasSdk);
+            callback.put("phoneCameraReceiverReady", hasReceiver && hasSdk);
+        } catch (Throwable error) {
+            callback.put("success", false);
+            callback.put("message", error.getMessage() == null ? "手机摄像头接收端状态检测失败" : error.getMessage());
+        }
+        callback.sendSuccess();
+    }
+
     private boolean hasFeature(PackageManager packageManager, String featureName) {
         return packageManager != null && packageManager.hasSystemFeature(featureName);
     }
@@ -224,6 +271,15 @@ public class TvBoxModule implements IEsModule {
             return packageManager.getPackageInfo(context.getPackageName(), 0);
         } catch (Throwable ignored) {
             return null;
+        }
+    }
+
+    private boolean hasPhoneCameraReceiverActivity() {
+        try {
+            Intent intent = new Intent(context, PhoneCameraReceiverActivity.class);
+            return intent.resolveActivity(context.getPackageManager()) != null;
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 

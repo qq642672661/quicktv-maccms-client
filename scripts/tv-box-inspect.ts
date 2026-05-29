@@ -155,14 +155,16 @@ function sourceContracts() {
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'pairUrl'),
     phoneCameraPairRoomCode: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'generateRoomCode') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'ttlMinutes'),
-    phoneCameraPairRemoteActions: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '重新生成') &&
+    phoneCameraPairRemoteActions: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '打开接收端') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '重新生成') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '返回摄像头') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '帮助自检'),
     phoneCameraPairHelpKeys: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'remoteNumber === 6') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'isRemoteHelpKey'),
     phoneCameraPairPrivacyBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '默认不录制') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '微信小程序推流'),
-    phoneCameraPairNativeWebRtcBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '电视端原生 WebRTC 接收端') &&
+    phoneCameraPairNativeWebRtcBoundary: hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '电视端接收入口已接入 APK') &&
+      hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), 'WebRTC SDK 和真实首帧未闭环') &&
       hasText(path.join(rootDir, 'src/pages/phone-camera-pair/index.vue'), '不会把手机伪装成系统摄像头'),
     phoneCameraCapturePage: hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'navigator.mediaDevices.getUserMedia') &&
       hasText(path.join(rootDir, 'scripts/tv-box-phone-camera-signaling-server.js'), 'new RTCPeerConnection'),

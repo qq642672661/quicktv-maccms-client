@@ -26,7 +26,7 @@
 
     <qt-view class="phone-camera-boundary" :focusable="false">
       <qt-text class="phone-camera-boundary-title" text="验收边界" :focusable="false" />
-      <qt-text class="phone-camera-boundary-text" text="电视端原生 WebRTC 接收端未接入前，本页只证明配对入口，不证明真实音视频已通过。" :focusable="false" />
+      <qt-text class="phone-camera-boundary-text" text="电视端接收入口已接入 APK；WebRTC SDK 和真实首帧未闭环前，仍不能记为通过。" :focusable="false" />
       <qt-text class="phone-camera-boundary-text" text="手机端必须有明显停止按钮，默认不录制；微信小程序推流要等资质和权限通过。" :focusable="false" />
     </qt-view>
 
@@ -40,10 +40,10 @@
         eventFocus
         eventClick
         @focus="setActiveAction(0)"
-        @click="regenerateRoom"
+        @click="openReceiver"
       >
         <qt-text class="phone-camera-button-key" text="1" gravity="center" :focusable="false" />
-        <qt-text class="phone-camera-button-text" text="重新生成" :focusable="false" />
+        <qt-text class="phone-camera-button-text" text="打开接收端" :focusable="false" />
       </qt-view>
       <qt-view
         :class="['phone-camera-button secondary', { active: activeActionIndex === 1 }]"
@@ -53,10 +53,10 @@
         eventFocus
         eventClick
         @focus="setActiveAction(1)"
-        @click="launch.launchCameraSetup()"
+        @click="regenerateRoom"
       >
         <qt-text class="phone-camera-button-key" text="2" gravity="center" :focusable="false" />
-        <qt-text class="phone-camera-button-text" text="返回摄像头" :focusable="false" />
+        <qt-text class="phone-camera-button-text" text="重新生成" :focusable="false" />
       </qt-view>
       <qt-view
         :class="['phone-camera-button secondary', { active: activeActionIndex === 2 }]"
@@ -66,9 +66,22 @@
         eventFocus
         eventClick
         @focus="setActiveAction(2)"
-        @click="launch.launchTvBoxHelp()"
+        @click="launch.launchCameraSetup()"
       >
         <qt-text class="phone-camera-button-key" text="3" gravity="center" :focusable="false" />
+        <qt-text class="phone-camera-button-text" text="返回摄像头" :focusable="false" />
+      </qt-view>
+      <qt-view
+        :class="['phone-camera-button secondary', { active: activeActionIndex === 3 }]"
+        :focusable="true"
+        :enableFocusBorder="true"
+        :listenHasFocusChange="true"
+        eventFocus
+        eventClick
+        @focus="setActiveAction(3)"
+        @click="launch.launchTvBoxHelp()"
+      >
+        <qt-text class="phone-camera-button-key" text="4" gravity="center" :focusable="false" />
         <qt-text class="phone-camera-button-text" text="帮助自检" :focusable="false" />
       </qt-view>
     </qt-view>
@@ -79,6 +92,7 @@
 import { computed, ref } from 'vue'
 import { ESKeyCode, ESKeyEvent, useESToast } from '@extscreen/es3-core'
 import launch from '../../tools/launch'
+import { openPhoneCameraReceiver } from '../../tools/tv-box/native-capabilities'
 import { isRemoteConfirmKey, isRemoteHelpKey, moveLinearSelection, remoteNumberFromKeyCode } from '../../tools/tv-box/remote-control'
 
 const toast = useESToast()
@@ -89,7 +103,7 @@ const pairBaseUrl = 'https://quicktv.local/phone-camera'
 
 const pairUrl = computed(() => `${pairBaseUrl}?room=${roomCode.value}&role=phone`)
 const roomHintText = computed(() => `一次性房间码，约 ${ttlMinutes} 分钟内有效`)
-const actionHandlers = [regenerateRoom, launch.launchCameraSetup.bind(launch), launch.launchTvBoxHelp.bind(launch)]
+const actionHandlers = [openReceiver, regenerateRoom, launch.launchCameraSetup.bind(launch), launch.launchTvBoxHelp.bind(launch)]
 
 function generateRoomCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000))
@@ -98,6 +112,11 @@ function generateRoomCode(): string {
 function regenerateRoom() {
   roomCode.value = generateRoomCode()
   toast.showToast('已重新生成手机摄像头房间码')
+}
+
+async function openReceiver() {
+  const result = await openPhoneCameraReceiver()
+  toast.showToast(result.message || (result.success ? '已打开电视接收端' : '暂无法打开电视接收端'))
 }
 
 function setActiveAction(index: number) {
@@ -327,9 +346,9 @@ defineExpose({ onKeyDown, onBackPressed })
 }
 
 .phone-camera-button {
-  width: 352px;
+  width: 270px;
   height: 96px;
-  margin-right: 24px;
+  margin-right: 21px;
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -371,7 +390,7 @@ defineExpose({ onKeyDown, onBackPressed })
 }
 
 .phone-camera-button-text {
-  width: 230px;
+  width: 188px;
   height: 50px;
   color: #11151a;
   focus-color: #11151a;

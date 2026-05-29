@@ -11,6 +11,9 @@ export interface TvBoxCapabilities {
   hasUsbHost: boolean | null
   hasCameraPermission: boolean | null
   hasRecordAudioPermission: boolean | null
+  hasPhoneCameraReceiver: boolean | null
+  hasNativeWebRtcSdk: boolean | null
+  phoneCameraReceiverReady: boolean | null
   cameraCount: number | null
   externalCameraCount: number | null
   usbDeviceCount: number | null
@@ -41,6 +44,9 @@ const fallbackCapabilities: TvBoxCapabilities = {
   hasUsbHost: null,
   hasCameraPermission: null,
   hasRecordAudioPermission: null,
+  hasPhoneCameraReceiver: null,
+  hasNativeWebRtcSdk: null,
+  phoneCameraReceiverReady: null,
   cameraCount: null,
   externalCameraCount: null,
   usbDeviceCount: null,
@@ -80,6 +86,9 @@ function normalizeCapabilities(result: any): TvBoxCapabilities {
     hasUsbHost: toNullableBoolean(data.hasUsbHost),
     hasCameraPermission: toNullableBoolean(data.hasCameraPermission),
     hasRecordAudioPermission: toNullableBoolean(data.hasRecordAudioPermission),
+    hasPhoneCameraReceiver: toNullableBoolean(data.hasPhoneCameraReceiver),
+    hasNativeWebRtcSdk: toNullableBoolean(data.hasNativeWebRtcSdk),
+    phoneCameraReceiverReady: toNullableBoolean(data.phoneCameraReceiverReady),
     cameraCount: toNullableNumber(data.cameraCount),
     externalCameraCount: toNullableNumber(data.externalCameraCount),
     usbDeviceCount: toNullableNumber(data.usbDeviceCount),
@@ -137,6 +146,22 @@ export async function openTvBoxSystemCamera(): Promise<TvBoxNativeResult> {
     return {
       success: false,
       message: '当前设备暂不支持自动打开摄像头预览'
+    }
+  }
+}
+
+export async function openPhoneCameraReceiver(): Promise<TvBoxNativeResult> {
+  try {
+    const result = await callTvBoxModule('openPhoneCameraReceiver')
+    const data = result?.data || result || {}
+    return {
+      success: data.success !== false,
+      message: data.message || ''
+    }
+  } catch {
+    return {
+      success: false,
+      message: '当前设备暂不支持打开手机摄像头电视接收端'
     }
   }
 }

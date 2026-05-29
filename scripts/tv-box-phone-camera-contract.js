@@ -8,7 +8,7 @@ const outputJsonPath = process.env.TV_BOX_PHONE_CAMERA_CONTRACT_JSON || path.joi
 const outputMarkdownPath = process.env.TV_BOX_PHONE_CAMERA_CONTRACT_MD || path.join(reportDir, 'tv-box-phone-camera-contract-latest.md')
 
 const contract = {
-  version: '2026-05-29.2',
+  version: '2026-05-29.3',
   purpose: '手机采集摄像头和麦克风，电视盒子原生 WebRTC 接收；QuickTVUI 只负责遥控器友好的配对、状态、重试和降级。',
   defaultRoute: 'native_webrtc_receiver',
   nonGoals: [
@@ -29,7 +29,7 @@ const contract = {
     {
       id: 'tv_quicktvui_pairing_page',
       owner: 'QuickTVUI frontend',
-      responsibilities: ['显示大二维码和 6 位房间码', '只暴露重新生成/返回/帮助三个遥控动作', '展示连接中/已连接/重连/降级/失败状态']
+      responsibilities: ['显示大二维码和 6 位房间码', '只暴露打开接收端/重新生成/返回/帮助四个遥控动作', '展示连接中/已连接/重连/降级/失败状态']
     },
     {
       id: 'android_webrtc_receiver',
@@ -122,7 +122,7 @@ const contract = {
   implementationMilestones: [
     { id: 'm1_contract_and_pairing_ui', label: '合同、配对页、房间码和状态文案', proof: 'tv-box:phone-camera-contract + phone_camera_pair source contracts + tv-box:ux-audit' },
     { id: 'm2_lan_signaling', label: '局域网 WebSocket 信令服务', proof: 'tv-box:phone-camera-signaling-test validates room.create, peer.hello, offer/answer/ICE, keepalive, stats and hangup' },
-    { id: 'm3_android_receiver', label: 'Android 原生 WebRTC 接收端', proof: '真实电视盒子首帧和 stats' },
+    { id: 'm3_android_receiver', label: 'Android 原生 WebRTC 接收端', proof: '接收端 Activity/状态上报进入 APK；最终仍以真实电视盒子首帧、音频和 stats 为准' },
     { id: 'm4_phone_capture', label: '手机采集端/PWA 或 App', proof: 'tv-box:phone-camera-capture-test validates getUserMedia, RTCPeerConnection offer, visible stop button and HTTPS/WSS guard; real phone permission still needs field evidence' },
     { id: 'm5_field_acceptance', label: '现场验收矩阵纳入手机摄像头结果', proof: 'field record/inbox/import close-ready evidence' }
   ],
