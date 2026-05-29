@@ -25,6 +25,7 @@ function shellEnv(baseEnv, tempReportDir) {
   return {
     ...process.env,
     ...baseEnv,
+    TV_BOX_FIELD_RECORD_SKIP_INSPECT: 'true',
     REPORT_DIR: tempReportDir
   }
 }

@@ -467,6 +467,8 @@ require_text "scripts/tv-box-field-scenarios-test.js" "all_pass_camera_audio" "f
 require_text "scripts/tv-box-field-scenarios-test.js" "tv_core_no_camera_no_mic" "field scenarios cover TV core without camera/microphone"
 require_text "scripts/tv-box-field-scenarios-test.js" "remote_focus_failure" "field scenarios cover remote focus failure"
 require_text "scripts/tv-box-field-scenarios-test.js" "unknown_rescue_left_open" "field scenarios keep unknown acceptance open"
+require_text "scripts/tv-box-field-scenarios-test.js" "TV_BOX_FIELD_RECORD_SKIP_INSPECT" "field scenarios do not touch real ADB devices"
+require_text "scripts/tv-box-field-record.sh" "TV_BOX_FIELD_RECORD_SKIP_INSPECT" "field record can skip real-device inspection for synthetic imports"
 require_text "scripts/tv-box-handoff-html-smoke.js" "START_HERE.html" "handoff HTML smoke checks start page"
 require_text "scripts/tv-box-handoff-html-smoke.js" "FIELD_WIZARD_OFFLINE.html" "handoff HTML smoke checks offline field wizard"
 require_text "scripts/tv-box-handoff-html-smoke.js" "broken local links" "handoff HTML smoke detects broken local links"

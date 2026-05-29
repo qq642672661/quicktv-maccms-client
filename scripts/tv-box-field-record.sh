@@ -11,15 +11,22 @@ FIELD_RECORD_DIR="${FIELD_RECORD_DIR:-$REPORT_DIR/tv-box-field-records}"
 LATEST_JSON="$REPORT_DIR/tv-box-field-record-latest.json"
 LATEST_MD="$REPORT_DIR/tv-box-field-record-latest.md"
 MATRIX_CSV="$REPORT_DIR/tv-box-field-matrix.csv"
+SKIP_INSPECTION="${TV_BOX_FIELD_RECORD_SKIP_INSPECT:-false}"
 
 mkdir -p "$REPORT_DIR" "$FIELD_RECORD_DIR"
 
-(cd "$ROOT_DIR" && \
-  PACKAGE_NAME="$PACKAGE_NAME" \
-  BOX_IP="$BOX_IP" \
-  DEVICE_SERIAL="$DEVICE_SERIAL" \
-  TV_BOX_INSPECTION_JSON="$INSPECTION_PATH" \
-  npm run -s tv-box:inspect >/dev/null) || true
+case "$(printf '%s' "$SKIP_INSPECTION" | tr '[:upper:]' '[:lower:]')" in
+  true|1|yes|y)
+    ;;
+  *)
+    (cd "$ROOT_DIR" && \
+      PACKAGE_NAME="$PACKAGE_NAME" \
+      BOX_IP="$BOX_IP" \
+      DEVICE_SERIAL="$DEVICE_SERIAL" \
+      TV_BOX_INSPECTION_JSON="$INSPECTION_PATH" \
+      npm run -s tv-box:inspect >/dev/null) || true
+    ;;
+esac
 
 node - "$ROOT_DIR" "$REPORT_DIR" "$INSPECTION_PATH" "$FIELD_RECORD_DIR" "$LATEST_JSON" "$LATEST_MD" "$MATRIX_CSV" <<'NODE'
 const fs = require('fs')
