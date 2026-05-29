@@ -301,6 +301,30 @@ function buildAcceptanceCommand(boxIp) {
   return boxIp === '192.168.10.122' ? baseCommand : `BOX_IP=${boxIp} ${baseCommand}`
 }
 
+function isPendingOrBaselineDecision(level) {
+  return [
+    'c920_purchased_pending_arrival',
+    'c920_not_inserted_baseline',
+    'c920_insert_status_unconfirmed'
+  ].includes(level)
+}
+
+function normalizeFieldResultsForDecision(fieldResults, decisionLevel) {
+  if (isPendingOrBaselineDecision(decisionLevel)) {
+    return {
+      cameraPreview: 'unknown',
+      audioInput: 'unknown',
+      usbHotplug: 'unknown'
+    }
+  }
+
+  return {
+    cameraPreview: fieldResults.cameraPreview || 'unknown',
+    audioInput: fieldResults.audioInput || 'unknown',
+    usbHotplug: fieldResults.usbHotplug || 'unknown'
+  }
+}
+
 function buildCard(report) {
   const physicalStatus = readPhysicalStatus(report)
   const decision = buildDecision(report, physicalStatus)
@@ -309,7 +333,7 @@ function buildCard(report) {
   const boxIp = report?.boxIp || process.env.BOX_IP || '192.168.10.122'
   const command = buildAcceptanceCommand(boxIp)
   const acceptanceExists = fs.existsSync(acceptanceJsonPath)
-  const fieldResults = report?.fieldResults || {}
+  const fieldResults = normalizeFieldResultsForDecision(report?.fieldResults || {}, decision.level)
   const hardware = report?.hardwareEvidence || {}
   const native = hardware.nativeCapabilities || {}
 
@@ -344,9 +368,9 @@ function buildCard(report) {
       hotplugConfirmed: checklist.hotplugConfirmed
     },
     fieldResults: {
-      cameraPreview: fieldResults.cameraPreview || 'unknown',
-      audioInput: fieldResults.audioInput || 'unknown',
-      usbHotplug: fieldResults.usbHotplug || 'unknown'
+      cameraPreview: fieldResults.cameraPreview,
+      audioInput: fieldResults.audioInput,
+      usbHotplug: fieldResults.usbHotplug
     },
     hardwareEvidence: {
       cameraServiceCameraCount: report?.cameraService?.cameraCount ?? 'unknown',
