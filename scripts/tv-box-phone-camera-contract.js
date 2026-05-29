@@ -124,7 +124,7 @@ const contract = {
     { id: 'm2_lan_signaling', label: '局域网 WebSocket 信令服务', proof: 'tv-box:phone-camera-signaling-test validates room.create, peer.hello, offer/answer/ICE, keepalive, stats and hangup' },
     { id: 'm3_android_receiver', label: 'Android 原生 WebRTC 接收端', proof: '接收端 Activity、同房间码信令创建、可选 PhoneCameraNativeWebRtcEngine、answer/ICE/stats 上报和接收端准备度进入 APK；最终仍以真实电视盒子首帧、音频和 stats 为准' },
     { id: 'm4_phone_capture', label: '手机采集端/PWA 或 App', proof: 'tv-box:phone-camera-capture-test validates getUserMedia, RTCPeerConnection offer, visible stop button and HTTPS/WSS guard; real phone permission still needs field evidence' },
-    { id: 'm5_field_readiness', label: '现场手机入口准备度', proof: 'tv-box:phone-camera-readiness validates pair URL shape, HTTPS/WSS, phone page serving, room.create public URLs and secureContext; real media still needs field evidence' },
+    { id: 'm5_field_readiness', label: '现场手机入口准备度', proof: 'tv-box:phone-camera-readiness validates pair URL shape, HTTPS/WSS, phone page serving, room.create public URLs and secureContext, while keeping field phone reachability false until DNS/HTTPS/phone-open evidence exists; real media still needs field evidence' },
     { id: 'm6_field_acceptance', label: '现场验收矩阵纳入手机摄像头结果', proof: 'field record/inbox/import close-ready evidence' }
   ],
   officialBasis: [
@@ -133,7 +133,7 @@ const contract = {
     'Android Camera2/USB UVC 仍作为实体摄像头保底，手机摄像头不等于系统 Camera2 设备。',
     '微信小程序 live-pusher 需要服务类目、主体资质和接口权限审核，只能作为合规后入口。',
     '手机浏览器采集摄像头/麦克风必须按安全上下文处理；HTTPS 手机入口必须配套 WSS 信令。',
-    '现场信令服务可通过 PHONE_CAMERA_PUBLIC_BASE_URL 接受完整 /phone-camera 入口，先用 tv-box:phone-camera-readiness 防止扫码时才发现 HTTP 或 WSS 配置不匹配。'
+    '现场信令服务可通过 PHONE_CAMERA_PUBLIC_BASE_URL 接受完整 /phone-camera 入口，先用 tv-box:phone-camera-readiness 防止扫码时才发现 HTTP 或 WSS 配置不匹配；默认 quicktv.local 只是安全占位域名，必须补现场手机 DNS、HTTPS 证书和首开截图。'
   ]
 }
 
