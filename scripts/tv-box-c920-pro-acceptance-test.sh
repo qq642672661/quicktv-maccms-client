@@ -322,6 +322,62 @@ assert.match(cardMarkdown, /带独立供电 USB Hub/)
 assert.match(cardHtml, /打印 C920 到货操作卡/)
 NODE
 
+cat >"$TMP_ROOT/c920-procurement.json" <<'JSON'
+{
+  "purchaseChannel": "京东自营",
+  "expectedArrivalDate": "2026-05-30",
+  "physicalStatus": "purchased_pending_arrival",
+  "note": "self-test procurement"
+}
+JSON
+
+(
+  cd "$ROOT_DIR"
+  TV_BOX_C920_PROCUREMENT_JSON="$TMP_ROOT/c920-procurement.json" \
+  C920_ARRIVED_CURRENT_DATE=2026-05-29 \
+  ./scripts/tv-box-c920-arrived.sh >"$TMP_ROOT/c920-arrived-wait.log" 2>&1
+)
+
+grep -q "预计 2026-05-30 到货" "$TMP_ROOT/c920-arrived-wait.log"
+grep -q "本次不执行实体摄像头验收" "$TMP_ROOT/c920-arrived-wait.log"
+if grep -q "Logitech C920 PRO TV-box acceptance" "$TMP_ROOT/c920-arrived-wait.log"; then
+  echo "c920-arrived ran acceptance before the expected arrival date" >&2
+  exit 1
+fi
+
+EARLY_REPORT_DIR="$TMP_ROOT/arrived-early-reports"
+mkdir -p "$EARLY_REPORT_DIR"
+(
+  cd "$ROOT_DIR"
+  TV_BOX_TOOL_PATH="$FAKE_BIN" \
+  REPORT_DIR="$EARLY_REPORT_DIR" \
+  BOX_IP=192.168.10.122 \
+  DEVICE_SERIAL=192.168.10.122:5555 \
+  TV_BOX_C920_PROCUREMENT_JSON="$TMP_ROOT/c920-procurement.json" \
+  C920_ARRIVED_CURRENT_DATE=2026-05-29 \
+  C920_ARRIVED_ALLOW_EARLY=true \
+  INTERACTIVE=false \
+  FIELD_APPEND_MATRIX=false \
+  ./scripts/tv-box-c920-arrived.sh >"$TMP_ROOT/c920-arrived-early.log" 2>&1
+)
+
+node - "$EARLY_REPORT_DIR" "$TMP_ROOT/c920-arrived-early.log" <<'NODE'
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const reportDir = process.argv[2]
+const logPath = process.argv[3]
+const report = JSON.parse(fs.readFileSync(path.join(reportDir, 'tv-box-c920-pro-acceptance-latest.json'), 'utf8'))
+const log = fs.readFileSync(logPath, 'utf8')
+
+assert.match(log, /Current date: 2026-05-29/)
+assert.match(log, /Logitech C920 PRO TV-box acceptance/)
+assert.equal(report.physicalStatus.status, 'inserted')
+assert.equal(report.procurement.purchaseChannel, '京东自营')
+assert.equal(report.procurement.expectedArrivalDate, '2026-05-30')
+assert.equal(report.fieldDecision.level, 'usb_seen_camera_hal_missing')
+NODE
+
 PENDING_REPORT_DIR="$TMP_ROOT/pending-reports"
 mkdir -p "$PENDING_REPORT_DIR"
 cat >"$PENDING_REPORT_DIR/tv-box-c920-pro-acceptance-latest.json" <<'JSON'
