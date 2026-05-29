@@ -48,6 +48,7 @@ run_step "Android Java verification" ./scripts/android-verify.sh
 run_step "Debug APK build" npm run build-apk-debug
 run_step "Machine-readable TV-box inspection" npm run tv-box:inspect
 run_step "TV-box doctor" npm run tv-box:doctor
+run_step "ADB/RSA authorization helper" npm run tv-box:authorize
 run_step "Acceptance report" npm run tv-box:report
 run_step "Field compatibility record" npm run tv-box:field-record
 run_step "Field compatibility wizard dry-run" npm run tv-box:field-wizard -- --defaults --dry-run

@@ -22,6 +22,8 @@ SUPPORT_UX_AUDIT_MD="$BUNDLE_DIR/tv-box-ux-audit-latest.md"
 SUPPORT_UX_AUDIT_JSON="$BUNDLE_DIR/tv-box-ux-audit-latest.json"
 SUPPORT_COMMAND_CENTER_MD="$BUNDLE_DIR/tv-box-command-center-support.md"
 SUPPORT_COMMAND_CENTER_JSON="$BUNDLE_DIR/tv-box-command-center-support.json"
+SUPPORT_AUTHORIZATION_MD="$BUNDLE_DIR/tv-box-authorization-latest.md"
+SUPPORT_AUTHORIZATION_JSON="$BUNDLE_DIR/tv-box-authorization-latest.json"
 SUPPORT_SITE_READINESS_MD="$BUNDLE_DIR/tv-box-site-readiness-support.md"
 SUPPORT_SITE_READINESS_JSON="$BUNDLE_DIR/tv-box-site-readiness-support.json"
 SUPPORT_SITE_READINESS_HTML="$BUNDLE_DIR/tv-box-site-readiness-card.html"
@@ -144,6 +146,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 ## 关键文件
 
 - \`tv-box-doctor.txt\`: 人可读体检输出。
+- \`tv-box-authorization.txt\` / \`tv-box-authorization-latest.md/json\`: ADB/RSA 授权助手，给出缺 adb、没给 IP、要点电视 RSA、要指定设备或可安装的下一步。
 - \`tv-box-preflight.txt\` / \`tv-box-preflight-latest.md/json\`: 安装前自动预检，区分电脑工具链、交付包、ADB 授权和下一步动作。
 - \`tv-box-inspection.json\`: 机器可读检查结果。
 - \`handoff-standalone-test.txt\`: 最新交付压缩包解压后的离线完整性自检结果。
@@ -196,6 +199,9 @@ run_and_capture "Git status" "$BUNDLE_DIR/git-status.txt" git -C "$ROOT_DIR" sta
 run_and_capture "Package scripts" "$BUNDLE_DIR/package-scripts.json" node -e 'const p=require("./package.json"); console.log(JSON.stringify(p.scripts || {}, null, 2))'
 run_and_capture "Remote navigation self-test" "$BUNDLE_DIR/remote-self-test.txt" npm run -s tv-box:remote-test
 run_and_capture "ADB devices" "$BUNDLE_DIR/adb-devices.txt" bash -lc 'if command -v adb >/dev/null 2>&1; then adb devices -l; else echo "adb missing"; fi'
+run_and_capture "ADB/RSA authorization helper" "$BUNDLE_DIR/tv-box-authorization.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" TV_BOX_AUTHORIZATION_MD="$SUPPORT_AUTHORIZATION_MD" TV_BOX_AUTHORIZATION_JSON="$SUPPORT_AUTHORIZATION_JSON" npm run -s tv-box:authorize
+cp "$SUPPORT_AUTHORIZATION_MD" "$REPORT_DIR/tv-box-authorization-latest.md" 2>/dev/null || true
+cp "$SUPPORT_AUTHORIZATION_JSON" "$REPORT_DIR/tv-box-authorization-latest.json" 2>/dev/null || true
 run_and_capture "TV-box doctor" "$BUNDLE_DIR/tv-box-doctor.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" "$ROOT_DIR/scripts/tv-box-doctor.sh"
 run_and_capture "Machine inspection" "$BUNDLE_DIR/tv-box-inspect.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" TV_BOX_INSPECTION_JSON="$BUNDLE_DIR/tv-box-inspection.json" npm run -s tv-box:inspect
 run_and_capture "Field compatibility record" "$BUNDLE_DIR/tv-box-field-record.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" npm run -s tv-box:field-record
@@ -265,6 +271,8 @@ copy_if_exists "$REPORT_DIR/tv-box-field-scenarios-test-latest.json" "tv-box-fie
 copy_if_exists "$REPORT_DIR/tv-box-field-matrix.csv" "tv-box-field-matrix.csv"
 copy_if_exists "$REPORT_DIR/tv-box-hardware-profile-latest.md" "tv-box-hardware-profile-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-hardware-profile-latest.json" "tv-box-hardware-profile-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-authorization-latest.md" "tv-box-authorization-root-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-authorization-latest.json" "tv-box-authorization-root-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-compatibility-summary-latest.md" "tv-box-compatibility-summary-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-compatibility-summary-latest.json" "tv-box-compatibility-summary-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-easy-run-latest.md" "tv-box-easy-run-latest.md"

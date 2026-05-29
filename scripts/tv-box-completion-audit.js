@@ -9,6 +9,8 @@ const outputJsonPath = process.env.TV_BOX_COMPLETION_AUDIT_JSON || path.join(rep
 const outputMarkdownPath = process.env.TV_BOX_COMPLETION_AUDIT_MD || path.join(reportDir, 'tv-box-completion-audit-latest.md')
 const inspectionPath = process.env.TV_BOX_INSPECTION_JSON || path.join(reportDir, 'tv-box-inspection-latest.json')
 const preflightPath = process.env.TV_BOX_PREFLIGHT_JSON || path.join(reportDir, 'tv-box-preflight-latest.json')
+const authorizationPath = process.env.TV_BOX_AUTHORIZATION_JSON || path.join(reportDir, 'tv-box-authorization-latest.json')
+const authorizationMarkdownPath = process.env.TV_BOX_AUTHORIZATION_MD || path.join(reportDir, 'tv-box-authorization-latest.md')
 const fieldRecordPath = process.env.TV_BOX_FIELD_RECORD_JSON || path.join(reportDir, 'tv-box-field-record-latest.json')
 const compatibilityPath = process.env.TV_BOX_COMPATIBILITY_SUMMARY_JSON || path.join(reportDir, 'tv-box-compatibility-summary-latest.json')
 const fieldScenariosPath = process.env.TV_BOX_FIELD_SCENARIOS_TEST_JSON || path.join(reportDir, 'tv-box-field-scenarios-test-latest.json')
@@ -201,6 +203,7 @@ function main() {
 
   const inspection = readJson(inspectionPath)
   const preflight = readJson(preflightPath)
+  const authorization = readJson(authorizationPath)
   const fieldRecord = readJson(fieldRecordPath)
   const compatibility = readJson(compatibilityPath)
   const fieldScenarios = readJson(fieldScenariosPath)
@@ -210,7 +213,7 @@ function main() {
   const uxAudit = readJson(uxAuditPath)
   const sourceContracts = inspection?.sourceContracts || {}
   const deviceStatus = inspection?.deviceEvidence?.status || 'unknown'
-  const hasSelectedDevice = ['selected', 'authorized'].includes(deviceStatus)
+  const hasSelectedDevice = ['selected', 'authorized'].includes(deviceStatus) || authorization?.readyForInstall === true
   const apk = inspection?.apk || {}
   const isFinalDeliveryScope = auditScope === 'final_delivery'
   const isHandoffPackageScope = auditScope === 'handoff_package'
@@ -228,6 +231,8 @@ function main() {
   const handoffOperationCardHtml = fileState(path.join(handoffDir, 'OPERATION_CARD.html'))
   const handoffHardwareProfileJson = fileState(path.join(handoffDir, 'tv-box-hardware-profile-latest.json'))
   const handoffHardwareProfileMd = fileState(path.join(handoffDir, 'tv-box-hardware-profile-latest.md'))
+  const handoffAuthorizationJson = fileState(path.join(handoffDir, 'tv-box-authorization-latest.json'))
+  const handoffAuthorizationMd = fileState(path.join(handoffDir, 'tv-box-authorization-latest.md'))
   const fieldScenariosJson = fileState(fieldScenariosPath)
   const fieldScenariosMd = fileState(path.join(reportDir, 'tv-box-field-scenarios-test-latest.md'))
   const returnInboxScenariosJson = fileState(returnInboxScenariosPath)
@@ -376,10 +381,19 @@ function main() {
     '如果缺失，运行 npm run tv-box:support；根目录 easy summary 不应是 support_bundle。'
   ))
   requirements.push(makeRequirement(
+    'authorization_helper',
+    'ADB/RSA 授权助手和现场下一步报告',
+    fs.existsSync(path.join(rootDir, 'scripts', 'tv-box-authorize.sh')) &&
+      authorization?.status &&
+      (!isHandoffPackageScope || (handoffAuthorizationJson.exists && handoffAuthorizationMd.exists)) ? 'proven' : 'missing',
+    `status=${authorization?.status || 'missing'}, readyForInstall=${authorization?.readyForInstall === true}, authorized=${authorization?.adb?.authorizedCount ?? 0}, unready=${authorization?.adb?.unreadyCount ?? 0}, handoffJson=${handoffAuthorizationJson.exists}, handoffMd=${handoffAuthorizationMd.exists}`,
+    '现场先执行 BOX_IP=<盒子IP> npm run tv-box:authorize；报告未显示 ready_for_install 前不要反复安装。'
+  ))
+  requirements.push(makeRequirement(
     'device_authorization',
     '真实盒子 ADB/RSA 授权',
     hasSelectedDevice ? 'proven' : 'needs_box',
-    `deviceEvidence.status=${deviceStatus}`,
+    `deviceEvidence.status=${deviceStatus}, authorization.status=${authorization?.status || 'missing'}, selected=${authorization?.adb?.selectedDevice || inspection?.deviceEvidence?.selectedSerial || ''}`,
     '现场开启开发者选项/网络调试并确认 RSA 授权。'
   ))
   requirements.push(makeRequirement(
@@ -415,6 +429,8 @@ function main() {
     artifacts: {
       inspection: fileState(inspectionPath),
       preflight: fileState(preflightPath),
+      authorizationJson: fileState(authorizationPath),
+      authorizationMarkdown: fileState(authorizationMarkdownPath),
       fieldRecord: fileState(fieldRecordPath),
       compatibility: fileState(compatibilityPath),
       fieldScenariosRegressionJson: fieldScenariosJson,
@@ -437,6 +453,8 @@ function main() {
       handoffOperationCardHtml,
       handoffHardwareProfileJson,
       handoffHardwareProfileMd,
+      handoffAuthorizationJson,
+      handoffAuthorizationMd,
       handoffArchive,
       supportDirectory,
       supportArchive,

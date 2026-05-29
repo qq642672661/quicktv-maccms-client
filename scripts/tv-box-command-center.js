@@ -71,6 +71,7 @@ function unique(values) {
 function actionKey(action) {
   const text = String(action || '')
   if (/RUN_CAMERA_SMOKE|camera-smoke|摄像头冒烟|摄像头\/麦克风/.test(text)) return 'run_easy_with_camera'
+  if (/tv-box:authorize|authorization|授权助手|ready_for_install/.test(text)) return 'authorization_helper'
   if (/BOX_IP=.*tv-box:easy|安装、启动|安装并启动/.test(text)) return 'run_easy'
   if (/FIELD_WIZARD_OFFLINE|field-import|现场下载的JSON|下载 JSON/.test(text)) return 'field_import'
   if (/field-inbox|多份 JSON|收件箱|多人多盒/.test(text)) return 'field_inbox'
@@ -114,6 +115,31 @@ function requirementRow(item) {
 }
 
 function buildRoleNextActions(state) {
+  const authorizationStatus = state.authorization?.status || ''
+  if (authorizationStatus === 'ready_for_install') {
+    return {
+      projectOwner: '盒子授权已完成，让工程人员继续安装验收；完成前不要关闭项目。',
+      siteInstaller: '保持电视盒子在线，暂时不要关闭网络调试或拔掉摄像头/麦克风。',
+      engineer: '执行 BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy；如果不是按 IP 连接，改用 DEVICE_SERIAL=<目标序列号>。'
+    }
+  }
+
+  if (authorizationStatus === 'needs_device_selection') {
+    return {
+      projectOwner: '先确认目标电视盒子，避免把 App 装到错误设备。',
+      siteInstaller: '把电视盒子网络调试页和设备序列号拍给工程人员。',
+      engineer: '执行 adb devices -l，再执行 DEVICE_SERIAL=<目标序列号> npm run tv-box:authorize。'
+    }
+  }
+
+  if (['needs_rsa_authorization', 'target_not_authorized', 'target_not_visible', 'no_box_target', 'adb_missing'].includes(authorizationStatus)) {
+    return {
+      projectOwner: '当前先解决授权/连接，不要让现场反复安装。',
+      siteInstaller: '确认电脑和电视盒子同网，打开开发者选项/网络调试；电视出现 RSA 弹窗时选择允许。',
+      engineer: '执行 BOX_IP=<盒子IP> npm run tv-box:authorize，按 tv-box-authorization-latest.md 的下一步处理。'
+    }
+  }
+
   if (state.returnInbox?.closureStatus === 'needs_fix') {
     return {
       projectOwner: '不要关闭项目；把这次现场回传标成待修复复测。',
@@ -163,8 +189,14 @@ function buildRoleNextActions(state) {
 
 function buildPrimaryNextAction(state) {
   const roleNextActions = buildRoleNextActions(state)
+  const authorizationStatus = state.authorization?.status || ''
+  const authorizationNeedsAction = authorizationStatus && !['ready_for_install', 'missing'].includes(authorizationStatus)
   const reason = state.evidence.canClose
     ? '所有完成度要求已有证据。'
+    : authorizationStatus === 'ready_for_install'
+      ? 'ADB/RSA 授权助手显示已经可安装。'
+      : authorizationNeedsAction
+        ? 'ADB/RSA 授权助手已经给出现场连接下一步。'
     : state.deviceEvidence?.status === 'selected'
       ? '已有授权设备，下一步应跑真实盒子验收。'
       : state.evidence.canHandoff
@@ -172,7 +204,15 @@ function buildPrimaryNextAction(state) {
         : '交付包还没有达到可发送状态。'
 
   return {
-    status: state.evidence.canClose ? 'can_close' : state.evidence.canHandoff ? 'can_handoff_needs_box' : 'needs_engineering_fix',
+    status: state.evidence.canClose
+      ? 'can_close'
+      : authorizationStatus === 'ready_for_install'
+        ? 'ready_for_install'
+        : authorizationNeedsAction
+          ? 'needs_authorization'
+          : state.evidence.canHandoff
+            ? 'can_handoff_needs_box'
+            : 'needs_engineering_fix',
     reason,
     projectOwner: roleNextActions.projectOwner,
     siteInstaller: roleNextActions.siteInstaller,
@@ -184,6 +224,15 @@ function buildActionCards(state) {
   const handoffPath = state.artifacts.handoffArchive.path || 'reports/tv-box-handoff-latest.zip'
   const supportPath = state.artifacts.supportArchive.path || 'reports/tv-box-support-latest.zip'
   const actions = [
+    {
+      audience: '工程维护人员/现场安装人员',
+      title: '先跑 ADB/RSA 授权助手',
+      command: 'BOX_IP=<盒子IP> npm run tv-box:authorize',
+      details: [
+        '它会把状态压成：缺 adb、没给 IP、没看到目标、电视要点 RSA、多设备要选目标、或 ready_for_install。',
+        '报告未显示 ready_for_install 前不要反复安装；先按报告处理网络调试、盒子 IP 和电视屏幕授权弹窗。'
+      ]
+    },
     {
       audience: '项目负责人/现场安装人员/工程维护人员',
       title: '先看现场开工判定卡',
@@ -306,6 +355,7 @@ function main() {
 
   const inspection = readJson(path.join(reportDir, 'tv-box-inspection-latest.json'))
   const preflight = readJson(path.join(reportDir, 'tv-box-preflight-latest.json'))
+  const authorization = readJson(path.join(reportDir, 'tv-box-authorization-latest.json'))
   const completionAudit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
   const easySummary = readJson(path.join(reportDir, 'tv-box-easy-run-latest.json'))
   const releaseLedger = readJson(path.join(reportDir, 'tv-box-release-ledger-latest.json'))
@@ -342,6 +392,14 @@ function main() {
     preflight: preflight ? {
       verdict: preflight.verdict || '',
       nextActions: preflight.nextActions || []
+    } : null,
+    authorization: authorization ? {
+      status: authorization.status || 'unknown',
+      readyForInstall: authorization.readyForInstall === true,
+      selectedDevice: authorization.adb?.selectedDevice || '',
+      authorizedCount: authorization.adb?.authorizedCount || 0,
+      unreadyCount: authorization.adb?.unreadyCount || 0,
+      nextActions: authorization.nextActions || []
     } : null,
     completion: completionAudit ? {
       auditScope: completionAudit.auditScope || '',
@@ -410,6 +468,8 @@ function main() {
       easySummaryJson: fileState(path.join(reportDir, 'tv-box-easy-run-latest.json')),
       hardwareProfileMarkdown: fileState(path.join(reportDir, 'tv-box-hardware-profile-latest.md')),
       hardwareProfileJson: fileState(path.join(reportDir, 'tv-box-hardware-profile-latest.json')),
+      authorizationMarkdown: fileState(path.join(reportDir, 'tv-box-authorization-latest.md')),
+      authorizationJson: fileState(path.join(reportDir, 'tv-box-authorization-latest.json')),
       handoffHtmlSmokeJson: fileState(path.join(reportDir, 'tv-box-handoff-html-smoke-latest.json')),
       uxAuditJson: fileState(path.join(reportDir, 'tv-box-ux-audit-latest.json')),
       uxAuditMarkdown: fileState(path.join(reportDir, 'tv-box-ux-audit-latest.md')),
@@ -433,6 +493,7 @@ function main() {
     },
     upstreamNextActions: collectNextActions(
       ...(completionAudit?.nextActions || []),
+      ...(authorization?.nextActions || []),
       ...(releaseLedger?.nextActions || []),
       ...(easySummary?.nextActions || []),
       ...(returnInbox?.nextActions || []),
@@ -446,6 +507,7 @@ function main() {
     sources: {
       inspection: path.join(reportDir, 'tv-box-inspection-latest.json'),
       preflight: path.join(reportDir, 'tv-box-preflight-latest.json'),
+      authorization: path.join(reportDir, 'tv-box-authorization-latest.json'),
       completionAudit: path.join(reportDir, 'tv-box-completion-audit-latest.json'),
       releaseLedger: path.join(reportDir, 'tv-box-release-ledger-latest.json'),
       easySummary: path.join(reportDir, 'tv-box-easy-run-latest.json'),
@@ -482,6 +544,7 @@ ${card.details.map((item) => `- ${item}`).join('\n')}`).join('\n\n')
 - return inbox closure: \`${state.returnInbox?.closureStatus || 'unknown'}\`
 - site readiness: \`${state.siteReadiness?.status || 'unknown'}\`
 - elder/child UX audit: \`${state.uxAudit?.overall || 'unknown'}\` / failed checks \`${state.uxAudit?.failedChecks ?? 0}\`
+- ADB/RSA authorization: \`${state.authorization?.status || 'unknown'}\`
 - 设备证据: \`${state.deviceEvidence?.status || 'unknown'}\`
 
 ## 一眼结论
@@ -517,6 +580,8 @@ ${[
   artifactRow('FIELD_RETURN_CARD.html', state.artifacts.fieldReturnCardHtml, '现场发回证据前核对'),
   artifactRow('FIELD_WIZARD_OFFLINE.html', state.artifacts.offlineFieldWizardHtml, '离线填写真实盒子验收'),
   artifactRow('硬件兼容性画像 MD', state.artifacts.hardwareProfileMarkdown, '判断盒子/遥控器/摄像头/麦克风风险'),
+  artifactRow('ADB/RSA 授权助手 MD', state.artifacts.authorizationMarkdown, '给现场处理网络调试和 RSA 授权'),
+  artifactRow('ADB/RSA 授权助手 JSON', state.artifacts.authorizationJson, '机器读取授权状态和下一步'),
   artifactRow('完成度审计 JSON', state.artifacts.completionAuditJson, '机器判断未闭环项'),
   artifactRow('发布台账 JSON', state.artifacts.releaseLedgerJson, '追踪 releaseId 与 SHA'),
   artifactRow('网页离线冒烟 JSON', state.artifacts.handoffHtmlSmokeJson, '验证离线入口可用'),

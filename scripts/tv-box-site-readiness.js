@@ -72,6 +72,7 @@ function deriveStage(state) {
   const readiness = state.commandCenter?.readiness?.level || state.inspection?.readiness?.level || ''
   const completion = state.completionAudit?.summary?.overall || ''
   const deviceStatus = state.preflight?.device?.status || state.commandCenter?.deviceEvidence?.status || ''
+  const authorizationStatus = state.authorization?.status || ''
 
   if (completion === 'complete' || readiness === 'complete') {
     return {
@@ -81,7 +82,7 @@ function deriveStage(state) {
     }
   }
 
-  if (verdict === 'ready_for_box_install' || deviceStatus === 'authorized') {
+  if (verdict === 'ready_for_box_install' || deviceStatus === 'authorized' || authorizationStatus === 'ready_for_install') {
     return {
       status: 'ready_for_install',
       title: '已授权，可安装和验收',
@@ -89,7 +90,18 @@ function deriveStage(state) {
     }
   }
 
-  if (verdict === 'needs_box_authorization' || deviceStatus === 'unauthorized_or_offline' || deviceStatus === 'target_not_authorized') {
+  if (authorizationStatus === 'needs_device_selection') {
+    return {
+      status: 'needs_device_selection',
+      title: '先指定目标盒子',
+      summary: '电脑看到了多台已授权 Android 设备；先指定目标序列号，避免装错电视盒子。'
+    }
+  }
+
+  if (verdict === 'needs_box_authorization' ||
+    deviceStatus === 'unauthorized_or_offline' ||
+    deviceStatus === 'target_not_authorized' ||
+    ['needs_rsa_authorization', 'target_not_authorized', 'target_not_visible'].includes(authorizationStatus)) {
     return {
       status: 'needs_box_authorization',
       title: '先处理盒子授权',
@@ -152,9 +164,26 @@ function buildRoleActions(stage, state) {
         '没有弹窗时，关闭再打开网络调试，或重启盒子后重新运行安装脚本。'
       ],
       engineer: [
+        `执行 BOX_IP=${boxIp} npm run tv-box:authorize，先看 tv-box-authorization-latest.md 的状态和下一步。`,
         `执行 BOX_IP=${boxIp} npm run tv-box:preflight。`,
         '如果仍是 unauthorized/offline，先让现场拍电视屏幕和网络调试页面。',
         `需要排障时执行 BOX_IP=${boxIp} npm run tv-box:support，并归档 ${support}。`
+      ]
+    }
+  }
+
+  if (stage.status === 'needs_device_selection') {
+    return {
+      projectOwner: '当前不是代码问题，先确认哪一台 Android 设备才是目标电视盒子。',
+      siteInstaller: [
+        '不要同时安装到多台设备。',
+        '把电视盒子网络调试页和设备序列号拍给工程人员。',
+        '确认目标后再继续安装。'
+      ],
+      engineer: [
+        '执行 adb devices -l，确认目标电视盒子的序列号。',
+        '执行 DEVICE_SERIAL=<目标序列号> npm run tv-box:authorize。',
+        '报告显示 ready_for_install 后，再执行 DEVICE_SERIAL=<目标序列号> RUN_CAMERA_SMOKE=true npm run tv-box:easy。'
       ]
     }
   }
@@ -204,6 +233,7 @@ function buildReport() {
   fs.mkdirSync(reportDir, { recursive: true })
 
   const preflight = readJson(path.join(reportDir, 'tv-box-preflight-latest.json'))
+  const authorization = readJson(path.join(reportDir, 'tv-box-authorization-latest.json'))
   const commandCenter = readJson(path.join(reportDir, 'tv-box-command-center-latest.json'))
   const completionAudit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
   const inspection = readJson(path.join(reportDir, 'tv-box-inspection-latest.json'))
@@ -214,6 +244,7 @@ function buildReport() {
 
   const state = {
     preflight,
+    authorization,
     commandCenter,
     completionAudit,
     inspection,
@@ -225,6 +256,8 @@ function buildReport() {
       supportArchive: fileState(supportArchivePath),
       supportSha: fileState(`${supportArchivePath}.sha256`),
       preflightMarkdown: fileState(path.join(reportDir, 'tv-box-preflight-latest.md')),
+      authorizationMarkdown: fileState(path.join(reportDir, 'tv-box-authorization-latest.md')),
+      authorizationJson: fileState(path.join(reportDir, 'tv-box-authorization-latest.json')),
       commandCenterMarkdown: fileState(path.join(reportDir, 'tv-box-command-center-latest.md')),
       fieldWizardHtml: fileState(path.join(reportDir, 'tv-box-field-wizard-offline.html')),
       returnInboxMarkdown: fileState(path.join(reportDir, 'tv-box-return-inbox-latest.md'))
@@ -240,12 +273,15 @@ function buildReport() {
     stage,
     readiness: {
       preflightVerdict: preflight?.verdict || 'missing',
+      authorizationStatus: authorization?.status || 'missing',
       commandCenterReadiness: commandCenter?.readiness?.level || 'missing',
       completionOverall: completionAudit?.summary?.overall || 'missing',
       returnInboxClosure: returnInbox?.closure?.status || 'missing'
     },
     device: {
       preflightStatus: preflight?.device?.status || 'missing',
+      authorizationStatus: authorization?.status || 'missing',
+      authorizationReadyForInstall: authorization?.readyForInstall === true,
       target: preflight?.device?.target || '',
       selected: preflight?.device?.selected || '',
       authorizedCount: preflight?.device?.authorizedCount || 0,
@@ -286,6 +322,7 @@ function writeMarkdown(report) {
 - 当前状态: \`${report.stage.status}\`
 - 一句话: ${report.stage.summary}
 - preflight: \`${report.readiness.preflightVerdict}\`
+- authorization: \`${report.readiness.authorizationStatus}\`
 - command readiness: \`${report.readiness.commandCenterReadiness}\`
 - completion: \`${report.readiness.completionOverall}\`
 - return inbox closure: \`${report.readiness.returnInboxClosure}\`

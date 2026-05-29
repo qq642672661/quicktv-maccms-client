@@ -124,6 +124,7 @@ function main() {
   const completionAudit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
   const inspection = readJson(path.join(reportDir, 'tv-box-inspection-latest.json'))
   const preflight = readJson(path.join(reportDir, 'tv-box-preflight-latest.json'))
+  const authorization = readJson(path.join(reportDir, 'tv-box-authorization-latest.json'))
   const compatibility = readJson(path.join(reportDir, 'tv-box-compatibility-summary-latest.json'))
   const easySummary = readJson(path.join(reportDir, 'tv-box-easy-run-latest.json'))
   const fieldRecord = readJson(path.join(reportDir, 'tv-box-field-record-latest.json'))
@@ -147,6 +148,7 @@ function main() {
 
   const nextActions = collectNextActions(
     completionAudit?.nextActions || [],
+    authorization?.nextActions || [],
     inspection?.readiness?.nextActions || [],
     preflight?.nextActions || [],
     easySummary?.nextActions || [],
@@ -168,6 +170,13 @@ function main() {
     },
     readiness: inspection?.readiness || null,
     preflight: preflight ? { verdict: preflight.verdict, readiness: preflight.readiness || null } : null,
+    authorization: authorization ? {
+      status: authorization.status || 'unknown',
+      readyForInstall: authorization.readyForInstall === true,
+      selectedDevice: authorization.adb?.selectedDevice || '',
+      authorizedCount: authorization.adb?.authorizedCount || 0,
+      unreadyCount: authorization.adb?.unreadyCount || 0
+    } : null,
     completion: completionAudit ? { auditScope: completionAudit.auditScope, summary: completionAudit.summary } : null,
     compatibility: compatibility ? {
       totalRecords: compatibility.totalRecords || 0,
@@ -224,6 +233,8 @@ function main() {
       returnInboxScenariosRegressionMarkdown: fileState(path.join(reportDir, 'tv-box-return-inbox-scenarios-test-latest.md')),
       uxAuditJson: fileState(path.join(reportDir, 'tv-box-ux-audit-latest.json')),
       uxAuditMarkdown: fileState(path.join(reportDir, 'tv-box-ux-audit-latest.md')),
+      authorizationJson: fileState(path.join(reportDir, 'tv-box-authorization-latest.json')),
+      authorizationMarkdown: fileState(path.join(reportDir, 'tv-box-authorization-latest.md')),
       completionAuditJson: fileState(path.join(reportDir, 'tv-box-completion-audit-latest.json')),
       supportBundleDirectory: fileState(firstLine(path.join(reportDir, 'tv-box-support-latest-path.txt')))
     },
@@ -250,6 +261,7 @@ function main() {
 - return inbox scenarios regression: \`${record.returnInboxScenariosRegression?.status || 'unknown'}\` / scenarios \`${record.returnInboxScenariosRegression?.scenarioCount ?? 0}\`
 - return inbox closure: \`${record.returnInboxClosure?.status || 'unknown'}\`
 - elder/child UX audit: \`${record.uxAudit?.overall || 'unknown'}\` / failed checks \`${record.uxAudit?.failedChecks ?? 0}\`
+- ADB/RSA authorization: \`${record.authorization?.status || 'unknown'}\`
 
 ## 结论
 
@@ -274,6 +286,8 @@ ${artifactRow('现场回传收件箱场景回归 JSON', record.artifacts.returnI
 ${artifactRow('现场回传收件箱场景回归 MD', record.artifacts.returnInboxScenariosRegressionMarkdown)}
 ${artifactRow('长辈/小孩遥控器 UX 审计 JSON', record.artifacts.uxAuditJson)}
 ${artifactRow('长辈/小孩遥控器 UX 审计 MD', record.artifacts.uxAuditMarkdown)}
+${artifactRow('ADB/RSA 授权助手 JSON', record.artifacts.authorizationJson)}
+${artifactRow('ADB/RSA 授权助手 MD', record.artifacts.authorizationMarkdown)}
 ${artifactRow('完成度审计 JSON', record.artifacts.completionAuditJson)}
 
 ## 校验

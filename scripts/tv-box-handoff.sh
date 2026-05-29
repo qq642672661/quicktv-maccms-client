@@ -54,6 +54,8 @@ HANDOFF_HTML_SMOKE_JSON="$REPORT_DIR/tv-box-handoff-html-smoke-latest.json"
 HANDOFF_HTML_SMOKE_MD="$REPORT_DIR/tv-box-handoff-html-smoke-latest.md"
 PREFLIGHT_JSON="$REPORT_DIR/tv-box-preflight-latest.json"
 PREFLIGHT_MD="$REPORT_DIR/tv-box-preflight-latest.md"
+AUTHORIZATION_JSON="$REPORT_DIR/tv-box-authorization-latest.json"
+AUTHORIZATION_MD="$REPORT_DIR/tv-box-authorization-latest.md"
 SITE_READINESS_JSON="$REPORT_DIR/tv-box-site-readiness-latest.json"
 SITE_READINESS_MD="$REPORT_DIR/tv-box-site-readiness-latest.md"
 SITE_READINESS_HTML="$REPORT_DIR/tv-box-site-readiness-card.html"
@@ -86,6 +88,8 @@ mkdir -p "$HANDOFF_DIR" "$FIELD_RETURN_DIR"
 cp "$APK_PATH" "$HANDOFF_DIR/HelloTV-debug.apk"
 
 (cd "$ROOT_DIR" && PACKAGE_NAME="$PACKAGE_NAME" TV_BOX_INSPECTION_JSON="$INSPECTION_PATH" npm run -s tv-box:inspect >/dev/null)
+
+(cd "$ROOT_DIR" && BOX_IP="${BOX_IP:-}" DEVICE_SERIAL="${DEVICE_SERIAL:-}" npm run -s tv-box:authorize >/dev/null)
 
 (cd "$ROOT_DIR" && PACKAGE_NAME="$PACKAGE_NAME" TV_BOX_INSPECTION_JSON="$INSPECTION_PATH" REPORT_PATH="$REPORT_PATH" npm run -s tv-box:report >/dev/null)
 
@@ -172,6 +176,14 @@ fi
 
 if [[ -f "$EASY_SUMMARY_MD" ]]; then
   cp "$EASY_SUMMARY_MD" "$HANDOFF_DIR/tv-box-easy-run-latest.md"
+fi
+
+if [[ -f "$AUTHORIZATION_JSON" ]]; then
+  cp "$AUTHORIZATION_JSON" "$HANDOFF_DIR/tv-box-authorization-latest.json"
+fi
+
+if [[ -f "$AUTHORIZATION_MD" ]]; then
+  cp "$AUTHORIZATION_MD" "$HANDOFF_DIR/tv-box-authorization-latest.md"
 fi
 
 if [[ -f "$FIELD_WIZARD_ENV" ]]; then
@@ -283,6 +295,8 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "hardwareProfileJson": "tv-box-hardware-profile-latest.json",
     "easyRunSummaryMarkdown": "tv-box-easy-run-latest.md",
     "easyRunSummaryJson": "tv-box-easy-run-latest.json",
+    "authorizationMarkdown": "tv-box-authorization-latest.md",
+    "authorizationJson": "tv-box-authorization-latest.json",
     "completionAuditMarkdown": "tv-box-completion-audit-latest.md",
     "completionAuditJson": "tv-box-completion-audit-latest.json",
     "handoffHtmlSmokeMarkdown": "tv-box-handoff-html-smoke-latest.md",
@@ -313,6 +327,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "checksums": "SHA256SUMS"
   },
   "commands": {
+    "authorize": "BOX_IP=<box-ip> npm run tv-box:authorize",
     "easyInstall": "BOX_IP=<box-ip> npm run tv-box:easy",
     "easyFailureSelfTest": "npm run tv-box:easy-failure-test",
     "handoffStandaloneSelfTest": "npm run tv-box:handoff-standalone-test",
@@ -350,10 +365,11 @@ HelloTV 电视盒子交付包 - 先看这里
 5. 测完真实盒子后，双击 FIELD_RETURN_CARD.html，按卡片把 JSON、照片、日志和排障包发给工程人员。
 6. 回传证据不要散发：把 JSON、维护码照片、INSTALL_LOG.txt 或排障包、异常照片放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command 生成 zip。
 7. 安装前打开 PRE_INSTALL_CHECKLIST.zh-CN.md，确认电脑、电视盒子、IP 和 RSA 授权都准备好。
-8. Windows 电脑：双击 INSTALL_ON_WINDOWS.bat，按提示输入电视盒子 IP。
-9. macOS 电脑：双击 INSTALL_ON_MAC.command，按提示输入电视盒子 IP。
-10. 电视盒子需要先打开“开发者选项 / 网络调试”，电脑和电视盒子要在同一个网络。
-11. 电视上弹出 RSA 授权时，选择“允许”。
+8. 工程人员可先执行 BOX_IP=<盒子IP> npm run tv-box:authorize，只看 tv-box-authorization-latest.md 里的下一步，不要反复安装。
+9. Windows 电脑：双击 INSTALL_ON_WINDOWS.bat，按提示输入电视盒子 IP。
+10. macOS 电脑：双击 INSTALL_ON_MAC.command，按提示输入电视盒子 IP。
+11. 电视盒子需要先打开“开发者选项 / 网络调试”，电脑和电视盒子要在同一个网络。
+12. 电视上弹出 RSA 授权时，选择“允许”。
 
 装好后只记遥控器：
 - 方向键移动，OK 进入，返回键回上一步；首页再按返回会先问要不要退出。
@@ -374,6 +390,7 @@ HelloTV 电视盒子交付包 - 先看这里
 
 工程人员命令：
 BOX_IP=<盒子IP> npm run tv-box:easy
+BOX_IP=<盒子IP> npm run tv-box:authorize
 BOX_IP=<盒子IP> RUN_CAMERA_SMOKE=true npm run tv-box:easy
 BOX_IP=<盒子IP> npm run tv-box:field-wizard
 npm run tv-box:field-wizard-html
@@ -488,6 +505,7 @@ cat > "$HANDOFF_DIR/START_HERE.html" <<STARTHERE
       <h2>第 2 步：按电脑选择安装</h2>
       <p>解压后不要移动单个文件，安装脚本必须和 <code>HelloTV-debug.apk</code> 放在同一个目录。</p>
       <p>安装前先打开 <a href="PRE_INSTALL_CHECKLIST.zh-CN.md">PRE_INSTALL_CHECKLIST.zh-CN.md</a>，确认电脑、盒子 IP、网络调试和 RSA 授权都准备好。</p>
+      <p>工程人员先执行 <code>BOX_IP=&lt;盒子IP&gt; npm run tv-box:authorize</code>，再打开 <a href="tv-box-authorization-latest.md">ADB/RSA 授权助手报告</a>；报告未显示 <code>ready_for_install</code> 前不要反复安装。</p>
       <div class="actions">
         <a class="button secondary" href="SITE_READINESS_CARD.html">先看：现场开工判定卡</a>
         <a class="button" href="INSTALL_ON_WINDOWS.bat">Windows：双击安装脚本</a>
@@ -540,6 +558,7 @@ cat > "$HANDOFF_DIR/START_HERE.html" <<STARTHERE
     <section class="panel">
       <h2>工程人员命令</h2>
       <p><code>BOX_IP=&lt;盒子IP&gt; npm run tv-box:easy</code></p>
+      <p><code>BOX_IP=&lt;盒子IP&gt; npm run tv-box:authorize</code></p>
       <p><code>BOX_IP=&lt;盒子IP&gt; RUN_CAMERA_SMOKE=true npm run tv-box:easy</code></p>
       <p>包名：<code>$PACKAGE_NAME</code>；生成时间：<code>$(date '+%Y-%m-%d %H:%M:%S %Z')</code></p>
     </section>
@@ -568,6 +587,7 @@ cat > "$HANDOFF_DIR/QUICK_START.zh-CN.md" <<QUICKSTART
 
 - macOS：双击 \`INSTALL_ON_MAC.command\`。
 - Windows：双击 \`INSTALL_ON_WINDOWS.bat\`。
+- 工程人员先查授权：在源码工程执行 \`BOX_IP=<盒子IP> npm run tv-box:authorize\`，报告变成 \`ready_for_install\` 后再安装。
 - 工程人员：在源码工程执行 \`BOX_IP=<盒子IP> npm run tv-box:easy\`。
 
 按提示输入电视盒子 IP。安装完成后电视上应显示“电视盒子简易模式”。
@@ -621,10 +641,11 @@ cat > "$HANDOFF_DIR/PRE_INSTALL_CHECKLIST.zh-CN.md" <<'PREINSTALL'
 源码工程里可执行：
 
 ```bash
+BOX_IP=<盒子IP> npm run tv-box:authorize
 BOX_IP=<盒子IP> npm run tv-box:preflight
 ```
 
-它会生成 `reports/tv-box-preflight-latest.md/json`，自动判断电脑工具链、交付包 SHA256、ADB 授权、实机连接和下一步动作。
+授权助手会生成 `reports/tv-box-authorization-latest.md/json`，只告诉现场“缺 adb / 没给 IP / 要点 RSA / 要选设备 / 可安装”的下一步；预检会生成 `reports/tv-box-preflight-latest.md/json`，自动判断电脑工具链、交付包 SHA256、ADB 授权、实机连接和下一步动作。
 PREINSTALL
 
 cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
@@ -664,10 +685,11 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 让电视盒子打开“开发者选项 / 网络调试”，找到盒子 IP，然后在项目目录执行：
 
 \`\`\`bash
+BOX_IP=<盒子IP> npm run tv-box:authorize
 BOX_IP=<盒子IP> npm run tv-box:easy
 \`\`\`
 
-这条命令会自动构建、连接、安装、启动，执行一轮遥控器冒烟，并重新生成验收报告。
+先看授权助手报告是否已经是 \`ready_for_install\`；通过后，一键安装命令会自动构建、连接、安装、启动，执行一轮遥控器冒烟，并重新生成验收报告。
 
 ## 只拿到交付目录时
 

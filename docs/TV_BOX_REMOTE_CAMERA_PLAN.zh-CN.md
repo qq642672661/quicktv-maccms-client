@@ -44,6 +44,7 @@
 - 新增 `npm run tv-box:doctor`：先体检电脑工具链、APK Manifest、ADB 连接、盒子 feature 和 App 安装状态，便于普通用户把问题定位到“电脑环境 / 盒子连接 / App 安装 / 权限”。
 - 新增 `npm run tv-box:inspect`：输出 `reports/tv-box-inspection-latest.json`，把工具链、源码合约、APK SHA256、遥控器自测、ADB/盒子/摄像头/麦克风线索、Camera/Record audio appops、当前前台窗口和下一步动作写成机器可读证据。
 - `tv-box:inspect` 会输出 `readiness` 就绪度结论，把原始证据归纳成“可交付 / 可安装 / 已实机安装 / 阻断”，并给出现场下一步动作。
+- 新增 `npm run tv-box:authorize`：生成 `reports/tv-box-authorization-latest.md/json`，专门处理 ADB/RSA 授权，把缺 adb、没给 IP、看不到目标、电视屏幕要点 RSA、多设备要选目标和 `ready_for_install` 分开，现场未授权时先看这份报告，不反复安装。
 - 新增 `npm run tv-box:preflight`：安装前只读预检，生成 `reports/tv-box-preflight-latest.md/json`，自动判断电脑工具链、遥控器逻辑自测、Debug APK、交付压缩包 SHA256、ADB 授权状态和下一步动作；没有实机时明确给出“交付包可发现场，但仍需真实盒子验收”。
 - 新增 `npm run tv-box:report`：生成 Markdown 验收报告，沉淀工具链、APK Manifest、设备连接、安装状态和人工实机验收清单。
 - `tv-box:doctor`、`tv-box:report` 和 `tv-box:camera-smoke` 连上盒子后会抓取 `dumpsys usb` 关键行；`TvBoxModule` 能力检测也会写入 `usbDeviceCount` / `usbVideoDeviceCount` / `audioInputDeviceCount` / `usbAudioInputDeviceCount` 日志，便于判断 USB 摄像头和麦克风是否被系统识别。
@@ -56,7 +57,7 @@
 - 新增 `npm run tv-box:completion-audit`：把源码合约、自动化报告、交付包、排障包、离线验收表和真实盒子验收状态汇成 `reports/tv-box-completion-audit-latest.md/json`，逐项标记 `proven`、`needs_box`、`missing` 或 `failed`，防止把“未接真实盒子”误说成“已完成实机验收”。默认 `final_delivery` 审计校验最终交付 zip 和排障 zip 的 SHA256；交付包和排障包内分别携带 `handoff_package`、`support_bundle` 随包快照，不自我引用尚未完成写入的外层压缩包。
 - 新增 `npm run tv-box:release-ledger`：生成 `reports/tv-box-release-ledger-latest.md/json` 并追加 `reports/tv-box-release-ledger.jsonl`，沉淀每次发包的 releaseId、APK/交付包/排障包 SHA256、readiness、完成度统计、兼容性样本、Git 分支/提交和下一步动作，便于长期追踪现场版本。
 - 新增 `npm run tv-box:audit`：自动核对简易入口、摄像头入口、Manifest、APK、验收报告、安装日志说明和交付包是否齐全。
-- 新增 `.github/workflows/tv-box-check.yml`：在 PR、main/master/codex 分支推送或手动触发时基于 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 与对应 `.sha256`，避免电视盒子方案只停留在单台电脑可用。
+- 新增 `.github/workflows/tv-box-check.yml`：在 PR、main/master/codex 分支推送或手动触发时基于 `package-lock.json` 执行 `npm ci --legacy-peer-deps`，再运行 `npm run tv-box:check`，并上传 `reports/tv-box-handoff/`、`reports/tv-box-handoff-latest.zip`、`reports/tv-box-field-wizard-latest.*`、`reports/tv-box-field-wizard-offline.html`、`reports/tv-box-field-import-latest.*`、`reports/tv-box-field-inbox-latest.*`、`reports/tv-box-field-inbox-imports/`、`reports/tv-box-return-inbox-scenarios-test-latest.*`、`reports/tv-box-field-scenarios-test-latest.*`、`reports/tv-box-easy-run-latest.*`、`reports/tv-box-authorization-latest.*`、`reports/tv-box-completion-audit-latest.*`、`reports/tv-box-release-ledger-latest.*`、`reports/tv-box-release-ledger.jsonl` 与对应 `.sha256`，避免电视盒子方案只停留在单台电脑可用。
 - 基础遥控器冒烟和摄像头冒烟都会抓取交互期间日志；出现 `AndroidRuntime` 或 `FATAL EXCEPTION` 会直接失败，避免“看起来按过键但实际崩过”的假通过。
 
 ## 遥控器交互规范
@@ -268,6 +269,7 @@ GitHub Actions 也会运行同一条总闸门，并把 `reports/tv-box-handoff/`
 - `tv-box-return-inbox-scenarios-test-latest.md` / `tv-box-return-inbox-scenarios-test-latest.json`（现场回传证据质检场景回归，防止缺证据被误收）
 - `tv-box-field-record-latest.md` / `tv-box-field-record-latest.json` / `tv-box-field-matrix.csv`（最近一次兼容性记录和累计 CSV）
 - `tv-box-easy-run-latest.md` / `tv-box-easy-run-latest.json`（一键安装自动沉淀摘要，集中列出 readiness、交付包、排障包、兼容性状态和下一步）
+- `tv-box-authorization-latest.md` / `tv-box-authorization-latest.json`（ADB/RSA 授权助手，现场先解决网络调试、盒子 IP、RSA 弹窗和多设备选择）
 - `tv-box-completion-audit-latest.md` / `tv-box-completion-audit-latest.json`（完成度证据审计，区分已有证据和仍需真实盒子验收的项目）
 - `tv-box-release-ledger-latest.md` / `tv-box-release-ledger-latest.json` / `tv-box-release-ledger.jsonl`（长期交付台账，追踪每次发包产物、SHA、readiness 和待实机项）
 - `tv-box-acceptance-latest.md`

@@ -90,6 +90,7 @@ jobs:
             reports/tv-box-compatibility-summary-latest.*
             reports/tv-box-hardware-profile-latest.*
             reports/tv-box-easy-run-latest.*
+            reports/tv-box-authorization-latest.*
             reports/tv-box-handoff-html-smoke-latest.*
             reports/tv-box-ux-audit-latest.*
             reports/tv-box-command-center-latest.*
