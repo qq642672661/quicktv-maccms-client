@@ -191,6 +191,15 @@ function buildDecision(report, physicalStatus) {
       }
     }
     if (physicalStatus === 'inserted') {
+      if (report?.hardwareEvidence?.usbRealtekOnly) {
+        return {
+          ...sourceDecision,
+          sourceLevel: sourceDecision.level,
+          title: '已插入 C920，但 USB Host 只看到 Realtek 网卡',
+          summary: report.hardwareEvidence.usbDeviceSummary || '盒子 USB Host 当前没有看到 Logitech/C920 或 USB Video Class 设备。',
+          primaryAction: '先确认 C920 是否真的插在小米盒子 USB 口；重新插紧后重跑，直插仍只见 Realtek 时改用带独立供电 USB Hub。'
+        }
+      }
       return {
         ...sourceDecision,
         sourceLevel: sourceDecision.level,
@@ -341,6 +350,13 @@ function buildCard(report) {
     },
     hardwareEvidence: {
       cameraServiceCameraCount: report?.cameraService?.cameraCount ?? 'unknown',
+      usbHostVisibleDeviceCount: hardware.usbHostVisibleDeviceCount ?? 'unknown',
+      usbDeviceSummary: hardware.usbDeviceSummary || '未采集',
+      usbDeviceSummaries: hardware.usbDeviceSummaries || [],
+      usbLogitechC920Detected: hardware.usbLogitechC920Detected,
+      usbVideoDeviceDetected: hardware.usbVideoDeviceDetected,
+      usbAudioDeviceDetected: hardware.usbAudioDeviceDetected,
+      usbRealtekOnly: hardware.usbRealtekOnly,
       usbVideoHintCount: hardware.usbVideoHintCount ?? 0,
       usbAudioHintCount: hardware.usbAudioHintCount ?? 0,
       nativeCameraCount: native.cameraCount ?? 'unknown',
@@ -379,6 +395,9 @@ function buildMarkdown(card) {
 
   const evidenceRows = [
     ['CameraService cameraCount', card.hardwareEvidence.cameraServiceCameraCount],
+    ['USB host 可见设备数', card.hardwareEvidence.usbHostVisibleDeviceCount],
+    ['USB 设备清单', card.hardwareEvidence.usbDeviceSummary],
+    ['USB 是否看到 Logitech/C920', yesNo(card.hardwareEvidence.usbLogitechC920Detected)],
     ['USB 视频线索数', card.hardwareEvidence.usbVideoHintCount],
     ['USB 音频线索数', card.hardwareEvidence.usbAudioHintCount],
     ['App camera/external/usbVideo', `${card.hardwareEvidence.nativeCameraCount}/${card.hardwareEvidence.nativeExternalCameraCount}/${card.hardwareEvidence.nativeUsbVideoDeviceCount}`],
@@ -423,6 +442,10 @@ ${makeTable(checklistRows, ['项目', '结果', '说明'])}
 
 ${makeTable(evidenceRows, ['证据', '值'])}
 
+## USB Host 清单
+
+${card.hardwareEvidence.usbDeviceSummaries.length ? card.hardwareEvidence.usbDeviceSummaries.map((item) => `- ${item}`).join('\n') : '- 未列出外设。'}
+
 ## 基线对比
 
 - 状态: \`${card.baselineComparison.status}\`
@@ -448,6 +471,9 @@ ${card.closeGuard.map((item) => `- ${item}`).join('\n')}
 function buildHtml(card) {
   const branchItems = card.branchSteps.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
   const guardItems = card.closeGuard.map((step) => `<li>${htmlEscape(step)}</li>`).join('\n')
+  const usbDeviceItems = card.hardwareEvidence.usbDeviceSummaries.length
+    ? card.hardwareEvidence.usbDeviceSummaries.map((item) => `<li>${htmlEscape(item)}</li>`).join('\n')
+    : '<li>未列出外设。</li>'
   const rows = [
     ['USB 视频线索', yesNo(card.checklist.usbVideoDetected)],
     ['Camera2 枚举', yesNo(card.checklist.camera2Enumerated)],
@@ -502,6 +528,9 @@ function buildHtml(card) {
     <ul>${branchItems}</ul>
     <h2>现场核对</h2>
     <table>${rows}</table>
+    <h2>USB Host 清单</h2>
+    <p>${htmlEscape(card.hardwareEvidence.usbDeviceSummary)}</p>
+    <ul>${usbDeviceItems}</ul>
     <h2>不能关闭的边界</h2>
     <ul>${guardItems}</ul>
     <h2>回传给工程侧</h2>

@@ -160,10 +160,10 @@ npm run tv-box:c920-arrived
 C920 验收报告还会生成“到货判定卡”，直接区分“USB 没看到视频设备”“USB 有线索但 Camera2 没枚举”“预览页已打开但需要看电视确认”“画面已确认但音频/热插拔未闭环”等状态，并汇总 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数；首次未插摄像头运行时会保存 `reports/tv-box-c920-pro-baseline.json` 到货前基线，后续插上 C920 会自动对比是否新增 USB 视频、Camera2 摄像头和 USB 音频。上述证据用于排障，不替代 Camera2/CameraService 枚举和电视真实画面确认。已采购但未到货时，可把采购渠道和预计到货日写进操作卡，避免把未插入基线误读成故障：
 
 ```bash
-C920_PHYSICAL_STATUS=purchased_pending_arrival C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-30 npm run tv-box:c920-arrival-card
+C920_PHYSICAL_STATUS=purchased_pending_arrival C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-31 npm run tv-box:c920-arrival-card
 ```
 
-当前采购状态也会持久记录在 `tv-box-field-state/c920-procurement.json`，所以 `npm run tv-box:c920-arrival-card` 和 `tv-box:next` 不带环境变量时也会显示“京东自营 / 2026-05-30 / 已采购待到货”。`npm run tv-box:c920-arrival-card` 会把最新 C920 验收报告转成 `reports/tv-box-c920-arrival-card-latest.md/json` 和可打印的 `reports/tv-box-c920-arrival-card.html`，给现场人员按“直插 C920 -> 运行验收命令 -> 电视真实画面确认 -> C920 自带麦克风/独立 USB 麦克风 -> USB 热插拔 -> 回传 support zip”顺序处理。它会明确写出：只有电视上看到 C920 PRO 真实画面，`FIELD_CAMERA_PREVIEW` 才能记 `pass`；只看到 USB 线索、Activity 打开或音频线索都不能冒充业务通过。
+当前采购状态也会持久记录在 `tv-box-field-state/c920-procurement.json`，所以 `npm run tv-box:c920-arrival-card` 和 `tv-box:next` 不带环境变量时也会显示“京东自营 / 2026-05-31 / 已采购待到货”。`npm run tv-box:c920-arrival-card` 会把最新 C920 验收报告转成 `reports/tv-box-c920-arrival-card-latest.md/json` 和可打印的 `reports/tv-box-c920-arrival-card.html`，给现场人员按“直插 C920 -> 运行验收命令 -> 电视真实画面确认 -> C920 自带麦克风/独立 USB 麦克风 -> USB 热插拔 -> 回传 support zip”顺序处理。它会明确写出：只有电视上看到 C920 PRO 真实画面，`FIELD_CAMERA_PREVIEW` 才能记 `pass`；只看到 USB 线索、Activity 打开或音频线索都不能冒充业务通过。
 
 想在一键安装后顺手跑摄像头冒烟，可以打开开关：
 

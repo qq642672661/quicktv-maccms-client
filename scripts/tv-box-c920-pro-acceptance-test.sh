@@ -303,6 +303,11 @@ assert.ok(report.hardwareEvidence.kernelVideoNodeCount >= 1)
 assert.ok(report.hardwareEvidence.kernelSndCaptureNodeCount >= 1)
 assert.ok(report.hardwareEvidence.usbVideoHintCount >= 1)
 assert.ok(report.hardwareEvidence.usbAudioHintCount >= 1)
+assert.ok(report.hardwareEvidence.usbHostVisibleDeviceCount >= 1)
+assert.equal(report.hardwareEvidence.usbLogitechC920Detected, true)
+assert.equal(report.hardwareEvidence.usbVideoDeviceDetected, true)
+assert.equal(report.hardwareEvidence.usbAudioDeviceDetected, true)
+assert.match(report.hardwareEvidence.usbDeviceSummary, /Logitech|C920|Fake UVC/)
 assert.equal(report.hardwareEvidence.nativeCapabilities.usbVideoDeviceCount, 1)
 assert.equal(report.hardwareEvidence.nativeCapabilities.usbAudioInputDeviceCount, 1)
 assert.equal(report.fieldResults.cameraPreview, 'fail')
@@ -315,11 +320,105 @@ assert.equal(card.status, 'usb_seen_camera_hal_missing')
 assert.equal(card.procurement.purchaseChannel, '京东自营')
 assert.equal(card.procurement.expectedArrivalDate, '2026-05-30')
 assert.equal(card.checklist.usbVideoDetected, true)
+assert.equal(card.hardwareEvidence.usbLogitechC920Detected, true)
 assert.match(card.command, /tv-box:c920-arrived/)
 assert.match(cardMarkdown, /只有电视上看到 C920 PRO 真实画面/)
 assert.match(cardMarkdown, /C920_PHYSICAL_STATUS=已插入/)
 assert.match(cardMarkdown, /带独立供电 USB Hub/)
+assert.match(cardMarkdown, /USB Host 清单/)
+assert.match(cardMarkdown, /Fake UVC Camera|Logitech/)
 assert.match(cardHtml, /打印 C920 到货操作卡/)
+NODE
+
+REALTEK_REPORT_DIR="$TMP_ROOT/realtek-card-reports"
+mkdir -p "$REALTEK_REPORT_DIR"
+cat >"$TMP_ROOT/realtek-acceptance.json" <<'JSON'
+{
+  "generatedAtUtc": "2026-05-29T00:00:00.000Z",
+  "boxIp": "192.168.10.122",
+  "physicalStatus": {
+    "status": "inserted",
+    "label": "已插入 C920，按识别结果排障"
+  },
+  "cameraService": {
+    "cameraCount": "0",
+    "normalCameraCount": "0"
+  },
+  "fieldDecision": {
+    "level": "waiting_for_camera_or_usb_not_detected",
+    "title": "未看到 C920 视频设备",
+    "summary": "当前更像是摄像头未接入、线材/供电/Hub 问题，或盒子 USB 层没有识别到视频设备。",
+    "primaryAction": "先确认 C920 已插紧且指示灯/硬件正常；直插不行就改用带独立供电 USB Hub 后重跑。",
+    "checklist": {
+      "usbVideoDetected": false,
+      "camera2Enumerated": false,
+      "previewActivityOpened": true,
+      "realPreviewConfirmed": false,
+      "usbAudioDetected": false,
+      "audioConfirmed": false,
+      "hotplugConfirmed": false
+    }
+  },
+  "hardwareEvidence": {
+    "usbHostVisibleDeviceCount": 1,
+    "usbDeviceSummary": "当前 USB host 只看到 Realtek 802.11ac NIC，未看到 Logitech/C920 或 USB Video Class 设备。",
+    "usbDeviceSummaries": [
+      "Realtek 802.11ac NIC / vendor=3034 product=51232 / Wireless/Bluetooth, Misc/composite, class=224/239"
+    ],
+    "usbLogitechC920Detected": false,
+    "usbVideoDeviceDetected": false,
+    "usbAudioDeviceDetected": false,
+    "usbRealtekOnly": true,
+    "usbVideoHintCount": 0,
+    "usbAudioHintCount": 0,
+    "nativeCapabilities": {
+      "cameraCount": 0,
+      "externalCameraCount": 0,
+      "usbVideoDeviceCount": 0,
+      "audioInputDeviceCount": 2,
+      "usbAudioInputDeviceCount": 0
+    }
+  },
+  "fieldResults": {
+    "cameraPreview": "unknown",
+    "audioInput": "unknown",
+    "usbHotplug": "unknown"
+  },
+  "baselineComparison": {
+    "status": "compared",
+    "summary": "相对基线没有看到新增 USB 视频、Camera2 或 USB 音频变化",
+    "signals": {
+      "usbVideoIncreased": false,
+      "camera2Increased": false,
+      "usbAudioIncreased": false,
+      "audioInputChanged": false
+    }
+  }
+}
+JSON
+
+(
+  cd "$ROOT_DIR"
+  REPORT_DIR="$REALTEK_REPORT_DIR" \
+  TV_BOX_C920_ACCEPTANCE_JSON="$TMP_ROOT/realtek-acceptance.json" \
+  C920_PHYSICAL_STATUS=已插入 \
+  node ./scripts/tv-box-c920-arrival-card.js >/dev/null
+)
+
+node - "$REALTEK_REPORT_DIR" <<'NODE'
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const reportDir = process.argv[2]
+const card = JSON.parse(fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.json'), 'utf8'))
+const cardMarkdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrival-card-latest.md'), 'utf8')
+
+assert.equal(card.title, '已插入 C920，但 USB Host 只看到 Realtek 网卡')
+assert.match(card.summary, /Realtek 802\.11ac NIC/)
+assert.equal(card.hardwareEvidence.usbLogitechC920Detected, false)
+assert.equal(card.hardwareEvidence.usbRealtekOnly, true)
+assert.match(cardMarkdown, /未看到 Logitech\/C920/)
+assert.match(cardMarkdown, /USB Host 清单/)
 NODE
 
 cat >"$TMP_ROOT/c920-procurement.json" <<'JSON'

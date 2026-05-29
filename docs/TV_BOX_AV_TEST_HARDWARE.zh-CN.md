@@ -103,13 +103,13 @@ C920_PHYSICAL_STATUS=purchased_pending_arrival npm run tv-box:c920-arrival-card
 如果已经确认采购来源和预计到货日，也一起写入到货卡，明天接入时继续沿用同一证据链：
 
 ```bash
-C920_PHYSICAL_STATUS=purchased_pending_arrival C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-30 npm run tv-box:c920-arrival-card
+C920_PHYSICAL_STATUS=purchased_pending_arrival C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-31 npm run tv-box:c920-arrival-card
 ```
 
 现场不需要记英文状态，也可以直接用中文：
 
 ```bash
-C920_PHYSICAL_STATUS=已采购待到货 C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-30 npm run tv-box:c920-arrival-card
+C920_PHYSICAL_STATUS=已采购待到货 C920_PURCHASE_CHANNEL="京东自营" C920_EXPECTED_ARRIVAL_DATE=2026-05-31 npm run tv-box:c920-arrival-card
 C920_PHYSICAL_STATUS=已到货未插入 npm run tv-box:c920-arrival-card
 npm run tv-box:c920-arrived
 ```

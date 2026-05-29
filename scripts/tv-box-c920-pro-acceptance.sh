@@ -302,6 +302,180 @@ function unique(items) {
   return [...new Set(items)]
 }
 
+function firstPresent(...values) {
+  return values.map((value) => String(value || '').trim()).find(Boolean) || ''
+}
+
+function ensureUsbDevice(devices, currentRef) {
+  if (!currentRef.current) {
+    currentRef.current = {
+      address: '',
+      vendorId: '',
+      productId: '',
+      deviceClass: null,
+      deviceSubclass: null,
+      manufacturerName: '',
+      productName: '',
+      serialNumber: '',
+      interfaceClasses: [],
+      interfaceNames: []
+    }
+    devices.push(currentRef.current)
+  }
+  return currentRef.current
+}
+
+function parseUsbDeviceInventory(rawText) {
+  const devices = []
+  const currentRef = { current: null }
+  let inInterfaces = false
+
+  for (const line of textLines(rawText)) {
+    let match = line.match(/^name=(\/dev\/bus\/usb\/\S+)/)
+    if (match) {
+      currentRef.current = null
+      const device = ensureUsbDevice(devices, currentRef)
+      device.address = match[1]
+      inInterfaces = false
+      continue
+    }
+
+    match = line.match(/^device_address=(\/dev\/bus\/usb\/\S+)/)
+    if (match) {
+      const device = ensureUsbDevice(devices, currentRef)
+      device.address = device.address || match[1]
+      continue
+    }
+
+    if (/^interfaces=\[/.test(line)) {
+      inInterfaces = true
+      continue
+    }
+
+    match = line.match(/^vendor_id=(\d+)/)
+    if (match) {
+      ensureUsbDevice(devices, currentRef).vendorId = match[1]
+      continue
+    }
+
+    match = line.match(/^product_id=(\d+)/)
+    if (match) {
+      ensureUsbDevice(devices, currentRef).productId = match[1]
+      continue
+    }
+
+    match = line.match(/^manufacturer_name=(.*)/i) || line.match(/^Manufacturer:\s*(.*)/i)
+    if (match) {
+      ensureUsbDevice(devices, currentRef).manufacturerName = firstPresent(match[1])
+      continue
+    }
+
+    match = line.match(/^product_name=(.*)/i) || line.match(/^Product:\s*(.*)/i)
+    if (match) {
+      ensureUsbDevice(devices, currentRef).productName = firstPresent(match[1])
+      continue
+    }
+
+    match = line.match(/^serial_number=(.*)/i)
+    if (match) {
+      ensureUsbDevice(devices, currentRef).serialNumber = firstPresent(match[1])
+      continue
+    }
+
+    match = line.match(/^class=(\d+)/)
+    if (match) {
+      const device = ensureUsbDevice(devices, currentRef)
+      const value = Number(match[1])
+      if (inInterfaces || device.deviceClass !== null) {
+        device.interfaceClasses.push(value)
+      } else {
+        device.deviceClass = value
+      }
+      continue
+    }
+
+    match = line.match(/^subclass=(\d+)/)
+    if (match) {
+      const device = ensureUsbDevice(devices, currentRef)
+      if (!inInterfaces && device.deviceSubclass === null) device.deviceSubclass = Number(match[1])
+      continue
+    }
+
+    match = line.match(/^name=(?!\/dev\/bus\/usb\/)(.*)/)
+    if (match && inInterfaces) {
+      const name = firstPresent(match[1])
+      if (name) ensureUsbDevice(devices, currentRef).interfaceNames.push(name)
+    }
+  }
+
+  return devices
+    .filter((device) => firstPresent(device.address, device.vendorId, device.productId, device.manufacturerName, device.productName, device.serialNumber, device.interfaceNames.join(' ')))
+    .map((device) => ({
+      ...device,
+      interfaceClasses: unique(device.interfaceClasses).sort((a, b) => a - b),
+      interfaceNames: unique(device.interfaceNames)
+    }))
+}
+
+function usbDeviceDisplayName(device) {
+  return firstPresent(
+    [device.manufacturerName, device.productName].filter(Boolean).join(' '),
+    device.productName,
+    device.manufacturerName,
+    device.address,
+    [device.vendorId && `vendor=${device.vendorId}`, device.productId && `product=${device.productId}`].filter(Boolean).join(' ')
+  )
+}
+
+function summarizeUsbDevice(device) {
+  const classes = []
+  const allClasses = [device.deviceClass, ...device.interfaceClasses].filter((value) => Number.isFinite(value))
+  if (allClasses.includes(14)) classes.push('USB Video/UVC')
+  if (allClasses.includes(1)) classes.push('USB Audio')
+  if (allClasses.includes(224)) classes.push('Wireless/Bluetooth')
+  if (allClasses.includes(239)) classes.push('Misc/composite')
+  if (allClasses.length) classes.push(`class=${unique(allClasses).join('/')}`)
+  const ids = [device.vendorId && `vendor=${device.vendorId}`, device.productId && `product=${device.productId}`].filter(Boolean).join(' ')
+  return [usbDeviceDisplayName(device), ids, classes.join(', ')].filter(Boolean).join(' / ')
+}
+
+function buildUsbInventorySummary(devices) {
+  const names = devices.map(usbDeviceDisplayName).filter(Boolean)
+  const text = devices.map((device) => [
+    device.manufacturerName,
+    device.productName,
+    device.vendorId,
+    device.productId,
+    device.interfaceNames.join(' '),
+    device.interfaceClasses.join(' ')
+  ].join(' ')).join('\n')
+  const logitechC920Detected = /logitech|c920|quickcam/i.test(text) || /\b1133\b/.test(text)
+  const usbVideoDeviceDetected = devices.some((device) => device.deviceClass === 14 || device.interfaceClasses.includes(14) || /uvc|webcam|camera|video/i.test([device.productName, ...device.interfaceNames].join(' ')))
+  const usbAudioDeviceDetected = devices.some((device) => device.deviceClass === 1 || device.interfaceClasses.includes(1) || /audio|microphone|mic/i.test([device.productName, ...device.interfaceNames].join(' ')))
+  const realtekDetected = /realtek|802\.11ac|wireless|bluetooth/i.test(text)
+  const realtekOnly = devices.length > 0 && realtekDetected && !logitechC920Detected && !usbVideoDeviceDetected
+
+  let summary = 'USB host 当前未列出外设。'
+  if (logitechC920Detected) {
+    summary = `USB host 已看到 Logitech/C920 线索：${names.join('；') || '已检测到 Logitech/C920'}。`
+  } else if (realtekOnly) {
+    summary = `当前 USB host 只看到 ${names.join('；') || 'Realtek/无线网卡类设备'}，未看到 Logitech/C920 或 USB Video Class 设备。`
+  } else if (devices.length > 0) {
+    summary = `当前 USB host 看到：${names.join('；')}；未看到 Logitech/C920${usbVideoDeviceDetected ? '，但有 USB Video Class 线索' : ' 或 USB Video Class 设备'}。`
+  }
+
+  return {
+    visibleDeviceCount: devices.length,
+    deviceSummaries: devices.map(summarizeUsbDevice),
+    summary,
+    logitechC920Detected,
+    usbVideoDeviceDetected,
+    usbAudioDeviceDetected,
+    realtekDetected,
+    realtekOnly
+  }
+}
+
 function numberFromCapabilities(line, name) {
   const match = String(line || '').match(new RegExp(`${name}=(-?\\d+)`))
   return match ? Number(match[1]) : null
@@ -392,6 +566,7 @@ const summary = readJson(path.join(reportDir, 'tv-box-compatibility-summary-late
 const audit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
 const adbDevicesText = readText('adb-devices.txt')
 const devMediaText = readText('dev-media.txt')
+const usbRawText = readText('usb-raw.txt')
 const usbSnapshotText = readText('usb-snapshot.txt')
 const audioSnapshotText = readText('audio-snapshot.txt')
 const cameraSmokeLogText = readText('camera-smoke.log')
@@ -418,6 +593,8 @@ const usbAudioHints = unique([
 ])
   .filter((line) => !/audio_accessory_connected=false|mSafeUsb|event log|dump time/i.test(line))
   .slice(0, 40)
+const usbDeviceInventory = parseUsbDeviceInventory(usbRawText)
+const usbInventorySummary = buildUsbInventorySummary(usbDeviceInventory)
 const capabilityLine = textLines(cameraSmokeLogText).find((line) => /capabilities cameraCount=/.test(line)) || ''
 const nativeCapabilities = {
   cameraCount: numberFromCapabilities(capabilityLine, 'cameraCount'),
@@ -430,8 +607,8 @@ const nativeCapabilities = {
 const pass = cameraSmokeStatus === '0' && cameraPreviewResult === 'pass'
 const parsedCameraCount = Number(cameraCount)
 const camera2Enumerated = Number.isFinite(parsedCameraCount) && parsedCameraCount > 0
-const usbVideoDetected = usbVideoHints.length > 0 || (nativeCapabilities.usbVideoDeviceCount || 0) > 0
-const usbAudioDetected = usbAudioHints.length > 0 || (nativeCapabilities.usbAudioInputDeviceCount || 0) > 0
+const usbVideoDetected = usbVideoHints.length > 0 || usbInventorySummary.usbVideoDeviceDetected || (nativeCapabilities.usbVideoDeviceCount || 0) > 0
+const usbAudioDetected = usbAudioHints.length > 0 || usbInventorySummary.usbAudioDeviceDetected || (nativeCapabilities.usbAudioInputDeviceCount || 0) > 0
 const previewActivityOpened = cameraSmokeStatus === '0'
 const realPreviewConfirmed = cameraPreviewResult === 'pass'
 const audioConfirmed = audioInputResult === 'pass'
@@ -533,6 +710,15 @@ const report = {
     kernelVideoNodes: videoNodes,
     kernelSndCaptureNodeCount: sndCaptureNodes.length,
     kernelSndCaptureNodes: sndCaptureNodes,
+    usbHostVisibleDeviceCount: usbInventorySummary.visibleDeviceCount,
+    usbDeviceInventory: usbDeviceInventory.slice(0, 12),
+    usbDeviceSummaries: usbInventorySummary.deviceSummaries.slice(0, 12),
+    usbDeviceSummary: usbInventorySummary.summary,
+    usbLogitechC920Detected: usbInventorySummary.logitechC920Detected,
+    usbVideoDeviceDetected: usbInventorySummary.usbVideoDeviceDetected,
+    usbAudioDeviceDetected: usbInventorySummary.usbAudioDeviceDetected,
+    usbRealtekDetected: usbInventorySummary.realtekDetected,
+    usbRealtekOnly: usbInventorySummary.realtekOnly,
     usbVideoHintCount: usbVideoHints.length,
     usbVideoHints: usbVideoHints.slice(0, 40),
     usbAudioHintCount: usbAudioHints.length,
@@ -705,13 +891,19 @@ if (report.baselineComparison.status === 'baseline_missing') {
 if (report.baselineComparison.status === 'compared') {
   nextActions.push(`基线对比：${report.baselineComparison.summary}。`)
 }
+if (physicalStatus === 'inserted' && !usbInventorySummary.logitechC920Detected && usbInventorySummary.visibleDeviceCount > 0) {
+  nextActions.push(usbInventorySummary.summary)
+}
 const noNewHardwareSignal = report.baselineComparison.status === 'compared' &&
   !report.baselineComparison.signals.usbVideoIncreased &&
   !report.baselineComparison.signals.camera2Increased &&
   !report.baselineComparison.signals.usbAudioIncreased &&
   !report.baselineComparison.signals.audioInputChanged
-if (fieldDecision.level === 'waiting_for_camera_or_usb_not_detected' && physicalStatus !== 'inserted' && noNewHardwareSignal) {
-  nextActions.push('如果 C920 还未到货或当前未插入，这是正常到货前基线，不是兼容失败。到货插入后重跑本命令。')
+if (fieldDecision.level === 'waiting_for_camera_or_usb_not_detected' && physicalStatus === 'purchased_pending_arrival') {
+  nextActions.push('C920 PRO 当前按已采购待到货处理；这是到货前基线，不是兼容失败。到货插入后运行 npm run tv-box:c920-arrived。')
+  nextActions.push('明天接入时先直插小米盒子 USB 口；插上后如果 USB 清单仍只看到 Realtek/无线网卡类设备，再按插紧、供电 Hub、电脑复测、C270 备机顺序排障。')
+} else if (fieldDecision.level === 'waiting_for_camera_or_usb_not_detected' && physicalStatus !== 'inserted' && noNewHardwareSignal) {
+  nextActions.push('如果 C920 当前未插入，这是正常未插入基线，不是兼容失败。插入后重跑本命令。')
   nextActions.push('如果现场确认 C920 已经插入，再按插紧、带独立供电 USB Hub、电脑复测、C270 备机顺序排障。')
 } else {
   nextActions.push(fieldDecision.primaryAction)
@@ -753,6 +945,9 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - CameraService cameraCount: \`${cameraCount}\`
 - CameraService normalCameraCount: \`${normalCameraCount}\`
 - ADB 离线/未授权噪声: \`${offlineAdbDevices.length ? offlineAdbDevices.join(', ') : '无'}\`
+- USB host 可见设备数: \`${usbInventorySummary.visibleDeviceCount}\`
+- USB 设备清单: \`${usbInventorySummary.summary}\`
+- USB 是否看到 Logitech/C920: \`${usbInventorySummary.logitechC920Detected ? 'yes' : 'no'}\`
 - Kernel /dev/video* 节点数: \`${videoNodes.length}\`
 - Kernel /dev/snd 采集节点数: \`${sndCaptureNodes.length}\`
 - USB 视频线索数: \`${usbVideoHints.length}\`
@@ -772,6 +967,7 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 
 ## 到货判定卡
 
+- USB host 清单: ${usbInventorySummary.deviceSummaries.length ? usbInventorySummary.deviceSummaries.map((item) => `\`${item}\``).join('；') : '`未列出外设`'}
 - USB 视频设备: \`${usbVideoDetected ? 'seen' : 'not_seen'}\`
 - Camera2 枚举: \`${camera2Enumerated ? 'seen' : 'not_seen'}\`
 - 预览 Activity: \`${previewActivityOpened ? 'opened' : 'not_opened'}\`
@@ -810,6 +1006,7 @@ ${nextActions.map((item) => `- ${item}`).join('\n')}
 - \`${path.relative(reportDir, path.join(runDir, 'adb-devices.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'media-camera.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'dev-media.txt'))}\`
+- \`${path.relative(reportDir, path.join(runDir, 'usb-raw.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'usb-snapshot.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'audio-snapshot.txt'))}\`
 `
