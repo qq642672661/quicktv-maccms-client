@@ -144,13 +144,19 @@ run_capture "Inspect after C920 smoke" "$RUN_DIR/inspect-after.log" \
   env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" npm run -s tv-box:inspect || true
 
 if command -v adb >/dev/null 2>&1 && [[ -n "$DEVICE_SERIAL" ]]; then
+  adb devices -l >"$RUN_DIR/adb-devices.txt" 2>&1 || true
   adb -s "$DEVICE_SERIAL" shell dumpsys media.camera >"$RUN_DIR/media-camera.txt" 2>&1 || true
   adb -s "$DEVICE_SERIAL" shell 'ls -l /dev/video* 2>/dev/null || true; echo; ls -l /dev/snd 2>/dev/null || true' >"$RUN_DIR/dev-media.txt" 2>&1 || true
+  adb -s "$DEVICE_SERIAL" shell dumpsys usb >"$RUN_DIR/usb-raw.txt" 2>&1 || true
   adb -s "$DEVICE_SERIAL" shell "dumpsys usb | grep -Ei 'Device|Class|class|interface|video|camera|uvc|webcam|audio|microphone|host|accessory' | head -160" >"$RUN_DIR/usb-snapshot.txt" 2>&1 || true
+  adb -s "$DEVICE_SERIAL" shell "dumpsys audio | grep -Ei 'input|microphone|mic|usb|device|record|capture|source' | head -180" >"$RUN_DIR/audio-snapshot.txt" 2>&1 || true
 else
+  : >"$RUN_DIR/adb-devices.txt"
   : >"$RUN_DIR/media-camera.txt"
   : >"$RUN_DIR/dev-media.txt"
+  : >"$RUN_DIR/usb-raw.txt"
   : >"$RUN_DIR/usb-snapshot.txt"
+  : >"$RUN_DIR/audio-snapshot.txt"
 fi
 
 camera_count="$(sed -n 's/.*Number of camera devices: *//p' "$RUN_DIR/media-camera.txt" | sed -n '1p' | xargs || true)"
@@ -269,19 +275,89 @@ function readJson(filePath) {
   }
 }
 
+function readText(fileName) {
+  try {
+    return fs.readFileSync(path.join(runDir, fileName), 'utf8')
+  } catch {
+    return ''
+  }
+}
+
+function textLines(text) {
+  return String(text || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
+
+function unique(items) {
+  return [...new Set(items)]
+}
+
+function numberFromCapabilities(line, name) {
+  const match = String(line || '').match(new RegExp(`${name}=(-?\\d+)`))
+  return match ? Number(match[1]) : null
+}
+
 const fieldRecord = readJson(path.join(reportDir, 'tv-box-field-record-latest.json'))
 const summary = readJson(path.join(reportDir, 'tv-box-compatibility-summary-latest.json'))
 const audit = readJson(path.join(reportDir, 'tv-box-completion-audit-latest.json'))
+const adbDevicesText = readText('adb-devices.txt')
+const devMediaText = readText('dev-media.txt')
+const usbSnapshotText = readText('usb-snapshot.txt')
+const audioSnapshotText = readText('audio-snapshot.txt')
+const cameraSmokeLogText = readText('camera-smoke.log')
+const adbDeviceLines = textLines(adbDevicesText).filter((line) => !/^List of devices attached/i.test(line))
+const offlineAdbDevices = adbDeviceLines
+  .filter((line) => /\boffline\b|\bunauthorized\b/i.test(line))
+  .map((line) => line.split(/\s+/)[0])
+const videoNodes = unique(textLines(devMediaText)
+  .filter((line) => /\/dev\/video\d+/.test(line))
+  .map((line) => (line.match(/\/dev\/video\d+/) || [''])[0])
+  .filter(Boolean))
+const sndCaptureNodes = unique(textLines(devMediaText)
+  .filter((line) => /(?:\/dev\/snd\/)?pcmC\d+D\d+c\b/.test(line))
+  .map((line) => {
+    const value = (line.match(/(?:\/dev\/snd\/)?pcmC\d+D\d+c\b/) || [''])[0]
+    return value.startsWith('/dev/snd/') ? value : `/dev/snd/${value}`
+  })
+  .filter(Boolean))
+const usbLines = textLines(usbSnapshotText)
+const usbVideoHints = unique(usbLines.filter((line) => /video|uvc|webcam|camera|\bclass=14\b/i.test(line)))
+const usbAudioHints = unique([
+  ...usbLines.filter((line) => /audio|microphone|\bclass=1\b/i.test(line)),
+  ...textLines(audioSnapshotText).filter((line) => /usb|microphone|mic/i.test(line))
+])
+  .filter((line) => !/audio_accessory_connected=false|mSafeUsb|event log|dump time/i.test(line))
+  .slice(0, 40)
+const capabilityLine = textLines(cameraSmokeLogText).find((line) => /capabilities cameraCount=/.test(line)) || ''
+const nativeCapabilities = {
+  cameraCount: numberFromCapabilities(capabilityLine, 'cameraCount'),
+  externalCameraCount: numberFromCapabilities(capabilityLine, 'externalCameraCount'),
+  usbDeviceCount: numberFromCapabilities(capabilityLine, 'usbDeviceCount'),
+  usbVideoDeviceCount: numberFromCapabilities(capabilityLine, 'usbVideoDeviceCount'),
+  audioInputDeviceCount: numberFromCapabilities(capabilityLine, 'audioInputDeviceCount'),
+  usbAudioInputDeviceCount: numberFromCapabilities(capabilityLine, 'usbAudioInputDeviceCount')
+}
 const pass = cameraSmokeStatus === '0' && cameraPreviewResult === 'pass'
 const nextActions = []
+if (offlineAdbDevices.length > 0) {
+  nextActions.push(`ADB 设备列表还有离线/未授权噪声：${offlineAdbDevices.join(', ')}；现场验收前可执行 adb disconnect <序列号> 清理，避免选错设备。`)
+}
 if (cameraSmokeStatus !== '0') {
   nextActions.push('摄像头冒烟未通过：先确认 C920 PRO 插紧；仍失败时改用带独立供电 USB Hub，重启盒子后重跑本命令。')
 }
 if (cameraCount === '0' || cameraCount === 'unknown' || cameraPreviewResult !== 'pass') {
   nextActions.push('Camera2 预览还未闭环：只有电视上看到 C920 PRO 真实画面后，才能把 FIELD_CAMERA_PREVIEW 记为 pass。')
 }
+if ((usbVideoHints.length > 0 || (nativeCapabilities.usbVideoDeviceCount || 0) > 0) && (cameraCount === '0' || cameraCount === 'unknown')) {
+  nextActions.push('USB 层疑似看到视频设备但 CameraService 仍为 0：优先试带独立供电 USB Hub 和 C270；仍失败再评估盒子 Camera HAL 或用户态 UVC/WebRTC 路线。')
+}
 if (audioInputResult === 'unknown') {
   nextActions.push('C920 PRO 自带麦克风未闭环：需要在摄像头页维护码/录音链路确认音频输入；不稳定时改用独立 USB 会议麦克风。')
+}
+if ((nativeCapabilities.usbAudioInputDeviceCount || 0) > 0 && audioInputResult !== 'pass') {
+  nextActions.push('系统/原生能力疑似看到 USB 音频输入，但业务录音未确认；请用录音或互动课链路确认后再把音频记为 pass。')
 }
 if (usbHotplugResult === 'unknown') {
   nextActions.push('USB 热插拔未闭环：拔插 C920 PRO 后再跑一次验收，确认不会掉线或卡死。')
@@ -302,6 +378,19 @@ const report = {
   cameraService: {
     cameraCount,
     normalCameraCount
+  },
+  hardwareEvidence: {
+    adbOfflineOrUnauthorizedDevices: offlineAdbDevices,
+    kernelVideoNodeCount: videoNodes.length,
+    kernelVideoNodes: videoNodes,
+    kernelSndCaptureNodeCount: sndCaptureNodes.length,
+    kernelSndCaptureNodes: sndCaptureNodes,
+    usbVideoHintCount: usbVideoHints.length,
+    usbVideoHints: usbVideoHints.slice(0, 40),
+    usbAudioHintCount: usbAudioHints.length,
+    usbAudioHints,
+    nativeCapabilities,
+    note: 'Kernel /dev/video* 节点和 USB hints 只说明底层可能有媒体设备；Camera2/CameraService 枚举和电视真实画面才是摄像头业务通过证据。'
   },
   fieldResults: {
     cameraPreview: cameraPreviewResult,
@@ -333,6 +422,12 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - camera smoke exit: \`${cameraSmokeStatus}\`
 - CameraService cameraCount: \`${cameraCount}\`
 - CameraService normalCameraCount: \`${normalCameraCount}\`
+- ADB 离线/未授权噪声: \`${offlineAdbDevices.length ? offlineAdbDevices.join(', ') : '无'}\`
+- Kernel /dev/video* 节点数: \`${videoNodes.length}\`
+- Kernel /dev/snd 采集节点数: \`${sndCaptureNodes.length}\`
+- USB 视频线索数: \`${usbVideoHints.length}\`
+- USB 音频线索数: \`${usbAudioHints.length}\`
+- App 原生能力: \`camera=${nativeCapabilities.cameraCount ?? 'unknown'} external=${nativeCapabilities.externalCameraCount ?? 'unknown'} usbVideo=${nativeCapabilities.usbVideoDeviceCount ?? 'unknown'} audioInput=${nativeCapabilities.audioInputDeviceCount ?? 'unknown'} usbAudio=${nativeCapabilities.usbAudioInputDeviceCount ?? 'unknown'}\`
 - 摄像头真实画面: \`${cameraPreviewResult}\`
 - 音频输入: \`${audioInputResult}\`
 - USB 热插拔: \`${usbHotplugResult}\`
@@ -352,6 +447,11 @@ ${nextActions.map((item) => `- ${item}`).join('\n')}
 - \`reports/tv-box-hardware-profile-latest.md\`
 - \`reports/tv-box-completion-audit-latest.md\`
 - \`reports/tv-box-command-center-latest.md\`
+- \`${path.relative(reportDir, path.join(runDir, 'adb-devices.txt'))}\`
+- \`${path.relative(reportDir, path.join(runDir, 'media-camera.txt'))}\`
+- \`${path.relative(reportDir, path.join(runDir, 'dev-media.txt'))}\`
+- \`${path.relative(reportDir, path.join(runDir, 'usb-snapshot.txt'))}\`
+- \`${path.relative(reportDir, path.join(runDir, 'audio-snapshot.txt'))}\`
 `
 
 fs.writeFileSync(latestMarkdownPath, markdown)

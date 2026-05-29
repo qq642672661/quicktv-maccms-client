@@ -24,6 +24,15 @@ cat >"$FAKE_BIN/adb" <<'SH'
 set -euo pipefail
 
 args="$*"
+if [[ "$args" == "devices -l" ]]; then
+  cat <<'EOF'
+List of devices attached
+192.0.2.10:5555        offline transport_id:1
+192.168.10.122:5555    device product:frozen model:MiTV_AZFP0 device:frozen transport_id:2
+EOF
+  exit 0
+fi
+
 if [[ "$args" == *"dumpsys media.camera"* ]]; then
   cat <<'EOF'
 == Service global info: ==
@@ -40,6 +49,7 @@ crw-rw---- 1 system mediadrm 81, 0 2015-01-01 08:00 /dev/video10
 
 total 0
 crw-rw-rw- 1 system audio 116, 0 2015-01-01 08:00 controlC0
+crw-rw-rw- 1 system audio 116, 24 2015-01-01 08:00 pcmC0D0c
 EOF
   exit 0
 fi
@@ -48,11 +58,28 @@ if [[ "$args" == *"dumpsys usb"* ]]; then
   cat <<'EOF'
   host_manager={
     devices={
+      Product: Fake UVC Camera
+      Manufacturer: Logitech
       class=239
       subclass=2
         interfaces=[
+            class=14
+            subclass=2
+            name=UVC video
+            class=1
+            subclass=2
+            name=USB audio
             class=224
             subclass=1
+EOF
+  exit 0
+fi
+
+if [[ "$args" == *"dumpsys audio"* ]]; then
+  cat <<'EOF'
+  input devices:
+    USB audio input device
+    microphone source available
 EOF
   exit 0
 fi
@@ -118,6 +145,7 @@ case "$args" in
     echo "fake remote smoke"
     ;;
   *"tv-box:camera-smoke"*)
+    echo "I/TvBoxModule: capabilities cameraCount=0 externalCameraCount=0 usbDeviceCount=1 usbVideoDeviceCount=1 audioInputDeviceCount=2 usbAudioInputDeviceCount=1 hasUsbHost=true hasCameraPermission=true hasRecordAudioPermission=true" >&2
     echo "fake camera smoke failure" >&2
     exit 42
     ;;
@@ -215,6 +243,13 @@ const record = readJson('tv-box-field-record-latest.json')
 assert.equal(report.status, 'needs_camera_follow_up')
 assert.equal(report.cameraSmokeExitCode, 42)
 assert.equal(report.cameraService.cameraCount, '0')
+assert.deepEqual(report.hardwareEvidence.adbOfflineOrUnauthorizedDevices, ['192.0.2.10:5555'])
+assert.ok(report.hardwareEvidence.kernelVideoNodeCount >= 1)
+assert.ok(report.hardwareEvidence.kernelSndCaptureNodeCount >= 1)
+assert.ok(report.hardwareEvidence.usbVideoHintCount >= 1)
+assert.ok(report.hardwareEvidence.usbAudioHintCount >= 1)
+assert.equal(report.hardwareEvidence.nativeCapabilities.usbVideoDeviceCount, 1)
+assert.equal(report.hardwareEvidence.nativeCapabilities.usbAudioInputDeviceCount, 1)
 assert.equal(report.fieldResults.cameraPreview, 'fail')
 assert.equal(record.checks.cameraPreview, 'fail')
 assert.equal(record.checks.cameraPermission, 'pass')

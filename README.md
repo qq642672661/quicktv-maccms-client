@@ -155,6 +155,8 @@ Logitech C920 PRO / C920 Pro HD 到货后，优先跑专用接入验收。它会
 BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance
 ```
 
+C920 验收报告还会汇总 ADB 离线/未授权设备、`/dev/video*`、`/dev/snd`、USB 视频/音频线索和 App 原生能力计数；这些是排障证据，不替代 Camera2/CameraService 枚举和电视真实画面确认。
+
 想在一键安装后顺手跑摄像头冒烟，可以打开开关：
 
 ```bash
