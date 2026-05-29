@@ -151,6 +151,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`tv-box-inspection.json\`: 机器可读检查结果。
 - \`handoff-standalone-test.txt\`: 最新交付压缩包解压后的离线完整性自检结果。
 - \`handoff-html-smoke.txt\` / \`tv-box-handoff-html-smoke-latest.md/json\`: START_HERE 和 FIELD_WIZARD_OFFLINE 的离线网页可用性自检结果。
+- \`tv-box-remote-smoke-latest.md/json/png\`: ADB 遥控器冒烟证据，包含 keyevent 序列、当前 Activity/焦点、截图、USB 快照和 logcat 摘要；它不替代真实遥控器手感、C920 真实画面、麦克风和热插拔验收。
 - \`tv-box-command-center-support.md/json\`: 排障包视角交付总控，集中列出应发哪个包、SHA、readiness、未闭环项和下一步。
 - \`tv-box-site-readiness-support.md/json/html\`: 现场开工判定卡，告诉现场先授权、安装、补证据还是工程修复。
 - \`adb-devices.txt\`: ADB 连接状态。
@@ -191,6 +192,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`tv-box-hardware-profile-latest.md/json\`: 硬件兼容性画像，给出盒子、遥控器、USB 摄像头、麦克风的推荐规格、当前风险和现场下一步。
 - \`tv-box-compatibility-summary-latest.md/json\`: 兼容性自动汇总，区分推荐、待修复和待补测组合。
 - \`tv-box-easy-run-latest.md/json\`: 收集排障包时已有的一键安装自动沉淀摘要，保持主交付 latest 语义不被覆盖。
+- \`tv-box-remote-smoke-latest.md/json/png\`: 如果现场已运行 \`BOX_IP=<盒子IP> npm run tv-box:smoke\`，这里会带上最新远程冒烟证据。
 - \`tv-box-completion-audit-latest.md/json\`: 完成度证据审计，集中标记哪些能力已由源码/报告/交付包证明，哪些仍需真实盒子验收。
 - \`tv-box-ux-audit-latest.md/json\`: 长辈/小孩遥控器 UX 独立审计，证明简易首页、帮助、自检、遥控练习、现场验收、摄像头、直播救援和退出确认没有漂移。
 - \`tv-box-easy-run-support.md/json\`: 排障包本次生成的 support 视角摘要，集中列出交付包、readiness 和下一步。
@@ -333,6 +335,9 @@ copy_if_exists "$REPORT_DIR/tv-box-preflight-latest.md" "tv-box-preflight-latest
 copy_if_exists "$REPORT_DIR/tv-box-preflight-latest.json" "tv-box-preflight-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff-html-smoke-latest.md" "tv-box-handoff-html-smoke-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff-html-smoke-latest.json" "tv-box-handoff-html-smoke-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-remote-smoke-latest.md" "tv-box-remote-smoke-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-remote-smoke-latest.json" "tv-box-remote-smoke-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-remote-smoke-latest.png" "tv-box-remote-smoke-latest.png"
 copy_if_exists "$REPORT_DIR/tv-box-ux-audit-latest.md" "tv-box-ux-audit-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-ux-audit-latest.json" "tv-box-ux-audit-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff-latest-path.txt" "handoff-latest-path.txt"
