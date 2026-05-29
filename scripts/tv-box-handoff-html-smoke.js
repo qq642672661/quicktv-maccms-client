@@ -151,6 +151,8 @@ function checkHardwareSelectionCardLinks() {
   assert.match(html, /方向键、OK\/确认、返回键/, 'hardware selection card remote basics are missing')
   assert.match(html, /UVC/, 'hardware selection card UVC camera guidance is missing')
   assert.match(html, /Logitech C920s \/ C920 Pro HD/, 'hardware selection card primary camera model is missing')
+  assert.match(html, /tv-box:c920-acceptance/, 'hardware selection card C920 acceptance command is missing')
+  assert.match(html, /FIELD_CAMERA_PREVIEW/, 'hardware selection card C920 real-preview guard is missing')
   assert.match(html, /Logitech C270/, 'hardware selection card fallback camera model is missing')
   assert.match(html, /Jabra Speak 510 UC/, 'hardware selection card USB audio model is missing')
   assert.match(html, new RegExp('Speak2 40/55'), 'hardware selection card current-generation USB audio alternative is missing')

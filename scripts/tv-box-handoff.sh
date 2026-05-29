@@ -2069,6 +2069,14 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.zh-CN.md" <<'HARDWARECARD'
 - 供电与扩展：带独立供电 USB Hub；摄像头和 USB 麦克风同时插入时优先用 Hub，避免盒子 USB 口供电不足。
 - 接线顺序：先摄像头直插盒子 USB 口，再测试“摄像头 -> 带供电 Hub -> 盒子”，最后测试“摄像头 + USB 麦克风 -> 带供电 Hub -> 盒子”。
 
+## C920 到货后先跑
+
+```bash
+BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance
+```
+
+这条命令会跑遥控器基础冒烟、C920 摄像头冒烟、CameraService/USB/音频线索采集、兼容性记录、硬件画像和完成度审计。只有电视上看到 C920 真实画面，才把 `FIELD_CAMERA_PREVIEW` 记为 `pass`；麦克风和 USB 热插拔未确认时保持 `unknown`，不要关闭。
+
 ## 不建议组合
 
 - 不能开启开发者选项或网络调试的盒子。
@@ -2277,6 +2285,16 @@ cat > "$HANDOFF_DIR/HARDWARE_SELECTION_CARD.html" <<'HARDWAREHTML'
           <li>只写“支持摄像头”但不能确认 UVC / Camera2 兼容的摄像头。</li>
           <li>USB 口供电弱、接摄像头会掉线的盒子。</li>
           <li>需要摄像头/麦克风业务却无法授权 CAMERA 或 RECORD_AUDIO 的系统版本。</li>
+        </ul>
+      </div>
+
+      <div class="panel must">
+        <h2>C920 到货后先跑</h2>
+        <p><code>BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance</code></p>
+        <ul>
+          <li>会自动跑遥控器基础冒烟、C920 摄像头冒烟、CameraService/USB/音频线索采集和兼容性记录。</li>
+          <li>只有电视上看到 C920 真实画面，才把 <code>FIELD_CAMERA_PREVIEW</code> 记为 <code>pass</code>。</li>
+          <li>麦克风和 USB 热插拔未确认时保持 <code>unknown</code>，不要关闭。</li>
         </ul>
       </div>
 
