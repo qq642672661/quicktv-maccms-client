@@ -194,6 +194,8 @@ BOX_IP=<盒子IP> npm run tv-box:inspect
 
 `tv-box:hardware-profile` 会生成 `reports/tv-box-hardware-profile-latest.md/json` 硬件兼容性画像，把当前 ADB/USB/Camera/Audio 证据、现场兼容性记录、推荐盒子/遥控器/USB 摄像头/麦克风规格和“未实机不可关闭”的判定规则放在一页。给采购或现场人员选盒子、摄像头、麦克风前，优先看这份画像和 `docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md`；当前建议用 Logitech C920s/C920 Pro HD 做主摄像头、Logitech C270 做低规格备机、Jabra Speak 510 UC / Speak2 40/55 或同类免驱 USB Audio Class 设备做音频输入、带独立供电 USB Hub 排除盒子供电问题。没有真实盒子时它会保持 `needs_real_box`，不会假装实机遥控器或摄像头已经验收。
 
+`tv-box:phone-camera-contract` 会生成 `reports/tv-box-phone-camera-contract-latest.md/json`，把“手机采集 + 电视端原生 WebRTC 接收”的房间码、信令消息、状态机、媒体档位、隐私边界、降级路线和现场验收证据固化成机器可读合同；交付包会同时带 `TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md`。后续做手机摄像头配对页、Android WebRTC 接收端、手机采集端或小程序入口，都按这份合同验收，不把手机误说成系统 Camera2 摄像头。
+
 体检会检查遥控器导航自测、JDK/Android SDK、最新 APK 包信息、Leanback/摄像头/麦克风声明；连上盒子后还会检查设备型号、Android 版本、电视/摄像头/音频 feature、App 安装、摄像头与录音权限声明、Camera/Record audio appops、当前前台窗口和 resumed Activity。`tv-box:inspect` 会把同类证据写成机器可读 JSON，并额外输出 `readiness` 就绪度结论，说明当前是否可交付、是否还缺真实盒子验收、下一步该做什么，方便远程排障和 CI artifact 留存。
 
 连上真实盒子时，`tv-box:smoke` 会自动按一轮遥控器路径：首页帮助、直播帮助、直播频道列表、全部内容 0/6 键救援、搜索页 0 键救援、继续看页菜单键救援、摄像头页帮助和返回。它仍不能替代人工看画面，但能快速发现二级页面卡死、返回不到首页或按键触发崩溃。

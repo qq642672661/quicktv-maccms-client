@@ -47,6 +47,9 @@ COMPATIBILITY_SUMMARY_MD="$REPORT_DIR/tv-box-compatibility-summary-latest.md"
 HARDWARE_PROFILE_JSON="$REPORT_DIR/tv-box-hardware-profile-latest.json"
 HARDWARE_PROFILE_MD="$REPORT_DIR/tv-box-hardware-profile-latest.md"
 AV_TEST_HARDWARE_PLAN_MD="$ROOT_DIR/docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
+PHONE_CAMERA_CONTRACT_SOURCE_MD="$ROOT_DIR/docs/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
+PHONE_CAMERA_CONTRACT_JSON="$REPORT_DIR/tv-box-phone-camera-contract-latest.json"
+PHONE_CAMERA_CONTRACT_MD="$REPORT_DIR/tv-box-phone-camera-contract-latest.md"
 EASY_SUMMARY_JSON="$REPORT_DIR/tv-box-easy-run-latest.json"
 EASY_SUMMARY_MD="$REPORT_DIR/tv-box-easy-run-latest.md"
 COMPLETION_AUDIT_JSON="$REPORT_DIR/tv-box-completion-audit-latest.json"
@@ -116,6 +119,8 @@ cp "$APK_PATH" "$HANDOFF_DIR/HelloTV-debug.apk"
   TV_BOX_COMPATIBILITY_SUMMARY_JSON="$COMPATIBILITY_SUMMARY_JSON" \
   npm run -s tv-box:hardware-profile >/dev/null)
 
+(cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-contract >/dev/null)
+
 HANDOFF_ARCHIVE_PATH=""
 if command -v zip >/dev/null 2>&1; then
   HANDOFF_ARCHIVE_PATH="$REPORT_DIR/tv-box-handoff-latest.zip"
@@ -173,6 +178,18 @@ fi
 
 if [[ -f "$AV_TEST_HARDWARE_PLAN_MD" ]]; then
   cp "$AV_TEST_HARDWARE_PLAN_MD" "$HANDOFF_DIR/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
+fi
+
+if [[ -f "$PHONE_CAMERA_CONTRACT_SOURCE_MD" ]]; then
+  cp "$PHONE_CAMERA_CONTRACT_SOURCE_MD" "$HANDOFF_DIR/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
+fi
+
+if [[ -f "$PHONE_CAMERA_CONTRACT_JSON" ]]; then
+  cp "$PHONE_CAMERA_CONTRACT_JSON" "$HANDOFF_DIR/tv-box-phone-camera-contract-latest.json"
+fi
+
+if [[ -f "$PHONE_CAMERA_CONTRACT_MD" ]]; then
+  cp "$PHONE_CAMERA_CONTRACT_MD" "$HANDOFF_DIR/tv-box-phone-camera-contract-latest.md"
 fi
 
 if [[ -f "$EASY_SUMMARY_JSON" ]]; then
@@ -285,6 +302,9 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "hardwareSelectionCard": "HARDWARE_SELECTION_CARD.zh-CN.md",
     "hardwareSelectionCardHtml": "HARDWARE_SELECTION_CARD.html",
     "avTestHardwarePlan": "TV_BOX_AV_TEST_HARDWARE.zh-CN.md",
+    "phoneCameraContract": "TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md",
+    "phoneCameraContractMarkdown": "tv-box-phone-camera-contract-latest.md",
+    "phoneCameraContractJson": "tv-box-phone-camera-contract-latest.json",
     "fieldAcceptanceChecklist": "FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md",
     "fieldReturnCard": "FIELD_RETURN_CARD.zh-CN.md",
     "fieldReturnCardHtml": "FIELD_RETURN_CARD.html",
@@ -347,6 +367,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "returnInboxScenariosRegression": "npm run tv-box:return-inbox-scenarios-test",
     "compatibilitySummary": "npm run tv-box:compatibility-summary",
     "hardwareProfile": "npm run tv-box:hardware-profile",
+    "phoneCameraContract": "npm run tv-box:phone-camera-contract",
     "easySummary": "npm run tv-box:easy-summary",
     "completionAudit": "npm run tv-box:completion-audit",
     "handoffHtmlSmoke": "npm run tv-box:handoff-html-smoke",
@@ -367,15 +388,16 @@ HelloTV 电视盒子交付包 - 先看这里
 1. 如果能打开网页文件，先双击 START_HERE.html。
 2. 如果只想教家人怎么用，双击 OPERATION_CARD.html，直接打印或贴在电视旁。
 3. 不知道该买哪种盒子、遥控器、USB 摄像头或麦克风时，双击 HARDWARE_SELECTION_CARD.html 打印选型卡。
-4. 安装前双击 SITE_READINESS_CARD.html，看当前应先发包、授权、安装还是补证据。
-5. 测完真实盒子后，双击 FIELD_RETURN_CARD.html，按卡片把 JSON、照片、日志和排障包发给工程人员。
-6. 回传证据不要散发：把 JSON、维护码照片、INSTALL_LOG.txt 或排障包、异常照片放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command 生成 zip。
-7. 安装前打开 PRE_INSTALL_CHECKLIST.zh-CN.md，确认电脑、电视盒子、IP 和 RSA 授权都准备好。
-8. 工程人员可先执行 BOX_IP=<盒子IP> npm run tv-box:authorize，只看 tv-box-authorization-latest.md 里的下一步，不要反复安装。
-9. Windows 电脑：双击 INSTALL_ON_WINDOWS.bat，按提示输入电视盒子 IP。
-10. macOS 电脑：双击 INSTALL_ON_MAC.command，按提示输入电视盒子 IP。
-11. 电视盒子需要先打开“开发者选项 / 网络调试”，电脑和电视盒子要在同一个网络。
-12. 电视上弹出 RSA 授权时，选择“允许”。
+4. 手机当电视摄像头还在开发/验收时，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md，看 WebRTC 房间码、信令、隐私和现场验收边界。
+5. 安装前双击 SITE_READINESS_CARD.html，看当前应先发包、授权、安装还是补证据。
+6. 测完真实盒子后，双击 FIELD_RETURN_CARD.html，按卡片把 JSON、照片、日志和排障包发给工程人员。
+7. 回传证据不要散发：把 JSON、维护码照片、INSTALL_LOG.txt 或排障包、异常照片放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command 生成 zip。
+8. 安装前打开 PRE_INSTALL_CHECKLIST.zh-CN.md，确认电脑、电视盒子、IP 和 RSA 授权都准备好。
+9. 工程人员可先执行 BOX_IP=<盒子IP> npm run tv-box:authorize，只看 tv-box-authorization-latest.md 里的下一步，不要反复安装。
+10. Windows 电脑：双击 INSTALL_ON_WINDOWS.bat，按提示输入电视盒子 IP。
+11. macOS 电脑：双击 INSTALL_ON_MAC.command，按提示输入电视盒子 IP。
+12. 电视盒子需要先打开“开发者选项 / 网络调试”，电脑和电视盒子要在同一个网络。
+13. 电视上弹出 RSA 授权时，选择“允许”。
 
 装好后只记遥控器：
 - 方向键移动，OK 进入，返回键回上一步；首页再按返回会先问要不要退出。
@@ -389,6 +411,7 @@ HelloTV 电视盒子交付包 - 先看这里
 如果 App 里遇到问题，按 0 或菜单/信息/帮助键打开帮助/自检；首页和摄像头页也可以按 6，把屏幕上的“维护码”读给维护人员。
 安装完成后，打开 FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md，按清单打勾再交付。
 不知道该选哪种盒子、遥控器、USB 摄像头或麦克风时，先打开 HARDWARE_SELECTION_CARD.html 给采购/现场看，再打开 tv-box-hardware-profile-latest.md 查看机器生成的当前风险标记和下一步。
+如果要用手机当电视摄像头，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md；当前默认路线是手机采集 + 局域网 WebSocket 信令 + 电视盒子原生 WebRTC 接收端，不把手机伪装成系统 Camera2 摄像头。
 测过真实盒子后，现场人员可先双击 FIELD_WIZARD_OFFLINE.html 离线填写并下载 JSON/Markdown/env；表单里可先点“只验收看电视通过”“摄像头/麦克风通过”“没有摄像头/麦克风”或“全部通过”模板，再修改少数不符合的项目。单份 JSON 用 tv-box:field-import 导入，多份 JSON 放进 reports/tv-box-field-inbox/ 后用 tv-box:field-inbox 批量导入，把盒子/遥控器/摄像头/麦克风结果沉淀到 FIELD_COMPATIBILITY_MATRIX.zh-CN.md、tv-box-field-matrix.csv 和兼容性自动汇总。
 现场发回资料前，先打开 FIELD_RETURN_CARD.html，对照“必须发回 4 样”和“不要留 unknown”逐项核对。
 如果要一次性发回证据，把所有材料放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command；生成的 HelloTV-field-return-*.zip 直接发给工程人员。
@@ -518,6 +541,7 @@ cat > "$HANDOFF_DIR/START_HERE.html" <<STARTHERE
         <a class="button secondary" href="INSTALL_ON_MAC.command">macOS：双击安装脚本</a>
         <a class="button secondary" href="OPERATION_CARD.html">打印：电视旁操作卡</a>
         <a class="button secondary" href="HARDWARE_SELECTION_CARD.html">打印：硬件选型卡</a>
+        <a class="button secondary" href="TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md">手机摄像头：信令与验收合同</a>
         <a class="button secondary" href="FIELD_RETURN_CARD.html">打印：现场回传卡</a>
         <a class="button secondary" href="FIELD_RETURN/README.zh-CN.txt">现场：回传文件夹说明</a>
         <a class="button secondary" href="PACK_FIELD_RETURN_ON_WINDOWS.bat">Windows：打包回传证据</a>
@@ -553,6 +577,7 @@ cat > "$HANDOFF_DIR/START_HERE.html" <<STARTHERE
         <li>测过真实盒子后：现场人员打开 <a href="FIELD_WIZARD_OFFLINE.html">离线现场验收表</a>，先点一键模板再修正不符合项，填写并下载记录；单份 JSON 用 <code>npm run tv-box:field-import -- &lt;现场下载的JSON&gt;</code> 导入，多份 JSON 放进 <code>reports/tv-box-field-inbox/</code> 后用 <code>npm run tv-box:field-inbox</code> 批量导入；同时可打开 <a href="tv-box-field-inbox-latest.md">现场 JSON 收件箱</a>、<a href="tv-box-field-import-latest.md">离线导入记录</a>、<a href="tv-box-field-wizard-latest.md">现场验收向导记录</a> 和 <a href="FIELD_COMPATIBILITY_MATRIX.zh-CN.md">兼容性矩阵说明</a>。</li>
         <li>发回现场证据前：打开 <a href="FIELD_RETURN_CARD.html">现场回传卡</a>，确认 JSON、维护码照片、安装日志/排障包和异常键值照片都齐了；把这些文件放进 <a href="FIELD_RETURN/README.zh-CN.txt">FIELD_RETURN</a> 后双击打包脚本，工程人员收到 zip 后先跑 <code>npm run tv-box:return-inbox -- &lt;现场回传目录或zip&gt;</code> 质检。</li>
         <li>不知道盒子/遥控器/摄像头/麦克风怎么选：先打开 <a href="HARDWARE_SELECTION_CARD.html">硬件选型卡</a> 给采购/现场看，再打开 <a href="tv-box-hardware-profile-latest.md">硬件兼容性画像</a>，按推荐规格和风险标记处理。</li>
+        <li>要用手机当电视摄像头：先打开 <a href="TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md">手机摄像头信令与验收合同</a>，按 WebRTC 房间码、信令、隐私和现场证据边界开发/验收。</li>
         <li>工程人员看本次自动沉淀：打开 <a href="tv-box-easy-run-latest.md">一键安装自动沉淀摘要</a>，确认交付包、排障包、readiness 和下一步。</li>
         <li>安装失败：把 <code>INSTALL_LOG.txt</code> 发给维护人员，再打开 <a href="INSTALL_SUPPORT.zh-CN.md">INSTALL_SUPPORT.zh-CN.md</a>。</li>
         <li>Windows 安装失败：看窗口里的 <code>E10-E99</code> 错误代码，再打开 <a href="WINDOWS_HELP.zh-CN.md">WINDOWS_HELP.zh-CN.md</a>。</li>
@@ -578,7 +603,7 @@ cat > "$HANDOFF_DIR/QUICK_START.zh-CN.md" <<QUICKSTART
 
 这个目录已经是完整交付包。不要改文件名，按下面做即可。
 
-如果不习惯看 Markdown，直接双击 \`START_HERE.html\`；只想教家人怎么用时双击 \`OPERATION_CARD.html\` 打印；需要采购/复核硬件时双击 \`HARDWARE_SELECTION_CARD.html\` 打印；测完真实盒子准备发回证据时双击 \`FIELD_RETURN_CARD.html\`，再把文件放进 \`FIELD_RETURN\` 文件夹并双击 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\` 或 \`PACK_FIELD_RETURN_ON_MAC.command\` 打包；如果电脑打不开网页文件，就打开 \`README_FIRST.txt\`。
+如果不习惯看 Markdown，直接双击 \`START_HERE.html\`；只想教家人怎么用时双击 \`OPERATION_CARD.html\` 打印；需要采购/复核硬件时双击 \`HARDWARE_SELECTION_CARD.html\` 打印；要做手机当电视摄像头时先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`；测完真实盒子准备发回证据时双击 \`FIELD_RETURN_CARD.html\`，再把文件放进 \`FIELD_RETURN\` 文件夹并双击 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\` 或 \`PACK_FIELD_RETURN_ON_MAC.command\` 打包；如果电脑打不开网页文件，就打开 \`README_FIRST.txt\`。
 
 安装前先打开 \`PRE_INSTALL_CHECKLIST.zh-CN.md\`，按 6 项确认电脑、电视盒子、IP、网络调试、RSA 授权和交付文件都准备好，再双击安装脚本。
 
@@ -615,6 +640,7 @@ cat > "$HANDOFF_DIR/QUICK_START.zh-CN.md" <<QUICKSTART
 - 菜单/信息/帮助键：帮助/自检。
 
 安装完成后打开 \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`，按清单打勾再交付；不知道盒子、遥控器、USB 摄像头或麦克风该怎么选时，先打开 \`HARDWARE_SELECTION_CARD.html\` 给采购/现场看，再打开 \`tv-box-hardware-profile-latest.md\` 看机器生成的风险标记。
+如果现场要试“手机当电视摄像头”，先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`；这条路线按手机采集、局域网 WebSocket 信令、电视盒子原生 WebRTC 接收端验收，不把手机误当系统 Camera2 摄像头。
 测过真实盒子后，现场人员可先打开 \`FIELD_WIZARD_OFFLINE.html\`，不用 npm 也能先套用一键模板、修正不符合项，再下载 JSON/Markdown/env 记录；工程人员单份 JSON 用 \`npm run tv-box:field-import -- <现场下载的JSON>\` 自动导入，多份 JSON 放入 \`reports/tv-box-field-inbox/\` 后用 \`npm run tv-box:field-inbox\` 批量导入，也可拿到 env 后运行 \`BOX_IP=<盒子IP> npm run tv-box:field-record\`，把盒子、遥控器、摄像头和麦克风结果写入 \`tv-box-field-record-latest.md\` 与 \`tv-box-field-matrix.csv\`；再运行或查看自动生成的 \`tv-box-compatibility-summary-latest.md\`，快速区分推荐组合、核心可用组合、待修复组合和待补测组合。多人多盒复测时打开 \`FIELD_COMPATIBILITY_MATRIX.zh-CN.md\` 按模板统一记录。
 发回现场证据前，先打开 \`FIELD_RETURN_CARD.html\`，按“必须发回 4 样”检查 JSON、维护码照片、INSTALL_LOG/support zip 和异常按键照片，避免工程人员拿到不完整证据。工程人员收到整个目录或 zip 后先运行 \`npm run tv-box:return-inbox -- <现场回传目录或zip>\`，确认齐全后再加 \`--append\` 写入兼容性矩阵。
 现场人员不会压缩文件时，把所有证据放进 \`FIELD_RETURN\` 文件夹，Windows 双击 \`PACK_FIELD_RETURN_ON_WINDOWS.bat\`，macOS 双击 \`PACK_FIELD_RETURN_ON_MAC.command\`；生成的 \`HelloTV-field-return-*.zip\` 直接发给工程人员。
@@ -669,6 +695,7 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 - Markdown 操作卡: \`OPERATION_CARD.zh-CN.md\`
 - 硬件选型卡: \`HARDWARE_SELECTION_CARD.html\` / \`HARDWARE_SELECTION_CARD.zh-CN.md\`
 - 音视频测试硬件方案: \`TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`
+- 手机摄像头信令与验收合同: \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`
 - 现场验收清单: \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`
 - 现场回传卡: \`FIELD_RETURN_CARD.html\` / \`FIELD_RETURN_CARD.zh-CN.md\`
 - 现场回传文件夹: \`FIELD_RETURN/README.zh-CN.txt\`
@@ -705,6 +732,8 @@ BOX_IP=<盒子IP> npm run tv-box:easy
 macOS/Windows 双击脚本都会在本目录写入 \`INSTALL_LOG.txt\`。失败时先打开 \`INSTALL_SUPPORT.zh-CN.md\`，把日志、盒子型号、盒子 IP 和电视屏幕照片发给维护人员。Windows 双击脚本还会显示 \`E10-E99\` 错误代码；现场人员不用理解命令行，打开 \`WINDOWS_HELP.zh-CN.md\` 找到同一个代码处理即可。
 
 安装完成后打开 \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`，逐项确认遥控器、直播、帮助/自检、摄像头、麦克风和排障证据；不满足清单时不要标记交付完成。
+
+如果要验证“手机当电视摄像头”，先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`，按合同里的房间码、WebRTC 信令、电视盒子原生接收端、手机权限、隐私停止按钮和现场证据清单推进；这条路线不是系统 Camera2 摄像头，微信小程序 \`live-pusher\` 也必须等主体资质和接口权限通过后再作为入口。
 
 如果要沉淀多款盒子/摄像头/麦克风兼容性，现场人员优先打开 \`FIELD_WIZARD_OFFLINE.html\`，先用一键模板降低填写成本，再修正不符合项并下载记录；工程人员单份 JSON 用 \`npm run tv-box:field-import -- <现场下载的JSON>\` 导入，多份 JSON 放进 \`reports/tv-box-field-inbox/\` 后用 \`npm run tv-box:field-inbox\` 批量导入，也可按 \`FIELD_COMPATIBILITY_MATRIX.zh-CN.md\` 的字段执行 \`BOX_IP=<盒子IP> npm run tv-box:field-record\`。脚本会生成 \`tv-box-field-inbox-latest.md\`、\`tv-box-field-record-latest.md\`、\`tv-box-field-record-latest.json\` 和 \`tv-box-field-matrix.csv\`，再由 \`npm run tv-box:compatibility-summary\` 生成 \`tv-box-compatibility-summary-latest.md/json\`，由 \`npm run tv-box:hardware-profile\` 生成 \`tv-box-hardware-profile-latest.md/json\`，后续复测同一套字段即可横向比较。
 

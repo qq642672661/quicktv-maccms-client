@@ -160,6 +160,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-OPERATION_CARD.html\`: 给家人/长辈/小孩看的可打印大字操作卡。
 - \`handoff-HARDWARE_SELECTION_CARD.html\`: 给采购、现场安装和维护人员看的可打印硬件选型卡。
   - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
+  - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
   - \`handoff-FIELD_WIZARD_OFFLINE.html\`: 不用 npm 的离线现场验收表，可下载 JSON/Markdown/env。
   - \`handoff-FIELD_RETURN_CARD.html\`: 现场发回证据前的核对卡，要求 JSON、维护码照片、日志/排障包和异常照片齐全。
   - \`handoff-FIELD_RETURN-README.zh-CN.txt\`: 现场回传文件夹说明。
@@ -215,6 +216,7 @@ run_and_capture "Field return inbox scenarios regression" "$BUNDLE_DIR/tv-box-re
 run_and_capture "Field acceptance scenarios regression" "$BUNDLE_DIR/tv-box-field-scenarios-test.txt" npm run -s tv-box:field-scenarios-test
 run_and_capture "Compatibility summary" "$BUNDLE_DIR/tv-box-compatibility-summary.txt" env TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" npm run -s tv-box:compatibility-summary
 run_and_capture "Hardware compatibility profile" "$BUNDLE_DIR/tv-box-hardware-profile.txt" env TV_BOX_INSPECTION_JSON="$REPORT_DIR/tv-box-inspection-latest.json" TV_BOX_FIELD_RECORD_JSON="$REPORT_DIR/tv-box-field-record-latest.json" TV_BOX_COMPATIBILITY_SUMMARY_JSON="$REPORT_DIR/tv-box-compatibility-summary-latest.json" npm run -s tv-box:hardware-profile
+run_and_capture "Phone camera contract" "$BUNDLE_DIR/tv-box-phone-camera-contract.txt" npm run -s tv-box:phone-camera-contract
 run_and_capture "Preflight summary" "$BUNDLE_DIR/tv-box-preflight.txt" env BOX_IP="$BOX_IP" DEVICE_SERIAL="$DEVICE_SERIAL" PACKAGE_NAME="$PACKAGE_NAME" "$ROOT_DIR/scripts/tv-box-preflight.sh"
 run_and_capture "Standalone handoff archive self-test" "$BUNDLE_DIR/handoff-standalone-test.txt" env REPORT_DIR="$REPORT_DIR" npm run -s tv-box:handoff-standalone-test
 run_and_capture "Handoff HTML smoke test" "$BUNDLE_DIR/handoff-html-smoke.txt" env REPORT_DIR="$REPORT_DIR" npm run -s tv-box:handoff-html-smoke
@@ -233,6 +235,9 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff/OPERATION_CARD.html" "handoff-OPERATI
 copy_if_exists "$REPORT_DIR/tv-box-handoff/HARDWARE_SELECTION_CARD.html" "handoff-HARDWARE_SELECTION_CARD.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/HARDWARE_SELECTION_CARD.zh-CN.md" "handoff-HARDWARE_SELECTION_CARD.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_AV_TEST_HARDWARE.zh-CN.md" "handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md" "handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.md" "tv-box-phone-camera-contract-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.json" "tv-box-phone-camera-contract-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/FIELD_WIZARD_OFFLINE.html" "handoff-FIELD_WIZARD_OFFLINE.html"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/README_FIRST.txt" "handoff-README_FIRST.txt"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/QUICK_START.zh-CN.md" "handoff-QUICK_START.zh-CN.md"
