@@ -595,6 +595,7 @@ const usbAudioHints = unique([
   .slice(0, 40)
 const usbDeviceInventory = parseUsbDeviceInventory(usbRawText)
 const usbInventorySummary = buildUsbInventorySummary(usbDeviceInventory)
+const remoteSmokeReport = readJson(path.join(reportDir, 'tv-box-remote-smoke-latest.json'))
 const capabilityLine = textLines(cameraSmokeLogText).find((line) => /capabilities cameraCount=/.test(line)) || ''
 const nativeCapabilities = {
   cameraCount: numberFromCapabilities(capabilityLine, 'cameraCount'),
@@ -673,6 +674,56 @@ function buildFieldDecision() {
 
 const fieldDecision = buildFieldDecision()
 
+function fileExistsRelative(filePath) {
+  if (!filePath) return ''
+  return fs.existsSync(filePath) ? path.relative(reportDir, filePath) : ''
+}
+
+function buildRemoteSmokeEvidence(sourceReport, exitCode) {
+  if (!sourceReport) {
+    return {
+      status: exitCode === '99' ? 'skipped' : 'missing',
+      exitCode: Number(exitCode),
+      reportPath: '',
+      markdownPath: '',
+      screenshotPath: '',
+      runDir: '',
+      deviceSerial: '',
+      scenarioCount: 0,
+      keyEventCount: 0,
+      crashDetected: false,
+      replacesRealRemoteAcceptance: false,
+      replacesC920Acceptance: false,
+      boundary: [
+        'ADB remote smoke report was not found; run tv-box:smoke or leave RUN_REMOTE_SMOKE=true in c920-arrived.'
+      ]
+    }
+  }
+
+  const artifacts = sourceReport.artifacts || {}
+  return {
+    status: sourceReport.status || (Number(exitCode) === 0 ? 'pass' : 'unknown'),
+    exitCode: sourceReport.exitCode ?? Number(exitCode),
+    reportPath: fileExistsRelative(artifacts.json?.path || path.join(reportDir, 'tv-box-remote-smoke-latest.json')),
+    markdownPath: fileExistsRelative(artifacts.markdown?.path || path.join(reportDir, 'tv-box-remote-smoke-latest.md')),
+    screenshotPath: fileExistsRelative(artifacts.screenshotLatest?.path || path.join(reportDir, 'tv-box-remote-smoke-latest.png')),
+    runDir: sourceReport.runDir || '',
+    deviceSerial: sourceReport.deviceSerial || '',
+    scenarioCount: Array.isArray(sourceReport.scenarios) ? sourceReport.scenarios.length : 0,
+    keyEventCount: Array.isArray(sourceReport.keyEvents) ? sourceReport.keyEvents.length : 0,
+    crashDetected: sourceReport.crashCheck?.crashDetected === true,
+    replacesRealRemoteAcceptance: sourceReport.boundary?.replacesRealRemoteAcceptance === true,
+    replacesC920Acceptance: sourceReport.boundary?.replacesC920Acceptance === true,
+    boundary: [
+      'Remote smoke proves only the ADB keyevent walk-through, launch/focus evidence, screenshot capture, and filtered crash-log state.',
+      'Remote smoke does not replace physical remote-control hand-feel acceptance.',
+      'Remote smoke does not replace C920 real preview, microphone input, or USB hotplug acceptance.'
+    ]
+  }
+}
+
+const remoteSmokeEvidence = buildRemoteSmokeEvidence(remoteSmokeReport, remoteSmokeStatus)
+
 const report = {
   generatedAtUtc: new Date().toISOString(),
   stamp,
@@ -687,6 +738,7 @@ const report = {
   },
   procurement,
   remoteSmokeExitCode: Number(remoteSmokeStatus),
+  remoteSmokeEvidence,
   cameraSmokeExitCode: Number(cameraSmokeStatus),
   cameraService: {
     cameraCount,
@@ -891,6 +943,9 @@ if (report.baselineComparison.status === 'baseline_missing') {
 if (report.baselineComparison.status === 'compared') {
   nextActions.push(`基线对比：${report.baselineComparison.summary}。`)
 }
+if (remoteSmokeEvidence.status === 'missing' || remoteSmokeEvidence.status === 'fail' || remoteSmokeEvidence.crashDetected) {
+  nextActions.push('ADB 遥控器冒烟证据未通过或缺失：先打开 tv-box-remote-smoke-latest.md/json/png，确认远程按键、当前 Activity、截图和崩溃日志，再继续 C920 实物验收。')
+}
 if (physicalStatus === 'inserted' && !usbInventorySummary.logitechC920Detected && usbInventorySummary.visibleDeviceCount > 0) {
   nextActions.push(usbInventorySummary.summary)
 }
@@ -941,6 +996,9 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - 摄像头: \`${cameraModel}\`
 - 物理状态: \`${report.physicalStatus.label}\`
 - remote smoke exit: \`${remoteSmokeStatus}\`
+- remote smoke status: \`${remoteSmokeEvidence.status}\`
+- remote smoke scenarios/keyevents: \`${remoteSmokeEvidence.scenarioCount}/${remoteSmokeEvidence.keyEventCount}\`
+- remote smoke screenshot: \`${remoteSmokeEvidence.screenshotPath || '未生成'}\`
 - camera smoke exit: \`${cameraSmokeStatus}\`
 - CameraService cameraCount: \`${cameraCount}\`
 - CameraService normalCameraCount: \`${normalCameraCount}\`
@@ -979,6 +1037,18 @@ const markdown = `# Logitech C920 PRO 到货接入验收
 - 结论: ${fieldDecision.summary}
 - 优先动作: ${fieldDecision.primaryAction}
 
+## ADB 遥控器冒烟证据
+
+- 状态: \`${remoteSmokeEvidence.status}\`
+- 退出码: \`${remoteSmokeEvidence.exitCode}\`
+- 设备: \`${remoteSmokeEvidence.deviceSerial || deviceSerial || 'unknown'}\`
+- 场景数 / keyevent 数: \`${remoteSmokeEvidence.scenarioCount} / ${remoteSmokeEvidence.keyEventCount}\`
+- 捕获 fatal/JS 运行时异常: \`${remoteSmokeEvidence.crashDetected ? 'yes' : 'no'}\`
+- JSON 报告: \`${remoteSmokeEvidence.reportPath || '未生成'}\`
+- Markdown 报告: \`${remoteSmokeEvidence.markdownPath || '未生成'}\`
+- 截图: \`${remoteSmokeEvidence.screenshotPath || '未生成'}\`
+- 边界: ADB 冒烟只证明远程 keyevent、启动/焦点、截图和崩溃日志；不能替代真实遥控器手感，也不能替代 C920 真实画面、麦克风和热插拔。
+
 ## 到货前基线对比
 
 - 基线状态: \`${report.baselineComparison.status}\`
@@ -1003,6 +1073,9 @@ ${nextActions.map((item) => `- ${item}`).join('\n')}
 - \`reports/tv-box-command-center-latest.md\`
 - \`reports/tv-box-c920-pro-baseline.md\`
 - \`reports/tv-box-c920-pro-baseline.json\`
+- \`reports/tv-box-remote-smoke-latest.md\`
+- \`reports/tv-box-remote-smoke-latest.json\`
+- \`reports/tv-box-remote-smoke-latest.png\`
 - \`${path.relative(reportDir, path.join(runDir, 'adb-devices.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'media-camera.txt'))}\`
 - \`${path.relative(reportDir, path.join(runDir, 'dev-media.txt'))}\`
