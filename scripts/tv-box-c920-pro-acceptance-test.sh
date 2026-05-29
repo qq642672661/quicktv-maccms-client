@@ -446,6 +446,7 @@ fi
 
 EARLY_REPORT_DIR="$TMP_ROOT/arrived-early-reports"
 mkdir -p "$EARLY_REPORT_DIR"
+FAKE_PREP_READY=$'List of devices attached\n192.0.2.10:5555        offline transport_id:1\n192.168.10.122:5555    device product:frozen model:MiTV_AZFP0 device:frozen transport_id:2\n'
 (
   cd "$ROOT_DIR"
   TV_BOX_TOOL_PATH="$FAKE_BIN" \
@@ -453,6 +454,7 @@ mkdir -p "$EARLY_REPORT_DIR"
   BOX_IP=192.168.10.122 \
   DEVICE_SERIAL=192.168.10.122:5555 \
   TV_BOX_C920_PROCUREMENT_JSON="$TMP_ROOT/c920-procurement.json" \
+  TV_BOX_C920_PREP_FAKE_ADB_DEVICES="$FAKE_PREP_READY" \
   C920_ARRIVED_CURRENT_DATE=2026-05-29 \
   C920_ARRIVED_ALLOW_EARLY=true \
   INTERACTIVE=false \
@@ -470,12 +472,35 @@ const report = JSON.parse(fs.readFileSync(path.join(reportDir, 'tv-box-c920-pro-
 const log = fs.readFileSync(logPath, 'utf8')
 
 assert.match(log, /Current date: 2026-05-29/)
+assert.match(log, /C920 arrival preflight status: ready_to_plug_and_run_with_adb_noise/)
 assert.match(log, /Logitech C920 PRO TV-box acceptance/)
 assert.equal(report.physicalStatus.status, 'inserted')
 assert.equal(report.procurement.purchaseChannel, '京东自营')
 assert.equal(report.procurement.expectedArrivalDate, '2026-05-30')
 assert.equal(report.fieldDecision.level, 'usb_seen_camera_hal_missing')
 NODE
+
+UNREADY_REPORT_DIR="$TMP_ROOT/arrived-unready-reports"
+mkdir -p "$UNREADY_REPORT_DIR"
+FAKE_PREP_NO_TARGET=$'List of devices attached\n192.0.2.10:5555        offline transport_id:1\n'
+(
+  cd "$ROOT_DIR"
+  REPORT_DIR="$UNREADY_REPORT_DIR" \
+  BOX_IP=192.168.10.122 \
+  DEVICE_SERIAL=192.168.10.122:5555 \
+  TV_BOX_C920_PROCUREMENT_JSON="$TMP_ROOT/c920-procurement.json" \
+  TV_BOX_C920_PREP_FAKE_ADB_DEVICES="$FAKE_PREP_NO_TARGET" \
+  C920_ARRIVED_CURRENT_DATE=2026-05-30 \
+  INTERACTIVE=false \
+  ./scripts/tv-box-c920-arrived.sh >"$TMP_ROOT/c920-arrived-unready.log" 2>&1
+)
+
+grep -q "C920 arrival preflight status: needs_box_connection" "$TMP_ROOT/c920-arrived-unready.log"
+grep -q "当前还不适合进入实体 C920 验收" "$TMP_ROOT/c920-arrived-unready.log"
+if grep -q "Logitech C920 PRO TV-box acceptance" "$TMP_ROOT/c920-arrived-unready.log"; then
+  echo "c920-arrived ran acceptance while C920 preflight was not ready" >&2
+  exit 1
+fi
 
 PENDING_REPORT_DIR="$TMP_ROOT/pending-reports"
 mkdir -p "$PENDING_REPORT_DIR"

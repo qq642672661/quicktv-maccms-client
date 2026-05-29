@@ -163,7 +163,7 @@ npm run tv-box:c920-prep
 
 它会输出 `reports/tv-box-c920-onsite-prep-latest.md/json`，不会触发实体摄像头验收；看到 `waiting_for_delivery` 就继续等到货，看到 `ready_to_plug_and_run` 或 `ready_to_plug_and_run_with_adb_noise` 再直插 C920 并运行 `npm run tv-box:c920-arrived`。如果报告提示 `adb disconnect <序列号>`，只是清理离线/未授权噪声，避免现场选错设备。
 
-`tv-box:c920-arrived` 默认使用当前小米盒子 `192.168.10.122`，默认把 C920 标记为已插入，并自动读取 `tv-box-field-state/c920-procurement.json` 里的京东自营和预计到货日。换盒子时才需要加 `BOX_IP=<盒子IP>`；如果预计到货日还没到，它会只提示等待，不会误跑实体摄像头验收，避免把“未到货/未插入”误判为 USB 或 Camera2 故障。确认已经提前到货并插好时，可加 `C920_ARRIVED_ALLOW_EARLY=true` 强制执行。底层仍然调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，所以完整采集和关闭边界不变。
+`tv-box:c920-arrived` 默认使用当前小米盒子 `192.168.10.122`，默认把 C920 标记为已插入，并自动读取 `tv-box-field-state/c920-procurement.json` 里的京东自营和预计到货日。换盒子时才需要加 `BOX_IP=<盒子IP>`；如果预计到货日还没到，它会只提示等待，不会误跑实体摄像头验收，避免把“未到货/未插入”误判为 USB 或 Camera2 故障。到货日或提前到货时，它会先自动跑 `tv-box:c920-prep`，只有目标盒子在线且状态是 `ready_to_plug_and_run` / `ready_to_plug_and_run_with_adb_noise` 才继续进入实体 C920 验收；如果盒子未授权、ADB 找不到目标设备或状态不适合验收，它只输出下一步，不把未准备好误判成摄像头故障。确认已经提前到货并插好时，可加 `C920_ARRIVED_ALLOW_EARLY=true` 强制越过日期保护；确实要跳过前置检查才加 `C920_ARRIVED_SKIP_PREP=true`。底层仍然调用 `tv-box:c920-acceptance`，等价于 `BOX_IP=192.168.10.122 C920_PHYSICAL_STATUS=inserted npm run tv-box:c920-acceptance`，所以完整采集和关闭边界不变。
 
 如果第一次运行后电视已经看到 C920 真实画面、麦克风业务输入和热插拔都确认通过，用确认写入器把人工结果写回兼容性记录，避免非交互自动化把关键项留成 `unknown`：
 
