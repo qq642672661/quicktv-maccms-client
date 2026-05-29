@@ -53,6 +53,8 @@ AV_TEST_HARDWARE_PLAN_MD="$ROOT_DIR/docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 PHONE_CAMERA_CONTRACT_SOURCE_MD="$ROOT_DIR/docs/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 PHONE_CAMERA_CONTRACT_JSON="$REPORT_DIR/tv-box-phone-camera-contract-latest.json"
 PHONE_CAMERA_CONTRACT_MD="$REPORT_DIR/tv-box-phone-camera-contract-latest.md"
+PHONE_CAMERA_SIGNALING_JSON="$REPORT_DIR/tv-box-phone-camera-signaling-test-latest.json"
+PHONE_CAMERA_SIGNALING_MD="$REPORT_DIR/tv-box-phone-camera-signaling-test-latest.md"
 PHONE_CAMERA_SCENARIOS_JSON="$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.json"
 PHONE_CAMERA_SCENARIOS_MD="$REPORT_DIR/tv-box-phone-camera-scenarios-test-latest.md"
 EASY_SUMMARY_JSON="$REPORT_DIR/tv-box-easy-run-latest.json"
@@ -127,6 +129,8 @@ cp "$APK_PATH" "$HANDOFF_DIR/HelloTV-debug.apk"
 (cd "$ROOT_DIR" && npm run -s tv-box:c920-arrival-card >/dev/null)
 
 (cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-contract >/dev/null)
+
+(cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-signaling-test >/dev/null)
 
 (cd "$ROOT_DIR" && npm run -s tv-box:phone-camera-scenarios-test >/dev/null)
 
@@ -211,6 +215,14 @@ fi
 
 if [[ -f "$PHONE_CAMERA_CONTRACT_MD" ]]; then
   cp "$PHONE_CAMERA_CONTRACT_MD" "$HANDOFF_DIR/tv-box-phone-camera-contract-latest.md"
+fi
+
+if [[ -f "$PHONE_CAMERA_SIGNALING_JSON" ]]; then
+  cp "$PHONE_CAMERA_SIGNALING_JSON" "$HANDOFF_DIR/tv-box-phone-camera-signaling-test-latest.json"
+fi
+
+if [[ -f "$PHONE_CAMERA_SIGNALING_MD" ]]; then
+  cp "$PHONE_CAMERA_SIGNALING_MD" "$HANDOFF_DIR/tv-box-phone-camera-signaling-test-latest.md"
 fi
 
 if [[ -f "$PHONE_CAMERA_SCENARIOS_JSON" ]]; then
@@ -337,6 +349,8 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "phoneCameraContract": "TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md",
     "phoneCameraContractMarkdown": "tv-box-phone-camera-contract-latest.md",
     "phoneCameraContractJson": "tv-box-phone-camera-contract-latest.json",
+    "phoneCameraSignalingMarkdown": "tv-box-phone-camera-signaling-test-latest.md",
+    "phoneCameraSignalingJson": "tv-box-phone-camera-signaling-test-latest.json",
     "phoneCameraScenariosMarkdown": "tv-box-phone-camera-scenarios-test-latest.md",
     "phoneCameraScenariosJson": "tv-box-phone-camera-scenarios-test-latest.json",
     "fieldAcceptanceChecklist": "FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md",
@@ -403,6 +417,7 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "hardwareProfile": "npm run tv-box:hardware-profile",
     "c920ArrivalCard": "npm run tv-box:c920-arrival-card",
     "phoneCameraContract": "npm run tv-box:phone-camera-contract",
+    "phoneCameraSignalingRegression": "npm run tv-box:phone-camera-signaling-test",
     "phoneCameraScenariosRegression": "npm run tv-box:phone-camera-scenarios-test",
     "easySummary": "npm run tv-box:easy-summary",
     "completionAudit": "npm run tv-box:completion-audit",
@@ -425,7 +440,7 @@ HelloTV 电视盒子交付包 - 先看这里
 2. 如果只想教家人怎么用，双击 OPERATION_CARD.html，直接打印或贴在电视旁。
 3. 不知道该买哪种盒子、遥控器、USB 摄像头或麦克风时，双击 HARDWARE_SELECTION_CARD.html 打印选型卡。
 4. C920 PRO 到货后，先双击 C920_ARRIVAL_CARD.html 看接线、验收命令、失败分流和不能关闭的边界。
-5. 手机当电视摄像头还在开发/验收时，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md，看 WebRTC 房间码、信令、隐私和现场验收边界。
+5. 手机当电视摄像头还在开发/验收时，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md，看 WebRTC 房间码、信令、隐私和现场验收边界；tv-box-phone-camera-signaling-test-latest.md 只证明局域网信令层，不证明真实首帧。
 6. 安装前双击 SITE_READINESS_CARD.html，看当前应先发包、授权、安装还是补证据。
 7. 测完真实盒子后，双击 FIELD_RETURN_CARD.html，按卡片把 JSON、照片、日志和排障包发给工程人员。
 8. 回传证据不要散发：把 JSON、维护码照片、INSTALL_LOG.txt 或排障包、异常照片放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command 生成 zip。
@@ -448,7 +463,7 @@ HelloTV 电视盒子交付包 - 先看这里
 如果 App 里遇到问题，按 0 或菜单/信息/帮助键打开帮助/自检；首页和摄像头页也可以按 6，把屏幕上的“维护码”读给维护人员。
 安装完成后，打开 FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md，按清单打勾再交付。
 不知道该选哪种盒子、遥控器、USB 摄像头或麦克风时，先打开 HARDWARE_SELECTION_CARD.html 给采购/现场看，再打开 tv-box-hardware-profile-latest.md 查看机器生成的当前风险标记和下一步。
-如果要用手机当电视摄像头，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md；当前默认路线是手机采集 + 局域网 WebSocket 信令 + 电视盒子原生 WebRTC 接收端，不把手机伪装成系统 Camera2 摄像头。
+如果要用手机当电视摄像头，先打开 TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md；当前默认路线是手机采集 + 局域网 WebSocket 信令 + 电视盒子原生 WebRTC 接收端，不把手机伪装成系统 Camera2 摄像头。tv-box-phone-camera-signaling-test-latest.md 证明房间码和 offer/answer/ICE 信令可跑通，电视首帧、音频和停止按钮仍等真实接收端验收。
 测过真实盒子后，现场人员可先双击 FIELD_WIZARD_OFFLINE.html 离线填写并下载 JSON/Markdown/env；表单里可先点“只验收看电视通过”“摄像头/麦克风通过”“没有摄像头/麦克风”或“全部通过”模板，再修改少数不符合的项目。单份 JSON 用 tv-box:field-import 导入，多份 JSON 放进 reports/tv-box-field-inbox/ 后用 tv-box:field-inbox 批量导入，把盒子/遥控器/摄像头/麦克风结果沉淀到 FIELD_COMPATIBILITY_MATRIX.zh-CN.md、tv-box-field-matrix.csv 和兼容性自动汇总。
 现场发回资料前，先打开 FIELD_RETURN_CARD.html，对照“必须发回 4 样”和“不要留 unknown”逐项核对。
 如果要一次性发回证据，把所有材料放进 FIELD_RETURN 文件夹，再双击 PACK_FIELD_RETURN_ON_WINDOWS.bat 或 PACK_FIELD_RETURN_ON_MAC.command；生成的 HelloTV-field-return-*.zip 直接发给工程人员。
@@ -736,6 +751,7 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 - C920 到货接入卡: \`C920_ARRIVAL_CARD.html\` / \`tv-box-c920-arrival-card-latest.md\`
 - 音视频测试硬件方案: \`TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`
 - 手机摄像头信令与验收合同: \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`
+- 手机摄像头局域网信令回归: \`tv-box-phone-camera-signaling-test-latest.md\`
 - 现场验收清单: \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`
 - 现场回传卡: \`FIELD_RETURN_CARD.html\` / \`FIELD_RETURN_CARD.zh-CN.md\`
 - 现场回传文件夹: \`FIELD_RETURN/README.zh-CN.txt\`
@@ -773,7 +789,7 @@ macOS/Windows 双击脚本都会在本目录写入 \`INSTALL_LOG.txt\`。失败�
 
 安装完成后打开 \`FIELD_ACCEPTANCE_CHECKLIST.zh-CN.md\`，逐项确认遥控器、直播、帮助/自检、摄像头、麦克风和排障证据；不满足清单时不要标记交付完成。
 
-如果要验证“手机当电视摄像头”，先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`，按合同里的房间码、WebRTC 信令、电视盒子原生接收端、手机权限、隐私停止按钮和现场证据清单推进；这条路线不是系统 Camera2 摄像头，微信小程序 \`live-pusher\` 也必须等主体资质和接口权限通过后再作为入口。
+如果要验证“手机当电视摄像头”，先打开 \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\` 和 \`tv-box-phone-camera-signaling-test-latest.md\`，按合同里的房间码、WebRTC 信令、电视盒子原生接收端、手机权限、隐私停止按钮和现场证据清单推进；信令回归只证明 M2，真实通过仍必须看电视首帧和音频。这条路线不是系统 Camera2 摄像头，微信小程序 \`live-pusher\` 也必须等主体资质和接口权限通过后再作为入口。
 
 如果要沉淀多款盒子/摄像头/麦克风兼容性，现场人员优先打开 \`FIELD_WIZARD_OFFLINE.html\`，先用一键模板降低填写成本，再修正不符合项并下载记录；工程人员单份 JSON 用 \`npm run tv-box:field-import -- <现场下载的JSON>\` 导入，多份 JSON 放进 \`reports/tv-box-field-inbox/\` 后用 \`npm run tv-box:field-inbox\` 批量导入，也可按 \`FIELD_COMPATIBILITY_MATRIX.zh-CN.md\` 的字段执行 \`BOX_IP=<盒子IP> npm run tv-box:field-record\`。脚本会生成 \`tv-box-field-inbox-latest.md\`、\`tv-box-field-record-latest.md\`、\`tv-box-field-record-latest.json\` 和 \`tv-box-field-matrix.csv\`，再由 \`npm run tv-box:compatibility-summary\` 生成 \`tv-box-compatibility-summary-latest.md/json\`，由 \`npm run tv-box:hardware-profile\` 生成 \`tv-box-hardware-profile-latest.md/json\`，后续复测同一套字段即可横向比较。
 

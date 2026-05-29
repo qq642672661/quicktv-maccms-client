@@ -42,6 +42,9 @@ run_step "C920 acceptance failure self-test syntax" bash -n scripts/tv-box-c920-
 run_step "C920 arrival operation card syntax" node --check scripts/tv-box-c920-arrival-card.js
 run_step "TV-box next-step scenarios regression syntax" bash -n scripts/tv-box-next-scenarios-test.sh
 run_step "TV-box phone camera contract syntax" node --check scripts/tv-box-phone-camera-contract.js
+run_step "TV-box phone camera pairing smoke syntax" bash -n scripts/tv-box-phone-camera-pair-smoke.sh
+run_step "TV-box phone camera signaling server syntax" node --check scripts/tv-box-phone-camera-signaling-server.js
+run_step "TV-box phone camera signaling regression syntax" node --check scripts/tv-box-phone-camera-signaling-test.js
 run_step "TV-box phone camera scenarios regression syntax" node --check scripts/tv-box-phone-camera-scenarios-test.js
 run_step "TV-box release ledger syntax" node --check scripts/tv-box-release-ledger.js
 run_step "TV-box site readiness syntax" node --check scripts/tv-box-site-readiness.js
@@ -68,6 +71,7 @@ run_step "Next-step autopilot scenarios regression" npm run tv-box:next-scenario
 run_step "Compatibility summary" npm run tv-box:compatibility-summary
 run_step "Hardware compatibility profile" npm run tv-box:hardware-profile
 run_step "Phone camera contract" npm run tv-box:phone-camera-contract
+run_step "Phone camera LAN signaling regression" npm run tv-box:phone-camera-signaling-test
 run_step "Phone camera scenarios regression" npm run tv-box:phone-camera-scenarios-test
 run_step "Easy install summary" npm run tv-box:easy-summary
 run_step "Handoff package" npm run tv-box:handoff

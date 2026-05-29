@@ -30,6 +30,8 @@ QuickTVUI 官方仓库目前没有发现手机摄像头直连电视端的 WebRTC
 
 ```bash
 npm run tv-box:phone-camera-contract
+npm run tv-box:phone-camera-signaling
+npm run tv-box:phone-camera-signaling-test
 npm run tv-box:phone-camera-scenarios-test
 ```
 
@@ -37,10 +39,12 @@ npm run tv-box:phone-camera-scenarios-test
 
 - `reports/tv-box-phone-camera-contract-latest.md`
 - `reports/tv-box-phone-camera-contract-latest.json`
+- `reports/tv-box-phone-camera-signaling-test-latest.md`
+- `reports/tv-box-phone-camera-signaling-test-latest.json`
 - `reports/tv-box-phone-camera-scenarios-test-latest.md`
 - `reports/tv-box-phone-camera-scenarios-test-latest.json`
 
-这些报告会被交付包和排障包带走。场景回归会用合成信令验证扫码首帧、房间过期、手机权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁；它不代替真实 WebRTC 首帧，但能防止合同字段、状态机和合规边界漂移。后续开发 Android 原生接收端、手机采集端、信令服务和现场验收矩阵都必须对齐同一份合同。
+这些报告会被交付包和排障包带走。`tv-box:phone-camera-signaling` 是开发/现场可启动的局域网信令服务，默认监听 `0.0.0.0:17891`，提供 `/healthz`、`/phone-camera` 和 `/phone-camera/signaling`；`tv-box:phone-camera-signaling-test` 会启动同一服务，自动验证房间创建、无效房间拒绝、一台电视配一台手机、`offer` / `answer` / `ice-candidate` / `keepalive` 转发、`session.stats` 接收和挂断关闭房间；它证明 M2 信令层可运行，但不代替真实 WebRTC 首帧。场景回归会用合成信令验证扫码首帧、房间过期、手机权限失败、弱网降级、断线重连、隐私停止和微信小程序资质门禁；它也不代替真实 WebRTC 首帧，但能防止合同字段、状态机和合规边界漂移。后续开发 Android 原生接收端、手机采集端和现场验收矩阵都必须对齐同一份合同。
 
 ## 路线边界
 
