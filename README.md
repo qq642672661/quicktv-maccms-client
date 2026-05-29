@@ -149,6 +149,12 @@ BOX_IP=<盒子IP> npm run tv-box:camera-smoke
 
 摄像头冒烟会尝试通过 ADB 授予摄像头和录音权限，点击“测试摄像头”后读取当前前台 Activity，必须看到 `CameraPreviewActivity`，再按返回确认可退出；这比只抓日志更适合判断电视盒子摄像头链路是否真正打开。
 
+Logitech C920 PRO / C920 Pro HD 到货后，优先跑专用接入验收。它会先做遥控器基础冒烟，再跑摄像头冒烟、刷新 `inspect`、写入兼容性矩阵、硬件画像、完成度审计和交付总控；电视上是否看到真实画面、C920 自带麦克风是否可用、拔插后是否稳定，仍会保留人工确认结果，不能用自动 Activity 打开冒充摄像头通过。
+
+```bash
+BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance
+```
+
 想在一键安装后顺手跑摄像头冒烟，可以打开开关：
 
 ```bash

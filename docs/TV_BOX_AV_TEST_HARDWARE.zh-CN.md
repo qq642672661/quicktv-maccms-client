@@ -86,6 +86,12 @@ BOX_IP=192.168.10.122 npm run tv-box:inspect
 BOX_IP=192.168.10.122 npm run tv-box:camera-smoke
 ```
 
+如果买回来的第一台主摄像头是 Logitech C920 PRO / C920 Pro HD，直接跑专用到货验收。它会自动执行遥控器基础冒烟、摄像头冒烟、CameraService/USB/音频线索采集、兼容性记录、硬件画像和完成度审计；电视上看到真实画面、麦克风输入和 USB 热插拔稳定性仍需要现场确认，未确认会保留 `unknown`，不能关闭验收。
+
+```bash
+BOX_IP=192.168.10.122 npm run tv-box:c920-acceptance
+```
+
 如果一键验收：
 
 ```bash
