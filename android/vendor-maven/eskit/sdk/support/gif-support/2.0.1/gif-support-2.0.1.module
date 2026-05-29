@@ -1,0 +1,67 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "gif-support",
+    "version": "2.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "gif-support-2.0.1.aar",
+          "url": "gif-support-2.0.1.aar",
+          "size": 17547,
+          "sha512": "b63e84c83f669f3c3d746c1c67b8f43f220d0a7125ab421d198730887149b8fc92423d29d535b89f3e44c99a73b5edfcd4ec4450e5504defdd7bdf0c7aaa7fee",
+          "sha256": "d4bb58a42af32a583187280c36cb84c752959db8162dd063013d94b6ee6e9f40",
+          "sha1": "47d32ae4436871ccfd60c87ce7db16b1e2ae0c46",
+          "md5": "586cff8fa67c0467b0a819dfce00180a"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "4.9.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gif-support-2.0.1.aar",
+          "url": "gif-support-2.0.1.aar",
+          "size": 17547,
+          "sha512": "b63e84c83f669f3c3d746c1c67b8f43f220d0a7125ab421d198730887149b8fc92423d29d535b89f3e44c99a73b5edfcd4ec4450e5504defdd7bdf0c7aaa7fee",
+          "sha256": "d4bb58a42af32a583187280c36cb84c752959db8162dd063013d94b6ee6e9f40",
+          "sha1": "47d32ae4436871ccfd60c87ce7db16b1e2ae0c46",
+          "md5": "586cff8fa67c0467b0a819dfce00180a"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.extscreen.runtime",
+    "module": "runtime-api",
+    "version": "2.2-beta20",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.support",
+          "module": "support-annotations",
+          "version": {
+            "requires": "28.0.0"
+          }
+        },
+        {
+          "group": "com.extscreen.runtime",
+          "module": "runtime-api-ability",
+          "version": {
+            "requires": "1.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "runtime-api-2.2-beta20.aar",
+          "url": "runtime-api-2.2-beta20.aar",
+          "size": 5857,
+          "sha512": "054ffd04a425628fbada05a80a17cb7788d4d8b9ee4b03cc15cd85c7a4a92d1e2ddb49cdfb232f2b427acd800676bcfb24c76fe11de3d69a4f80bdbecd0a9fa0",
+          "sha256": "ef620bb24999932a2b6b6316cce957a806b085303181cb8a55dc85bf95549e0f",
+          "sha1": "a548f00eca8e5a60d2705f5b395fd88744fc8ee5",
+          "md5": "0fc215fb0b8c71c3155a98b1c0ba67b1"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.support",
+          "module": "support-annotations",
+          "version": {
+            "requires": "28.0.0"
+          }
+        },
+        {
+          "group": "com.extscreen.runtime",
+          "module": "runtime-api-ability",
+          "version": {
+            "requires": "1.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "runtime-api-2.2-beta20.aar",
+          "url": "runtime-api-2.2-beta20.aar",
+          "size": 5857,
+          "sha512": "054ffd04a425628fbada05a80a17cb7788d4d8b9ee4b03cc15cd85c7a4a92d1e2ddb49cdfb232f2b427acd800676bcfb24c76fe11de3d69a4f80bdbecd0a9fa0",
+          "sha256": "ef620bb24999932a2b6b6316cce957a806b085303181cb8a55dc85bf95549e0f",
+          "sha1": "a548f00eca8e5a60d2705f5b395fd88744fc8ee5",
+          "md5": "0fc215fb0b8c71c3155a98b1c0ba67b1"
+        }
+      ]
+    }
+  ]
+}

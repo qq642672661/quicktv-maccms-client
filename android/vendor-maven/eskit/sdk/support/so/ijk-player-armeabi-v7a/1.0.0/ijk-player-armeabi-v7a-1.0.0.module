@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support.so",
+    "module": "ijk-player-armeabi-v7a",
+    "version": "1.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "ijk-player-armeabi-v7a-1.0.0.aar",
+          "url": "ijk-player-armeabi-v7a-1.0.0.aar",
+          "size": 2404801,
+          "sha512": "ca935a9fbf6dad0070074918b8c77a36ed7e22129d060ad750f217b7a71a12a75d895ae65eee46cc80eaac811bd3557558b2d56bcb18e61f038a4e0ffce69e9d",
+          "sha256": "22d7fc795c23f54873e299ba4196bfab448855464a82bbc67245b8012f644b5c",
+          "sha1": "65d7abe4526bc631470366e462627c11a874feff",
+          "md5": "9d8ded5a8845def3c789f739b98f45bb"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "ijk-player-armeabi-v7a-1.0.0.aar",
+          "url": "ijk-player-armeabi-v7a-1.0.0.aar",
+          "size": 2404801,
+          "sha512": "ca935a9fbf6dad0070074918b8c77a36ed7e22129d060ad750f217b7a71a12a75d895ae65eee46cc80eaac811bd3557558b2d56bcb18e61f038a4e0ffce69e9d",
+          "sha256": "22d7fc795c23f54873e299ba4196bfab448855464a82bbc67245b8012f644b5c",
+          "sha1": "65d7abe4526bc631470366e462627c11a874feff",
+          "md5": "9d8ded5a8845def3c789f739b98f45bb"
+        }
+      ]
+    }
+  ]
+}

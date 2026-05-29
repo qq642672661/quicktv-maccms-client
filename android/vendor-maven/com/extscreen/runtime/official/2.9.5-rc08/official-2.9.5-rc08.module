@@ -1,0 +1,510 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.extscreen.runtime",
+    "module": "official",
+    "version": "2.9.5-rc08",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.extscreen",
+          "module": "hippy4tv-support",
+          "version": {
+            "requires": "1.9.124"
+          }
+        },
+        {
+          "group": "com.extscreen.sdk",
+          "module": "eskit-official",
+          "version": {
+            "requires": "2.9.5-rc08"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "image-loader-support",
+          "version": {
+            "requires": "2.1.9"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-ad-huan",
+          "version": {
+            "requires": "1.1.8-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "runtime",
+          "version": {
+            "requires": "2.1.3-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-manager",
+          "version": {
+            "requires": "3.1.4-beta5"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-ijk-support",
+          "version": {
+            "requires": "3.1.14.26"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-audio-ijk-support",
+          "version": {
+            "requires": "3.1.5.12-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-audio-android",
+          "version": {
+            "requires": "2.0.4-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "audio-record",
+          "version": {
+            "requires": "2.2.1-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "video-cache-support",
+          "version": {
+            "requires": "1.0.4-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "download",
+          "version": {
+            "requires": "2.2.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "upload",
+          "version": {
+            "requires": "2.2.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "ui-support",
+          "version": {
+            "requires": "2.1.74"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "chart",
+          "version": {
+            "requires": "2.1.8-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "voice-wave",
+          "version": {
+            "requires": "2.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "swiper",
+          "version": {
+            "requires": "2.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "rippleview",
+          "version": {
+            "requires": "2.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "webview",
+          "version": {
+            "requires": "2.1.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "x5webview",
+          "version": {
+            "requires": "2.1.0.6-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "canvas",
+          "version": {
+            "requires": "1.0.7.7-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "small-player-support",
+          "version": {
+            "requires": "1.1.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "log",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "shared-data",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "group-data",
+          "version": {
+            "requires": "1.0.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "border-drawable",
+          "version": {
+            "requires": "1.0.2.14-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "card",
+          "version": {
+            "requires": "1.0.0.22-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "lottie-view-support",
+          "version": {
+            "requires": "1.0.0.5"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "network-speed",
+          "version": {
+            "requires": "1.0.0.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "gif-support",
+          "version": {
+            "requires": "2.0.1"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "brightness",
+          "version": {
+            "requires": "1.0.1"
+          }
+        },
+        {
+          "group": "com.extscreen.runtime",
+          "module": "runtime-api",
+          "version": {
+            "requires": "2.2-beta20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "official-2.9.5-rc08.aar",
+          "url": "official-2.9.5-rc08.aar",
+          "size": 6573,
+          "sha512": "b8dfed751abc74ea79ab5bffc8d7041513b8c6f38e804ec5fb5196fbbb5a62459de64ba7f9743c57eedb4e41afc08d9de65f0a05716e53628964dfe723d291dc",
+          "sha256": "c96a3e22f32fc7cdef3a00e2f482795baafeca143848f3cec034b4042bd14314",
+          "sha1": "ee9ac97270188b932d19fc4dbf62409d897a399c",
+          "md5": "34ce9a84a074362c6f4b284b75c9fc55"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.extscreen",
+          "module": "hippy4tv-support",
+          "version": {
+            "requires": "1.9.124"
+          }
+        },
+        {
+          "group": "com.extscreen.sdk",
+          "module": "eskit-official",
+          "version": {
+            "requires": "2.9.5-rc08"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "image-loader-support",
+          "version": {
+            "requires": "2.1.9"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-ad-huan",
+          "version": {
+            "requires": "1.1.8-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "runtime",
+          "version": {
+            "requires": "2.1.3-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-manager",
+          "version": {
+            "requires": "3.1.4-beta5"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-ijk-support",
+          "version": {
+            "requires": "3.1.14.26"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-audio-ijk-support",
+          "version": {
+            "requires": "3.1.5.12-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "player-audio-android",
+          "version": {
+            "requires": "2.0.4-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "audio-record",
+          "version": {
+            "requires": "2.2.1-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "video-cache-support",
+          "version": {
+            "requires": "1.0.4-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "download",
+          "version": {
+            "requires": "2.2.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "upload",
+          "version": {
+            "requires": "2.2.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "ui-support",
+          "version": {
+            "requires": "2.1.74"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "chart",
+          "version": {
+            "requires": "2.1.8-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "voice-wave",
+          "version": {
+            "requires": "2.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "swiper",
+          "version": {
+            "requires": "2.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "rippleview",
+          "version": {
+            "requires": "2.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "webview",
+          "version": {
+            "requires": "2.1.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "x5webview",
+          "version": {
+            "requires": "2.1.0.6-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "canvas",
+          "version": {
+            "requires": "1.0.7.7-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "small-player-support",
+          "version": {
+            "requires": "1.1.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "log",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "shared-data",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "group-data",
+          "version": {
+            "requires": "1.0.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "border-drawable",
+          "version": {
+            "requires": "1.0.2.14-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "card",
+          "version": {
+            "requires": "1.0.0.22-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "lottie-view-support",
+          "version": {
+            "requires": "1.0.0.5"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "network-speed",
+          "version": {
+            "requires": "1.0.0.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "gif-support",
+          "version": {
+            "requires": "2.0.1"
+          }
+        },
+        {
+          "group": "eskit.sdk.support",
+          "module": "brightness",
+          "version": {
+            "requires": "1.0.1"
+          }
+        },
+        {
+          "group": "com.extscreen.runtime",
+          "module": "runtime-api",
+          "version": {
+            "requires": "2.2-beta20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "official-2.9.5-rc08.aar",
+          "url": "official-2.9.5-rc08.aar",
+          "size": 6573,
+          "sha512": "b8dfed751abc74ea79ab5bffc8d7041513b8c6f38e804ec5fb5196fbbb5a62459de64ba7f9743c57eedb4e41afc08d9de65f0a05716e53628964dfe723d291dc",
+          "sha256": "c96a3e22f32fc7cdef3a00e2f482795baafeca143848f3cec034b4042bd14314",
+          "sha1": "ee9ac97270188b932d19fc4dbf62409d897a399c",
+          "md5": "34ce9a84a074362c6f4b284b75c9fc55"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support.so",
+    "module": "hp-v1-armeabi-v7a",
+    "version": "1.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "hp-v1-armeabi-v7a-1.0.1.aar",
+          "url": "hp-v1-armeabi-v7a-1.0.1.aar",
+          "size": 2893586,
+          "sha512": "16bf48c4e1724c581b2e43d7227207546e7f0c275cea699198e5e227aca142c63a766f65c696159e06966db344c7b54d719ff822fe4540412a2b0cc744c58514",
+          "sha256": "a0c43ad0d122859996c3e899f3f8efddbb85d09a29a897fe03edfff5053919cb",
+          "sha1": "147e6e5f88f3a54fa09cf599ffe8933b20349e1b",
+          "md5": "70fc48fa9fa9620a27ce9ed2623538e7"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "hp-v1-armeabi-v7a-1.0.1.aar",
+          "url": "hp-v1-armeabi-v7a-1.0.1.aar",
+          "size": 2893586,
+          "sha512": "16bf48c4e1724c581b2e43d7227207546e7f0c275cea699198e5e227aca142c63a766f65c696159e06966db344c7b54d719ff822fe4540412a2b0cc744c58514",
+          "sha256": "a0c43ad0d122859996c3e899f3f8efddbb85d09a29a897fe03edfff5053919cb",
+          "sha1": "147e6e5f88f3a54fa09cf599ffe8933b20349e1b",
+          "md5": "70fc48fa9fa9620a27ce9ed2623538e7"
+        }
+      ]
+    }
+  ]
+}

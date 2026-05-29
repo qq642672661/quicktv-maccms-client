@@ -1,0 +1,74 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "video-cache-support",
+    "version": "0.0.3-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "video-cache-support-0.0.3-SNAPSHOT.aar",
+          "url": "video-cache-support-0.0.3-SNAPSHOT.aar",
+          "size": 174601,
+          "sha512": "f6c08811ed6b5f0c035dbea0909cfbd638f837a35739c5d576b43ccebe9f8980723b5775e7a3ef76efec356ea0b788c8700643540405b44f670be3ccc56b9a1b",
+          "sha256": "94d96d7094483aa26fd9f40c281be08c63526c5f9db88afdc1018cadac10f4a6",
+          "sha1": "493c5e5ef780ee8016d455745f4b3fb19a1236d8",
+          "md5": "8d4061a8ff46fff9ca347b3fce2a24f7"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "3.12.0"
+          }
+        },
+        {
+          "group": "org.jetbrains",
+          "module": "annotations",
+          "version": {
+            "requires": "13.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "video-cache-support-0.0.3-SNAPSHOT.aar",
+          "url": "video-cache-support-0.0.3-SNAPSHOT.aar",
+          "size": 174601,
+          "sha512": "f6c08811ed6b5f0c035dbea0909cfbd638f837a35739c5d576b43ccebe9f8980723b5775e7a3ef76efec356ea0b788c8700643540405b44f670be3ccc56b9a1b",
+          "sha256": "94d96d7094483aa26fd9f40c281be08c63526c5f9db88afdc1018cadac10f4a6",
+          "sha1": "493c5e5ef780ee8016d455745f4b3fb19a1236d8",
+          "md5": "8d4061a8ff46fff9ca347b3fce2a24f7"
+        }
+      ]
+    }
+  ]
+}

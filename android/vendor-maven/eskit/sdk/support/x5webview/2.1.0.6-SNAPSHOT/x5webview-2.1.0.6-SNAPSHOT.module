@@ -1,0 +1,76 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "x5webview",
+    "version": "2.1.0.6-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.tencent.tbs",
+          "module": "tbssdk",
+          "version": {
+            "requires": "44181"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "x5webview-2.1.0.6-SNAPSHOT.aar",
+          "url": "x5webview-2.1.0.6-SNAPSHOT.aar",
+          "size": 25475,
+          "sha512": "d9e1564309a753cf038d5d3f24f5316d3f02b892e9a2aefa617e03b3a9de9f58e0e6bae6a5e8c19a6cb89187ddcd9393980688ff87f1556f2fc535ec927ddbf4",
+          "sha256": "d32eb53dffcd8846cd19a7be846cff67e316aaed72526120cdb7b0e70c47fe62",
+          "sha1": "136211ac16f224a691a5b185ce2c8c4356e6eb11",
+          "md5": "1cbd9a5497c8c12f4a5e23a437674bc8"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.tencent.tbs",
+          "module": "tbssdk",
+          "version": {
+            "requires": "44181"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "x5webview-2.1.0.6-SNAPSHOT.aar",
+          "url": "x5webview-2.1.0.6-SNAPSHOT.aar",
+          "size": 25475,
+          "sha512": "d9e1564309a753cf038d5d3f24f5316d3f02b892e9a2aefa617e03b3a9de9f58e0e6bae6a5e8c19a6cb89187ddcd9393980688ff87f1556f2fc535ec927ddbf4",
+          "sha256": "d32eb53dffcd8846cd19a7be846cff67e316aaed72526120cdb7b0e70c47fe62",
+          "sha1": "136211ac16f224a691a5b185ce2c8c4356e6eb11",
+          "md5": "1cbd9a5497c8c12f4a5e23a437674bc8"
+        }
+      ]
+    }
+  ]
+}

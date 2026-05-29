@@ -1,0 +1,90 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "upload",
+    "version": "2.2.2-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "3.12.0"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "logging-interceptor",
+          "version": {
+            "requires": "3.12.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "upload-2.2.2-SNAPSHOT.aar",
+          "url": "upload-2.2.2-SNAPSHOT.aar",
+          "size": 9801,
+          "sha512": "9e224f2168fc43a7140b832660677c533f1d0a621b213ff3c388ae1ad6f7e564e0b4dc6f2297dc7740bf0e894671aa988badd3991eb933d224c7d0995f33b2b0",
+          "sha256": "d3f9c9a7ceb76f48b47c36fbdef38ea65144ad1e61ef604c34fdf2a7e6a32f67",
+          "sha1": "3609acf2e00607f5237939fec1d1e9d4ce66f83f",
+          "md5": "d542d28a7433e79ff0ec95fec3c27e8b"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "3.12.0"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "logging-interceptor",
+          "version": {
+            "requires": "3.12.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "upload-2.2.2-SNAPSHOT.aar",
+          "url": "upload-2.2.2-SNAPSHOT.aar",
+          "size": 9801,
+          "sha512": "9e224f2168fc43a7140b832660677c533f1d0a621b213ff3c388ae1ad6f7e564e0b4dc6f2297dc7740bf0e894671aa988badd3991eb933d224c7d0995f33b2b0",
+          "sha256": "d3f9c9a7ceb76f48b47c36fbdef38ea65144ad1e61ef604c34fdf2a7e6a32f67",
+          "sha1": "3609acf2e00607f5237939fec1d1e9d4ce66f83f",
+          "md5": "d542d28a7433e79ff0ec95fec3c27e8b"
+        }
+      ]
+    }
+  ]
+}

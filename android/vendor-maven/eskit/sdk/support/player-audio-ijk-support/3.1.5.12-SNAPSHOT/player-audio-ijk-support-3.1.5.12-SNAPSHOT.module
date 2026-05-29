@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "player-audio-ijk-support",
+    "version": "3.1.5.12-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "player-audio-ijk-support-3.1.5.12-SNAPSHOT.aar",
+          "url": "player-audio-ijk-support-3.1.5.12-SNAPSHOT.aar",
+          "size": 66519,
+          "sha512": "96075a2fbddcd5afe991fdb7830927a419b8240f5b1311a55f8f2266dd5e70afa7b3a60669ad5cdaebad747e93cde0df78a33f2702a53252c8bed1b98ab4be8c",
+          "sha256": "5187ab0128089aa8e201a30b4208e5f36e3ac026741e16e996ccc2e9a6d180af",
+          "sha1": "69f4fa349ff628bdf72d42444e383694e5199024",
+          "md5": "f31e4829047a3e483d4e994f77d27399"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "player-audio-ijk-support-3.1.5.12-SNAPSHOT.aar",
+          "url": "player-audio-ijk-support-3.1.5.12-SNAPSHOT.aar",
+          "size": 66519,
+          "sha512": "96075a2fbddcd5afe991fdb7830927a419b8240f5b1311a55f8f2266dd5e70afa7b3a60669ad5cdaebad747e93cde0df78a33f2702a53252c8bed1b98ab4be8c",
+          "sha256": "5187ab0128089aa8e201a30b4208e5f36e3ac026741e16e996ccc2e9a6d180af",
+          "sha1": "69f4fa349ff628bdf72d42444e383694e5199024",
+          "md5": "f31e4829047a3e483d4e994f77d27399"
+        }
+      ]
+    }
+  ]
+}

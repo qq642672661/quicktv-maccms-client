@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "audio-record",
+    "version": "2.2.1-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "audio-record-2.2.1-SNAPSHOT.aar",
+          "url": "audio-record-2.2.1-SNAPSHOT.aar",
+          "size": 285968,
+          "sha512": "5e9a4b9440319b293871fa3af0640a8b50ecb4e1520469889f42833c3536de1701070f1a5394b7175e1732de3f79943f761c07521216fbcbd9c410884874d922",
+          "sha256": "30c436e2e4a563aa35dde7d5f6ef135d7e04c1e0b0528154cf1b05ac440569a1",
+          "sha1": "0b7a96f87dee2cb2c9cf3d2118b8c774b8698ea5",
+          "md5": "ed47d1bb40d464f061aef8a24489f1c5"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "audio-record-2.2.1-SNAPSHOT.aar",
+          "url": "audio-record-2.2.1-SNAPSHOT.aar",
+          "size": 285968,
+          "sha512": "5e9a4b9440319b293871fa3af0640a8b50ecb4e1520469889f42833c3536de1701070f1a5394b7175e1732de3f79943f761c07521216fbcbd9c410884874d922",
+          "sha256": "30c436e2e4a563aa35dde7d5f6ef135d7e04c1e0b0528154cf1b05ac440569a1",
+          "sha1": "0b7a96f87dee2cb2c9cf3d2118b8c774b8698ea5",
+          "md5": "ed47d1bb40d464f061aef8a24489f1c5"
+        }
+      ]
+    }
+  ]
+}

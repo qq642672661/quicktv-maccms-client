@@ -1,0 +1,58 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "eskit.sdk.support",
+    "module": "ijk-base",
+    "version": "1.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "ijk-base-1.0.5.aar",
+          "url": "ijk-base-1.0.5.aar",
+          "size": 71110,
+          "sha512": "4864fd98c0a27868657ca8905726524beb3f70775499a20bee2f178a564fe4cb50f54a2bbd2e48f5da1c2367461411e625eebb5de80d3fe7aeb5ac7f982914e2",
+          "sha256": "8e1f6ce99f5d5499fc63826c8f61732ef2439b370267488790e86e1d7945b736",
+          "sha1": "22fde18e1a25b48c8e16a1bde92b3af301240e57",
+          "md5": "5924b0bbfe2287257c156c0848d581f5"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "ijk-base-1.0.5.aar",
+          "url": "ijk-base-1.0.5.aar",
+          "size": 71110,
+          "sha512": "4864fd98c0a27868657ca8905726524beb3f70775499a20bee2f178a564fe4cb50f54a2bbd2e48f5da1c2367461411e625eebb5de80d3fe7aeb5ac7f982914e2",
+          "sha256": "8e1f6ce99f5d5499fc63826c8f61732ef2439b370267488790e86e1d7945b736",
+          "sha1": "22fde18e1a25b48c8e16a1bde92b3af301240e57",
+          "md5": "5924b0bbfe2287257c156c0848d581f5"
+        }
+      ]
+    }
+  ]
+}
