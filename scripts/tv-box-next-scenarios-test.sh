@@ -183,11 +183,45 @@ write_c920_arrival_card() {
   "procurement": {
     "purchaseChannel": "京东自营",
     "expectedArrivalDate": "2026-05-30"
+  },
+  "remoteSmokeEvidence": {
+    "status": "pass",
+    "scenarioCount": 4,
+    "keyEventCount": 36,
+    "screenshotPath": "tv-box-remote-smoke-latest.png",
+    "replacesRealRemoteAcceptance": false,
+    "replacesC920Acceptance": false
   }
 }
 JSON
   cat > "$REPORT_DIR/tv-box-c920-arrival-card-latest.md" <<MD
 # Fake C920 arrival card
+
+- status: \`$status\`
+MD
+}
+
+write_c920_prep() {
+  local status="${TV_BOX_FAKE_C920_PREP_STATUS:-waiting_for_delivery}"
+  cat > "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" <<JSON
+{
+  "generatedAtUtc": "2026-01-01T00:00:00Z",
+  "inputs": {
+    "currentDate": "2026-05-29",
+    "deviceSerial": "${DEVICE_SERIAL:-192.0.2.10:5555}"
+  },
+  "adb": {
+    "targetStatus": "${TV_BOX_FAKE_C920_PREP_TARGET_STATUS:-device}"
+  },
+  "result": {
+    "status": "$status",
+    "reason": "预计 2026-05-30 到货，当前是 2026-05-29；先只做准备，不运行实体摄像头验收。",
+    "readyToRunAcceptance": false
+  }
+}
+JSON
+  cat > "$REPORT_DIR/tv-box-c920-onsite-prep-latest.md" <<MD
+# Fake C920 onsite prep
 
 - status: \`$status\`
 MD
@@ -205,6 +239,9 @@ case "$script_name" in
     ;;
   tv-box:site-readiness)
     write_site_readiness
+    ;;
+  tv-box:c920-prep)
+    write_c920_prep
     ;;
   tv-box:c920-arrival-card)
     write_c920_arrival_card
@@ -342,6 +379,12 @@ run_scenario() {
   local actual_status
   actual_status="$(json_value "$result_json" "result.status")"
   [[ "$actual_status" == "$expected_status" ]] || fail "$scenario_id expected result.status=$expected_status, got $actual_status"
+
+  if [[ "$expected_status" == "c920_purchased_pending_arrival" ]]; then
+    [[ "$(json_value "$result_json" "observed.c920Prep.status")" == "waiting_for_delivery" ]] || fail "$scenario_id missing C920 prep status"
+    [[ "$(json_value "$result_json" "observed.c920RemoteSmoke.status")" == "pass" ]] || fail "$scenario_id missing remote smoke status"
+    grep -q "ADB 遥控器冒烟" "$scenario_report_dir/tv-box-next-latest.md" || fail "$scenario_id markdown missing remote smoke summary"
+  fi
 
   local called_easy="false"
   local called_check="false"
