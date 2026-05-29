@@ -799,6 +799,7 @@ require_text "scripts/tv-box-c920-arrival-card.js" "TV_BOX_C920_PROCUREMENT_JSON
 require_text "scripts/tv-box-c920-arrived.sh" 'BOX_IP="${BOX_IP:-192.168.10.122}"' "C920 arrived wrapper defaults to current Xiaomi box IP"
 require_text "scripts/tv-box-c920-arrived.sh" 'C920_PHYSICAL_STATUS="${C920_PHYSICAL_STATUS:-inserted}"' "C920 arrived wrapper defaults to inserted status"
 require_text "scripts/tv-box-c920-arrived.sh" "C920_ARRIVED_DRY_RUN" "C920 arrived wrapper supports dry-run verification"
+require_text "scripts/tv-box-c920-arrived.sh" "date and C920 preflight passed" "C920 arrived dry-run exercises date and preflight guards"
 require_text "scripts/tv-box-c920-arrived.sh" "C920_ARRIVED_ALLOW_EARLY" "C920 arrived wrapper requires an explicit override before expected arrival"
 require_text "scripts/tv-box-c920-arrived.sh" "C920_ARRIVED_CURRENT_DATE" "C920 arrived wrapper can test the arrival-date guard deterministically"
 require_text "scripts/tv-box-c920-arrived.sh" "tv-box-c920-pro-acceptance.sh" "C920 arrived wrapper delegates to acceptance script"
