@@ -555,6 +555,7 @@ mkdir -p "$DRY_RUN_REPORT_DIR"
 
 grep -q "C920 arrival preflight status: ready_to_plug_and_run_with_adb_noise" "$TMP_ROOT/c920-arrived-dry-run.log"
 grep -q "Dry run only; date and C920 preflight passed" "$TMP_ROOT/c920-arrived-dry-run.log"
+grep -q "Dry-run report:" "$TMP_ROOT/c920-arrived-dry-run.log"
 if grep -q "Logitech C920 PRO TV-box acceptance" "$TMP_ROOT/c920-arrived-dry-run.log"; then
   echo "c920-arrived dry run executed acceptance" >&2
   exit 1
@@ -563,6 +564,23 @@ if [[ -f "$DRY_RUN_REPORT_DIR/tv-box-c920-pro-acceptance-latest.json" ]]; then
   echo "c920-arrived dry run wrote acceptance report" >&2
   exit 1
 fi
+node - "$DRY_RUN_REPORT_DIR" <<'NODE'
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const reportDir = process.argv[2]
+const report = JSON.parse(fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrived-dry-run-latest.json'), 'utf8'))
+const markdown = fs.readFileSync(path.join(reportDir, 'tv-box-c920-arrived-dry-run-latest.md'), 'utf8')
+
+assert.equal(report.status, 'preflight_passed_acceptance_skipped')
+assert.equal(report.dryRun, true)
+assert.equal(report.acceptanceExecuted, false)
+assert.equal(report.prep.status, 'ready_to_plug_and_run_with_adb_noise')
+assert.equal(report.prep.targetStatus, 'device')
+assert.match(report.commands.realRun, /tv-box:c920-arrived/)
+assert.match(markdown, /C920 到货一键验收 dry-run 报告/)
+assert.match(markdown, /实体 C920 验收已执行: `no`/)
+NODE
 
 UNREADY_REPORT_DIR="$TMP_ROOT/arrived-unready-reports"
 mkdir -p "$UNREADY_REPORT_DIR"
