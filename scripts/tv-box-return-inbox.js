@@ -377,6 +377,7 @@ C920 PRO 到货接入回传时，除上面 4 样通用证据外，还应按到�
 - C920_MIC_BUSINESS_INPUT.mp4/txt
 - C920_HOTPLUG_RETEST.jpg/txt
 - SUPPORT_CODE_C920.jpg
+- tv-box-c920-pro-acceptance-latest.md/json
 `
   fs.writeFileSync(readmePath, readme)
 }
@@ -425,6 +426,7 @@ function classifyFiles(files, skipped) {
     c920MicrophoneEvidence: [],
     c920HotplugEvidence: [],
     c920SupportCodePhotos: [],
+    c920AcceptanceReports: [],
     issueEvidence: [],
     genericImages: [],
     otherLogs: [],
@@ -435,6 +437,11 @@ function classifyFiles(files, skipped) {
     const info = fileInfo(filePath)
     const lower = info.name.toLowerCase()
     const fullLower = filePath.toLowerCase()
+
+    if (/^tv-box-c920-pro-acceptance-latest\.(md|json)$/i.test(info.name) || /tv-box-c920-pro-acceptance/i.test(fullLower)) {
+      evidence.c920AcceptanceReports.push(info)
+      continue
+    }
 
     if (lower.endsWith('.json')) {
       const record = readJson(filePath)
@@ -529,6 +536,9 @@ function buildEvidenceChecks(evidence) {
     || evidence.c920MicrophoneEvidence.length > 0
     || evidence.c920HotplugEvidence.length > 0
     || evidence.c920SupportCodePhotos.length > 0
+    || evidence.c920AcceptanceReports.length > 0
+  const c920AcceptanceReportExts = new Set(evidence.c920AcceptanceReports.map((item) => path.extname(item.name).toLowerCase()))
+  const hasC920AcceptanceReportPair = c920AcceptanceReportExts.has('.md') && c920AcceptanceReportExts.has('.json')
 
   const checks = [
     {
@@ -608,6 +618,14 @@ function buildEvidenceChecks(evidence) {
           : evidence.supportCodePhotos.length > 0
             ? '已有维护码照片，但文件名不是 SUPPORT_CODE_C920.jpg；需要人工确认它属于本次 C920 到货验收'
             : '未找到 SUPPORT_CODE_C920.jpg'
+      },
+      {
+        id: 'c920_acceptance_report',
+        title: 'C920 验收报告',
+        status: hasC920AcceptanceReportPair ? 'pass' : 'missing',
+        evidence: hasC920AcceptanceReportPair
+          ? '已找到 tv-box-c920-pro-acceptance-latest.md 和 tv-box-c920-pro-acceptance-latest.json'
+          : '未同时找到 tv-box-c920-pro-acceptance-latest.md/json；需要保留 USB、Camera2、音频、基线对比和日志目录证据'
       }
     )
   }
@@ -828,6 +846,9 @@ function buildNextActions(report) {
   if (byId.c920_support_code_photo?.status === 'needs_manual_review') {
     actions.push('已有维护码照片但未按 SUPPORT_CODE_C920.jpg 命名；人工确认属于本次 C920 后再关闭或重命名归档。')
   }
+  if (byId.c920_acceptance_report?.status === 'missing') {
+    actions.push('C920 到货验收缺少验收报告；让现场补发 tv-box-c920-pro-acceptance-latest.md/json。')
+  }
   if (report.fieldInboxRun.exitCode && report.fieldInboxRun.exitCode !== 0) {
     actions.push('现场 JSON 通过回传扫描但导入 dry-run 失败；打开 tv-box-return-inbox-latest.md 查看 stdout/stderr。')
   }
@@ -957,6 +978,12 @@ ${listRows(report.evidence.installLogs)}
 | 文件 | 字节 |
 | --- | ---: |
 ${listRows(report.evidence.supportBundles)}
+
+### C920 验收报告
+
+| 文件 | 字节 |
+| --- | ---: |
+${listRows(report.evidence.c920AcceptanceReports)}
 
 ### 异常证据
 

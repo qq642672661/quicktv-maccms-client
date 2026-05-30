@@ -106,6 +106,10 @@ function writeC920Evidence(folder, scenario) {
   if (evidence.supportCode !== false) {
     writeEvidenceFile(path.join(folder, 'SUPPORT_CODE_C920.jpg'), `synthetic C920 support-code photo for ${scenario.id}\n`)
   }
+  if (evidence.acceptanceReport !== false) {
+    writeEvidenceFile(path.join(folder, 'tv-box-c920-pro-acceptance-latest.md'), `# Synthetic C920 acceptance report for ${scenario.id}\n`)
+    writeEvidenceFile(path.join(folder, 'tv-box-c920-pro-acceptance-latest.json'), `${JSON.stringify({ scenarioId: scenario.id, c920Acceptance: true }, null, 2)}\n`)
+  }
 }
 
 function createReturnFolder(baseDir, scenario) {
@@ -279,7 +283,8 @@ const scenarios = [
       c920_preview_tv_screen: 'pass',
       c920_mic_business_input: 'pass',
       c920_hotplug_retest: 'pass',
-      c920_support_code_photo: 'pass'
+      c920_support_code_photo: 'pass',
+      c920_acceptance_report: 'pass'
     }
   },
   {
@@ -303,7 +308,8 @@ const scenarios = [
       c920_preview_tv_screen: 'missing',
       c920_mic_business_input: 'pass',
       c920_hotplug_retest: 'pass',
-      c920_support_code_photo: 'pass'
+      c920_support_code_photo: 'pass',
+      c920_acceptance_report: 'pass'
     }
   },
   {
@@ -327,7 +333,8 @@ const scenarios = [
       c920_preview_tv_screen: 'pass',
       c920_mic_business_input: 'missing',
       c920_hotplug_retest: 'pass',
-      c920_support_code_photo: 'pass'
+      c920_support_code_photo: 'pass',
+      c920_acceptance_report: 'pass'
     }
   },
   {
@@ -351,7 +358,8 @@ const scenarios = [
       c920_preview_tv_screen: 'pass',
       c920_mic_business_input: 'pass',
       c920_hotplug_retest: 'missing',
-      c920_support_code_photo: 'pass'
+      c920_support_code_photo: 'pass',
+      c920_acceptance_report: 'pass'
     }
   },
   {
@@ -375,7 +383,33 @@ const scenarios = [
       c920_preview_tv_screen: 'pass',
       c920_mic_business_input: 'pass',
       c920_hotplug_retest: 'pass',
-      c920_support_code_photo: 'missing'
+      c920_support_code_photo: 'missing',
+      c920_acceptance_report: 'pass'
+    }
+  },
+  {
+    id: 'c920_missing_acceptance_report',
+    title: 'C920 缺验收报告：不能关闭',
+    expectedReadiness: 'needs_site_follow_up',
+    expectedClosureStatus: 'needs_site_follow_up',
+    expectedStrictExitCode: 1,
+    c920Evidence: { acceptanceReport: false },
+    env: buildEnv(
+      c920TextDefaults({ FIELD_BOX_MODEL: 'Scenario C920 Missing Acceptance Report' }),
+      {},
+      'Synthetic C920 return missing tv-box-c920-pro-acceptance latest reports.'
+    ),
+    expectedChecks: {
+      field_json: 'pass',
+      support_code_photo: 'pass',
+      install_log_or_support_bundle: 'pass',
+      issue_evidence: 'not_required',
+      unknown_closure: 'pass',
+      c920_preview_tv_screen: 'pass',
+      c920_mic_business_input: 'pass',
+      c920_hotplug_retest: 'pass',
+      c920_support_code_photo: 'pass',
+      c920_acceptance_report: 'missing'
     }
   }
 ]
@@ -469,6 +503,7 @@ ${rows}
 - JSON 里仍有 \`unknown\` 且没有异常证据时，不能关闭真实盒子验收。
 - 失败项如果带了 keyCode/异常照片/日志，应给出 \`needs_fix\`，允许工程导入为待修复组合，而不是丢失现场证据或误关闭。
 - C920 到货接入必须额外补齐 \`C920_PREVIEW_TV_SCREEN\`、\`C920_MIC_BUSINESS_INPUT\`、\`C920_HOTPLUG_RETEST\` 和 \`SUPPORT_CODE_C920\`；缺任一项都不能关闭。
+- C920 到货接入还必须回传 \`tv-box-c920-pro-acceptance-latest.md/json\`，保留 USB、Camera2、音频、基线对比和日志目录证据。
 `
 }
 

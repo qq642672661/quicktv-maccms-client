@@ -164,6 +164,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`tv-box-c920-confirm-latest.md/json\`: C920 人工确认写入卡，现场看见真实画面、确认麦克风和热插拔后，用一条命令把 pass/fail 写回验收链路。
 - \`tv-box-c920-onsite-prep-latest.md/json\`: C920 到货前/现场预备卡，说明今天是否该跑、盒子 ADB 是否在线、是否有离线设备噪声。
 - \`tv-box-c920-arrived-dry-run-latest.md/json\`: C920 到货日 dry-run 演练证据；它只证明日期和 ADB 前置检查，不替代真实画面、麦克风和热插拔验收。
+- \`tv-box-c920-pro-acceptance-latest.md/json\`: C920 实体验收报告，保留 USB、Camera2、音频、基线对比和日志目录证据。
 - \`handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`: 音视频测试硬件采购、接线、验收和故障分流方案。
 - \`handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`: 手机当电视摄像头的 WebRTC 信令、状态机、隐私和验收合同。
 - \`tv-box-phone-camera-capture-test-latest.md/json\`: 手机采集端页面回归，证明房间码、getUserMedia、RTCPeerConnection、停止按钮和 HTTPS/WSS 安全边界已固化。
@@ -264,6 +265,8 @@ copy_if_exists "$REPORT_DIR/tv-box-c920-onsite-prep-latest.md" "tv-box-c920-onsi
 copy_if_exists "$REPORT_DIR/tv-box-c920-onsite-prep-latest.json" "tv-box-c920-onsite-prep-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-c920-arrived-dry-run-latest.md" "tv-box-c920-arrived-dry-run-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-c920-arrived-dry-run-latest.json" "tv-box-c920-arrived-dry-run-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-c920-pro-acceptance-latest.md" "tv-box-c920-pro-acceptance-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-c920-pro-acceptance-latest.json" "tv-box-c920-pro-acceptance-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_AV_TEST_HARDWARE.zh-CN.md" "handoff-TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md" "handoff-TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-phone-camera-contract-latest.md" "tv-box-phone-camera-contract-latest.md"
