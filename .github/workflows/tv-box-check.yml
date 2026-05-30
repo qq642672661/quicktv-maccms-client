@@ -96,6 +96,7 @@ jobs:
             reports/tv-box-c920-arrival-card.html
             reports/tv-box-c920-confirm-latest.*
             reports/tv-box-c920-onsite-prep-latest.*
+            reports/tv-box-c920-arrived-dry-run-latest.*
             reports/tv-box-phone-camera-contract-latest.*
             reports/tv-box-phone-camera-capture-test-latest.*
             reports/tv-box-phone-camera-readiness-latest.*
