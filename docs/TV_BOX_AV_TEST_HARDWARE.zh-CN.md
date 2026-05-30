@@ -144,7 +144,7 @@ npm run tv-box:c920-arrival-card
 
 它会生成 `reports/tv-box-c920-arrival-card-latest.md/json` 和 `reports/tv-box-c920-arrival-card.html`，把最新验收结果转换成直插、带独立供电 USB Hub、Camera2/USB 分流、C920 自带麦克风或独立 USB 麦克风、USB 热插拔和回传证据步骤。交付包里也会带 `C920_ARRIVAL_CARD.html`，现场人员可以直接双击打印。
 
-到货卡会把 C920 专用证据文件名写清楚，现场按名字放进 `FIELD_RETURN/` 再打包回传：`C920_PREVIEW_TV_SCREEN.jpg/mp4` 证明电视真实预览，`C920_MIC_BUSINESS_INPUT.mp4/txt` 证明麦克风进入业务链路，`C920_HOTPLUG_RETEST.jpg/txt` 证明 USB 热插拔复测，`SUPPORT_CODE_C920.jpg` 证明维护码可读；工程侧收到后先跑 `npm run tv-box:return-inbox -- <现场回传目录或zip>`，证据不齐或仍有 unknown 时不关闭。
+到货卡会把 C920 专用证据文件名写清楚，现场按名字放进 `FIELD_RETURN/` 再打包回传：`C920_PREVIEW_TV_SCREEN.jpg/mp4` 证明电视真实预览，`C920_MIC_BUSINESS_INPUT.mp4/txt` 证明麦克风进入业务链路，`C920_HOTPLUG_RETEST.jpg/txt` 证明 USB 热插拔复测，`SUPPORT_CODE_C920.jpg` 证明维护码可读，`tv-box-c920-pro-acceptance-latest.md/json` 保留本次 USB、Camera2、音频、基线对比和日志目录证据；工程侧收到后先跑 `npm run tv-box:return-inbox -- <现场回传目录或zip>`，证据不齐或仍有 unknown 时不关闭。
 
 如果一键验收：
 
