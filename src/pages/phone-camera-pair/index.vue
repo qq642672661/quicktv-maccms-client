@@ -105,7 +105,7 @@ const defaultProfileId = import.meta.env.VITE_PHONE_CAMERA_PROFILE_ID || 'defaul
 const pairBaseUrl = normalizePhoneCameraBaseUrl(import.meta.env.VITE_PHONE_CAMERA_PAIR_BASE_URL || 'https://quicktv.local/phone-camera')
 
 const pairUrl = computed(() => `${pairBaseUrl}?room=${roomCode.value}&role=phone`)
-const signalingUrl = computed(() => buildSignalingUrl(pairBaseUrl))
+const signalingUrl = computed(() => buildSignalingUrl(pairBaseUrl, roomCode.value, 'tv'))
 const roomHintText = computed(() => `一次性房间码，约 ${ttlMinutes} 分钟内有效`)
 const actionHandlers = [openReceiver, regenerateRoom, launch.launchCameraSetup.bind(launch), launch.launchTvBoxHelp.bind(launch)]
 
@@ -119,14 +119,14 @@ function normalizePhoneCameraBaseUrl(value: string): string {
   return String(value || '').replace(/\/$/, '') || 'https://quicktv.local/phone-camera'
 }
 
-function buildSignalingUrl(phoneCameraUrl: string): string {
+function buildSignalingUrl(phoneCameraUrl: string, room: string, role: 'tv' | 'phone'): string {
   const normalized = normalizePhoneCameraBaseUrl(phoneCameraUrl)
   const match = normalized.match(/^(https?):\/\/([^/]+)(?:\/.*)?$/i)
   if (!match) {
-    return 'wss://quicktv.local/phone-camera/signaling'
+    return `wss://quicktv.local/phone-camera/signaling?room=${encodeURIComponent(room)}&role=${role}`
   }
   const signalingProtocol = match[1].toLowerCase() === 'https' ? 'wss' : 'ws'
-  return `${signalingProtocol}://${match[2]}/phone-camera/signaling`
+  return `${signalingProtocol}://${match[2]}/phone-camera/signaling?room=${encodeURIComponent(room)}&role=${role}`
 }
 
 function regenerateRoom() {
