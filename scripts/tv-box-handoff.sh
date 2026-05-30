@@ -53,6 +53,8 @@ C920_CONFIRM_JSON="$REPORT_DIR/tv-box-c920-confirm-latest.json"
 C920_CONFIRM_MD="$REPORT_DIR/tv-box-c920-confirm-latest.md"
 C920_ONSITE_PREP_JSON="$REPORT_DIR/tv-box-c920-onsite-prep-latest.json"
 C920_ONSITE_PREP_MD="$REPORT_DIR/tv-box-c920-onsite-prep-latest.md"
+C920_ARRIVED_DRY_RUN_JSON="$REPORT_DIR/tv-box-c920-arrived-dry-run-latest.json"
+C920_ARRIVED_DRY_RUN_MD="$REPORT_DIR/tv-box-c920-arrived-dry-run-latest.md"
 AV_TEST_HARDWARE_PLAN_MD="$ROOT_DIR/docs/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 PHONE_CAMERA_CONTRACT_SOURCE_MD="$ROOT_DIR/docs/TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md"
 PHONE_CAMERA_CONTRACT_JSON="$REPORT_DIR/tv-box-phone-camera-contract-latest.json"
@@ -235,6 +237,14 @@ if [[ -f "$C920_ONSITE_PREP_MD" ]]; then
   cp "$C920_ONSITE_PREP_MD" "$HANDOFF_DIR/tv-box-c920-onsite-prep-latest.md"
 fi
 
+if [[ -f "$C920_ARRIVED_DRY_RUN_JSON" ]]; then
+  cp "$C920_ARRIVED_DRY_RUN_JSON" "$HANDOFF_DIR/tv-box-c920-arrived-dry-run-latest.json"
+fi
+
+if [[ -f "$C920_ARRIVED_DRY_RUN_MD" ]]; then
+  cp "$C920_ARRIVED_DRY_RUN_MD" "$HANDOFF_DIR/tv-box-c920-arrived-dry-run-latest.md"
+fi
+
 if [[ -f "$AV_TEST_HARDWARE_PLAN_MD" ]]; then
   cp "$AV_TEST_HARDWARE_PLAN_MD" "$HANDOFF_DIR/TV_BOX_AV_TEST_HARDWARE.zh-CN.md"
 fi
@@ -403,6 +413,8 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "c920ConfirmJson": "tv-box-c920-confirm-latest.json",
     "c920OnsitePrepMarkdown": "tv-box-c920-onsite-prep-latest.md",
     "c920OnsitePrepJson": "tv-box-c920-onsite-prep-latest.json",
+    "c920ArrivedDryRunMarkdown": "tv-box-c920-arrived-dry-run-latest.md",
+    "c920ArrivedDryRunJson": "tv-box-c920-arrived-dry-run-latest.json",
     "avTestHardwarePlan": "TV_BOX_AV_TEST_HARDWARE.zh-CN.md",
     "phoneCameraContract": "TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md",
     "phoneCameraContractMarkdown": "tv-box-phone-camera-contract-latest.md",
@@ -823,6 +835,7 @@ cat > "$HANDOFF_DIR/INSTALL.zh-CN.md" <<HANDOFF
 - C920 到货接入卡: \`C920_ARRIVAL_CARD.html\` / \`tv-box-c920-arrival-card-latest.md\`
 - C920 人工确认写入卡: \`tv-box-c920-confirm-latest.md\` / \`tv-box-c920-confirm-latest.json\`
 - C920 现场预备卡: \`tv-box-c920-onsite-prep-latest.md\` / \`tv-box-c920-onsite-prep-latest.json\`
+- C920 到货日 dry-run 演练: \`tv-box-c920-arrived-dry-run-latest.md\` / \`tv-box-c920-arrived-dry-run-latest.json\`（如果已运行）
 - 音视频测试硬件方案: \`TV_BOX_AV_TEST_HARDWARE.zh-CN.md\`
 - 手机摄像头信令与验收合同: \`TV_BOX_PHONE_CAMERA_CONTRACT.zh-CN.md\`
 - 手机摄像头现场操作卡: \`PHONE_CAMERA_ONSITE_CARD.html\`

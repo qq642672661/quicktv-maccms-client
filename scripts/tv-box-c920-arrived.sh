@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROCUREMENT_JSON="${TV_BOX_C920_PROCUREMENT_JSON:-$ROOT_DIR/tv-box-field-state/c920-procurement.json}"
 REPORT_DIR="${REPORT_DIR:-$ROOT_DIR/reports}"
 PREP_JSON="${TV_BOX_C920_PREP_JSON:-$REPORT_DIR/tv-box-c920-onsite-prep-latest.json}"
+DRY_RUN_JSON="${TV_BOX_C920_ARRIVED_DRY_RUN_JSON:-$REPORT_DIR/tv-box-c920-arrived-dry-run-latest.json}"
+DRY_RUN_MD="${TV_BOX_C920_ARRIVED_DRY_RUN_MD:-$REPORT_DIR/tv-box-c920-arrived-dry-run-latest.md}"
 
 json_value_or_empty() {
   local file_path="$1"
@@ -44,6 +46,104 @@ is_iso_date() {
   [[ "${1:-}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
 }
 
+write_dry_run_report() {
+  local status="$1"
+  local reason="$2"
+  C920_DRY_RUN_STATUS="$status" \
+  C920_DRY_RUN_REASON="$reason" \
+  C920_DRY_RUN_JSON="$DRY_RUN_JSON" \
+  C920_DRY_RUN_MD="$DRY_RUN_MD" \
+  PREP_JSON="$PREP_JSON" \
+  node <<'NODE'
+const fs = require('fs')
+
+function readJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+function fileExists(filePath) {
+  try {
+    const stat = fs.statSync(filePath)
+    return { path: filePath, exists: true, sizeBytes: stat.size }
+  } catch {
+    return { path: filePath, exists: false, sizeBytes: 0 }
+  }
+}
+
+const env = process.env
+const prep = readJson(env.PREP_JSON)
+const deviceSerial = env.DEVICE_SERIAL || (String(env.BOX_IP || '').includes(':') ? env.BOX_IP : `${env.BOX_IP}:5555`)
+const report = {
+  generatedAtUtc: new Date().toISOString(),
+  status: env.C920_DRY_RUN_STATUS,
+  reason: env.C920_DRY_RUN_REASON,
+  dryRun: true,
+  acceptanceExecuted: false,
+  inputs: {
+    boxIp: env.BOX_IP,
+    deviceSerial,
+    physicalStatus: env.C920_PHYSICAL_STATUS,
+    currentDate: env.C920_ARRIVED_CURRENT_DATE
+  },
+  procurement: {
+    purchaseChannel: env.C920_PURCHASE_CHANNEL || '',
+    expectedArrivalDate: env.C920_EXPECTED_ARRIVAL_DATE || '',
+    note: env.C920_PURCHASE_NOTE || ''
+  },
+  prep: {
+    artifact: fileExists(env.PREP_JSON),
+    status: prep?.result?.status || '',
+    reason: prep?.result?.reason || '',
+    readyToRunAcceptance: prep?.result?.readyToRunAcceptance === true,
+    targetStatus: prep?.adb?.targetStatus || '',
+    cleanupAdbNoise: prep?.commands?.cleanupAdbNoise || []
+  },
+  commands: {
+    rehearsal: `C920_ARRIVED_DRY_RUN=true C920_ARRIVED_CURRENT_DATE=${env.C920_ARRIVED_CURRENT_DATE} npm run tv-box:c920-arrived`,
+    realRun: 'npm run tv-box:c920-arrived'
+  },
+  boundary: [
+    'Dry run proves date guard and C920 onsite preflight behavior only.',
+    'Dry run does not prove USB video enumeration, Camera2 preview, microphone input, or USB hotplug stability.',
+    'Physical C920 acceptance must be rerun without C920_ARRIVED_DRY_RUN after the camera is connected.'
+  ]
+}
+
+fs.mkdirSync(require('path').dirname(env.C920_DRY_RUN_JSON), { recursive: true })
+fs.writeFileSync(env.C920_DRY_RUN_JSON, `${JSON.stringify(report, null, 2)}\n`)
+
+const markdown = `# C920 到货一键验收 dry-run 报告
+
+- 生成时间 UTC: \`${report.generatedAtUtc}\`
+- 状态: \`${report.status}\`
+- 判断: ${report.reason}
+- BOX_IP: \`${report.inputs.boxIp}\`
+- ADB: \`${report.inputs.deviceSerial}\` / \`${report.prep.targetStatus || 'unknown'}\`
+- 物理状态: \`${report.inputs.physicalStatus}\`
+- 当前日期: \`${report.inputs.currentDate}\`
+- 采购/预计到货: \`${report.procurement.purchaseChannel || '未记录'} / ${report.procurement.expectedArrivalDate || '未记录'}\`
+- 前置检查: \`${report.prep.status || 'not_run'}\`
+- 前置检查报告: \`${report.prep.artifact.exists ? report.prep.artifact.path : '未生成'}\`
+- 实体 C920 验收已执行: \`${report.acceptanceExecuted ? 'yes' : 'no'}\`
+
+## 下一步
+
+- 到货并确认 C920 已插好后，去掉 \`C920_ARRIVED_DRY_RUN=true\` 再运行：\`${report.commands.realRun}\`
+- 如果前置检查有离线/未授权噪声，先按预备卡里的 \`adb disconnect <序列号>\` 清理。
+
+## 边界
+
+${report.boundary.map((item) => `- ${item}`).join('\n')}
+`
+
+fs.writeFileSync(env.C920_DRY_RUN_MD, markdown)
+NODE
+}
+
 echo "== C920 PRO 到货一键验收 =="
 echo "BOX_IP: $BOX_IP"
 echo "Physical status: $C920_PHYSICAL_STATUS"
@@ -60,6 +160,10 @@ if is_iso_date "$C920_EXPECTED_ARRIVAL_DATE" \
   echo "为避免把“未到货/未插入”误判为 USB 或 Camera2 故障，本次不执行实体摄像头验收。"
   echo "到货并插入小米盒子 USB 口后，重新运行：npm run tv-box:c920-arrived"
   echo "如果它已经提前到货且确认插好，可运行：C920_ARRIVED_ALLOW_EARLY=true npm run tv-box:c920-arrived"
+  if is_truthy "${C920_ARRIVED_DRY_RUN:-false}"; then
+    write_dry_run_report "waiting_for_delivery_acceptance_skipped" "C920 has not reached the expected arrival date; physical acceptance was not executed."
+    echo "Dry-run report: $DRY_RUN_MD"
+  fi
   exit 0
 fi
 
@@ -114,6 +218,10 @@ try {
       echo "请先查看：$PREP_JSON"
       echo "准备好后重新运行：npm run tv-box:c920-arrived"
       if ! is_truthy "${C920_ARRIVED_ALLOW_UNREADY:-false}"; then
+        if is_truthy "${C920_ARRIVED_DRY_RUN:-false}"; then
+          write_dry_run_report "preflight_not_ready_acceptance_skipped" "C920 onsite preflight was not ready; physical acceptance was not executed."
+          echo "Dry-run report: $DRY_RUN_MD"
+        fi
         exit 0
       fi
       echo "C920_ARRIVED_ALLOW_UNREADY=true 已设置，继续执行底层验收。"
@@ -122,8 +230,10 @@ try {
 fi
 
 if is_truthy "${C920_ARRIVED_DRY_RUN:-false}"; then
+  write_dry_run_report "preflight_passed_acceptance_skipped" "Date guard and C920 onsite preflight passed; physical acceptance was not executed."
   echo
   echo "Dry run only; date and C920 preflight passed, but acceptance was not executed."
+  echo "Dry-run report: $DRY_RUN_MD"
   echo "到货并确认 C920 已插好后，去掉 C920_ARRIVED_DRY_RUN=true 再运行：npm run tv-box:c920-arrived"
   exit 0
 fi
