@@ -12,6 +12,7 @@ const compatibilitySummaryPath = process.env.TV_BOX_COMPATIBILITY_SUMMARY_JSON |
 const preflightPath = process.env.TV_BOX_PREFLIGHT_JSON || path.join(reportDir, 'tv-box-preflight-latest.json')
 const handoffHtmlSmokePath = process.env.TV_BOX_HANDOFF_HTML_SMOKE_JSON || path.join(reportDir, 'tv-box-handoff-html-smoke-latest.json')
 const remoteSmokePath = process.env.TV_BOX_REMOTE_SMOKE_JSON || path.join(reportDir, 'tv-box-remote-smoke-latest.json')
+const cameraSmokePath = process.env.TV_BOX_CAMERA_SMOKE_JSON || path.join(reportDir, 'tv-box-camera-smoke-latest.json')
 const fieldScenariosPath = process.env.TV_BOX_FIELD_SCENARIOS_TEST_JSON || path.join(reportDir, 'tv-box-field-scenarios-test-latest.json')
 const returnInboxScenariosPath = process.env.TV_BOX_RETURN_INBOX_SCENARIOS_JSON || path.join(reportDir, 'tv-box-return-inbox-scenarios-test-latest.json')
 const returnInboxPath = process.env.TV_BOX_RETURN_INBOX_JSON || path.join(reportDir, 'tv-box-return-inbox-latest.json')
@@ -122,6 +123,18 @@ function deriveNextActions(summary, inspection, fieldRecord, compatibility) {
     actions.push('ADB 遥控器冒烟报告为 fail；先打开 tv-box-remote-smoke-latest.md，看当前 Activity、截图和 logcat 后再修复。')
   }
 
+  if (summary.cameraSmoke?.status) {
+    if (summary.cameraSmoke.realPreviewProven !== true) {
+      actions.push('摄像头冒烟只证明入口和预览 Activity 不崩溃；C920 真实画面、麦克风和 USB 热插拔仍要现场确认。')
+    }
+    if (summary.cameraSmoke.status === 'no_system_camera') {
+      actions.push('当前 CameraService 摄像头为 0，不能把 C920 记为通过；到货直插 USB 后重跑 tv-box:c920-arrived。')
+    }
+    if (summary.cameraSmoke.status === 'usb_video_seen_camera_hal_missing') {
+      actions.push('USB 视频硬件有线索但 Camera HAL 未开放；优先换 C270 复测或转手机 WebRTC 保底路线。')
+    }
+  }
+
   if (deviceStatus === 'selected' && !summary.artifacts.remoteSmokeJson.exists) {
     actions.push('真实盒子已授权；可运行 BOX_IP=<盒子IP> npm run tv-box:smoke，生成 ADB 遥控器冒烟截图、焦点和日志证据。')
   }
@@ -164,6 +177,7 @@ function main() {
   const preflight = readJson(preflightPath)
   const handoffHtmlSmoke = readJson(handoffHtmlSmokePath)
   const remoteSmoke = readJson(remoteSmokePath)
+  const cameraSmoke = readJson(cameraSmokePath)
   const fieldScenarios = readJson(fieldScenariosPath)
   const returnInboxScenarios = readJson(returnInboxScenariosPath)
   const returnInbox = readJson(returnInboxPath)
@@ -189,6 +203,9 @@ function main() {
     remoteSmokeMarkdown: fileState(path.join(reportDir, 'tv-box-remote-smoke-latest.md')),
     remoteSmokeJson: fileState(remoteSmokePath),
     remoteSmokeScreenshot: fileState(path.join(reportDir, 'tv-box-remote-smoke-latest.png')),
+    cameraSmokeMarkdown: fileState(path.join(reportDir, 'tv-box-camera-smoke-latest.md')),
+    cameraSmokeJson: fileState(cameraSmokePath),
+    cameraSmokeLog: fileState(path.join(reportDir, 'tv-box-camera-smoke-latest.log')),
     fieldScenariosRegressionMarkdown: fileState(path.join(reportDir, 'tv-box-field-scenarios-test-latest.md')),
     fieldScenariosRegressionJson: fileState(fieldScenariosPath),
     returnInboxScenariosRegressionMarkdown: fileState(path.join(reportDir, 'tv-box-return-inbox-scenarios-test-latest.md')),
@@ -264,6 +281,16 @@ function main() {
       replacesC920Acceptance: remoteSmoke.boundary?.replacesC920Acceptance === true,
       crashDetected: remoteSmoke.crashCheck?.crashDetected === true
     } : null,
+    cameraSmoke: cameraSmoke ? {
+      status: cameraSmoke.status || 'unknown',
+      summary: cameraSmoke.summary || '',
+      realPreviewProven: cameraSmoke.evidence?.realPreviewProven === true,
+      c920AcceptanceEligible: cameraSmoke.evidence?.c920AcceptanceEligible || 'unknown',
+      cameraCount: cameraSmoke.inventory?.cameraCount ?? null,
+      externalCameraCount: cameraSmoke.inventory?.externalCameraCount ?? null,
+      usbVideoDeviceCount: cameraSmoke.inventory?.usbVideoDeviceCount ?? null,
+      audioInputDeviceCount: cameraSmoke.inventory?.audioInputDeviceCount ?? null
+    } : null,
     fieldScenariosRegression: fieldScenarios ? {
       status: fieldScenarios.status || 'unknown',
       totalRecords: fieldScenarios.summary?.totalRecords || 0,
@@ -309,6 +336,7 @@ function main() {
 - 待修复组合: \`${summary.compatibility?.needsFixCount ?? 0}\`
 - 交付网页离线冒烟: \`${summary.handoffHtmlSmoke?.status || 'unknown'}\` / checks \`${summary.handoffHtmlSmoke?.checkCount ?? 0}\`
 - ADB 遥控器冒烟证据: \`${summary.remoteSmoke?.status || 'not_run'}\` / scenarios \`${summary.remoteSmoke?.scenarioCount ?? 0}\` / keyevents \`${summary.remoteSmoke?.keyEventCount ?? 0}\`
+- 摄像头冒烟证据: \`${summary.cameraSmoke?.status || 'not_run'}\` / real preview \`${summary.cameraSmoke?.realPreviewProven ? 'yes' : 'no'}\` / CameraService \`${summary.cameraSmoke?.cameraCount ?? 'unknown'}\`
 - 现场验收场景回归: \`${summary.fieldScenariosRegression?.status || 'unknown'}\` / records \`${summary.fieldScenariosRegression?.totalRecords ?? 0}\`
 - 现场回传收件箱场景回归: \`${summary.returnInboxScenariosRegression?.status || 'unknown'}\` / scenarios \`${summary.returnInboxScenariosRegression?.scenarioCount ?? 0}\`
 - 现场回传关闭判定: \`${summary.returnInboxClosure?.status || 'unknown'}\`
@@ -336,6 +364,9 @@ ${[
   markdownArtifactRow('ADB 遥控器冒烟 MD', artifacts.remoteSmokeMarkdown, '记录远程 keyevent、Activity、焦点、截图和 logcat；不替代真实遥控器/C920 验收'),
   markdownArtifactRow('ADB 遥控器冒烟 JSON', artifacts.remoteSmokeJson, '机器可读远程冒烟证据'),
   markdownArtifactRow('ADB 遥控器冒烟截图', artifacts.remoteSmokeScreenshot, '远程确认当前电视画面'),
+  markdownArtifactRow('摄像头冒烟 MD', artifacts.cameraSmokeMarkdown, '区分预览页无崩溃与真实 C920 画面通过'),
+  markdownArtifactRow('摄像头冒烟 JSON', artifacts.cameraSmokeJson, '机器可读摄像头判定和 CameraService/USB 线索'),
+  markdownArtifactRow('摄像头冒烟 logcat', artifacts.cameraSmokeLog, '摄像头、音频、权限和预览 Activity 日志线索'),
   markdownArtifactRow('现场验收场景回归 MD', artifacts.fieldScenariosRegressionMarkdown, '验证现场分类规则不漂移'),
   markdownArtifactRow('现场验收场景回归 JSON', artifacts.fieldScenariosRegressionJson, '机器可读分类场景结果'),
   markdownArtifactRow('现场回传收件箱场景回归 MD', artifacts.returnInboxScenariosRegressionMarkdown, '验证现场证据质检规则不漂移'),

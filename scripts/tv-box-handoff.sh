@@ -79,6 +79,9 @@ HANDOFF_HTML_SMOKE_MD="$REPORT_DIR/tv-box-handoff-html-smoke-latest.md"
 REMOTE_SMOKE_JSON="$REPORT_DIR/tv-box-remote-smoke-latest.json"
 REMOTE_SMOKE_MD="$REPORT_DIR/tv-box-remote-smoke-latest.md"
 REMOTE_SMOKE_SCREENSHOT="$REPORT_DIR/tv-box-remote-smoke-latest.png"
+CAMERA_SMOKE_JSON="$REPORT_DIR/tv-box-camera-smoke-latest.json"
+CAMERA_SMOKE_MD="$REPORT_DIR/tv-box-camera-smoke-latest.md"
+CAMERA_SMOKE_LOG="$REPORT_DIR/tv-box-camera-smoke-latest.log"
 PREFLIGHT_JSON="$REPORT_DIR/tv-box-preflight-latest.json"
 PREFLIGHT_MD="$REPORT_DIR/tv-box-preflight-latest.md"
 AUTHORIZATION_JSON="$REPORT_DIR/tv-box-authorization-latest.json"
@@ -462,6 +465,9 @@ cat > "$HANDOFF_DIR/MANIFEST.json" <<MANIFEST
     "completionAuditJson": "tv-box-completion-audit-latest.json",
     "handoffHtmlSmokeMarkdown": "tv-box-handoff-html-smoke-latest.md",
     "handoffHtmlSmokeJson": "tv-box-handoff-html-smoke-latest.json",
+    "cameraSmokeMarkdown": "tv-box-camera-smoke-latest.md",
+    "cameraSmokeJson": "tv-box-camera-smoke-latest.json",
+    "cameraSmokeLog": "tv-box-camera-smoke-latest.log",
     "uxAuditMarkdown": "tv-box-ux-audit-latest.md",
     "uxAuditJson": "tv-box-ux-audit-latest.json",
     "commandCenterMarkdown": "tv-box-command-center-latest.md",
@@ -3125,6 +3131,7 @@ fi
   TV_BOX_FIELD_RECORD_JSON="$FIELD_RECORD_JSON" \
   TV_BOX_COMPATIBILITY_SUMMARY_JSON="$COMPATIBILITY_SUMMARY_JSON" \
   TV_BOX_HANDOFF_HTML_SMOKE_JSON="$HANDOFF_HTML_SMOKE_JSON" \
+  TV_BOX_CAMERA_SMOKE_JSON="$CAMERA_SMOKE_JSON" \
   npm run -s tv-box:easy-summary >/dev/null)
 
 if [[ -f "$EASY_SUMMARY_JSON" ]]; then
@@ -3153,6 +3160,18 @@ fi
 
 if [[ -f "$REMOTE_SMOKE_SCREENSHOT" ]]; then
   cp "$REMOTE_SMOKE_SCREENSHOT" "$HANDOFF_DIR/tv-box-remote-smoke-latest.png"
+fi
+
+if [[ -f "$CAMERA_SMOKE_JSON" ]]; then
+  cp "$CAMERA_SMOKE_JSON" "$HANDOFF_DIR/tv-box-camera-smoke-latest.json"
+fi
+
+if [[ -f "$CAMERA_SMOKE_MD" ]]; then
+  cp "$CAMERA_SMOKE_MD" "$HANDOFF_DIR/tv-box-camera-smoke-latest.md"
+fi
+
+if [[ -f "$CAMERA_SMOKE_LOG" ]]; then
+  cp "$CAMERA_SMOKE_LOG" "$HANDOFF_DIR/tv-box-camera-smoke-latest.log"
 fi
 
 if [[ -f "$UX_AUDIT_JSON" ]]; then
