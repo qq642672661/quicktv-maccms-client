@@ -141,7 +141,7 @@ write_summary() {
 BOX_IP=<盒子IP> npm run tv-box:support
 \`\`\`
 
-然后把本目录或压缩包发给维护人员。里面已经包含工具链、ADB 设备、电视盒子能力、USB/摄像头/麦克风线索、当前前台 Activity、Camera/Record audio appops、最近日志、交付清单、兼容性自动汇总、一键安装自动沉淀摘要、完成度证据审计、交付包离线自检和机器检查 JSON。
+然后把本目录或压缩包发给维护人员。里面已经包含工具链、ADB 设备、电视盒子能力、USB/摄像头/麦克风线索、当前前台 Activity、Camera/Record audio appops、最近日志、交付清单、兼容性自动汇总、一键安装自动沉淀摘要、完成度证据审计、交付包离线自检和机器检查 JSON；如果现场已经跑过摄像头冒烟，也会带上对应报告，但它不替代 C920 真实画面、麦克风和热插拔验收。
 
 ## 关键文件
 
@@ -152,6 +152,7 @@ BOX_IP=<盒子IP> npm run tv-box:support
 - \`handoff-standalone-test.txt\`: 最新交付压缩包解压后的离线完整性自检结果。
 - \`handoff-html-smoke.txt\` / \`tv-box-handoff-html-smoke-latest.md/json\`: START_HERE 和 FIELD_WIZARD_OFFLINE 的离线网页可用性自检结果。
 - \`tv-box-remote-smoke-latest.md/json/png\`: ADB 遥控器冒烟证据，包含 keyevent 序列、当前 Activity/焦点、截图、USB 快照和 logcat 摘要；它不替代真实遥控器手感、C920 真实画面、麦克风和热插拔验收。
+- \`tv-box-camera-smoke-latest.md/json/log\`: 如果已经运行摄像头冒烟，这里会带上摄像头页、预览 Activity、CameraService/USB/音频输入和崩溃日志边界证据；它不替代 C920 真实画面、麦克风和热插拔验收。
 - \`tv-box-command-center-support.md/json\`: 排障包视角交付总控，集中列出应发哪个包、SHA、readiness、未闭环项和下一步。
 - \`tv-box-site-readiness-support.md/json/html\`: 现场开工判定卡，告诉现场先授权、安装、补证据还是工程修复。
 - \`adb-devices.txt\`: ADB 连接状态。
@@ -344,6 +345,14 @@ copy_if_exists "$REPORT_DIR/tv-box-handoff-html-smoke-latest.json" "tv-box-hando
 copy_if_exists "$REPORT_DIR/tv-box-remote-smoke-latest.md" "tv-box-remote-smoke-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-remote-smoke-latest.json" "tv-box-remote-smoke-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-remote-smoke-latest.png" "tv-box-remote-smoke-latest.png"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-camera-smoke-latest.md" "tv-box-camera-smoke-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-camera-smoke-latest.json" "tv-box-camera-smoke-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-handoff/tv-box-camera-smoke-latest.log" "tv-box-camera-smoke-latest.log"
+copy_if_exists "$REPORT_DIR/tv-box-camera-smoke-latest.md" "tv-box-camera-smoke-latest.md"
+copy_if_exists "$REPORT_DIR/tv-box-camera-smoke-latest.json" "tv-box-camera-smoke-latest.json"
+copy_if_exists "$REPORT_DIR/tv-box-camera-smoke-latest.log" "tv-box-camera-smoke-latest.log"
+copy_if_exists "$REPORT_DIR/tv-box-camera-smoke-focus-during-latest.txt" "tv-box-camera-smoke-focus-during-latest.txt"
+copy_if_exists "$REPORT_DIR/tv-box-camera-smoke-focus-after-latest.txt" "tv-box-camera-smoke-focus-after-latest.txt"
 copy_if_exists "$REPORT_DIR/tv-box-ux-audit-latest.md" "tv-box-ux-audit-latest.md"
 copy_if_exists "$REPORT_DIR/tv-box-ux-audit-latest.json" "tv-box-ux-audit-latest.json"
 copy_if_exists "$REPORT_DIR/tv-box-handoff-latest-path.txt" "handoff-latest-path.txt"

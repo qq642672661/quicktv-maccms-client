@@ -109,6 +109,7 @@ jobs:
             reports/tv-box-handoff-html-smoke-latest.*
             reports/tv-box-remote-smoke-latest.*
             reports/tv-box-remote-smoke
+            reports/tv-box-camera-smoke-latest.*
             reports/tv-box-ux-audit-latest.*
             reports/tv-box-command-center-latest.*
             reports/tv-box-next-latest.*
