@@ -305,7 +305,7 @@ function buildPhoneCameraHtml(roomCode) {
         var override = new URLSearchParams(window.location.search).get('signaling')
         if (override) return override
         var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        return protocol + '//' + window.location.host + '/phone-camera/signaling'
+        return protocol + '//' + window.location.host + '/phone-camera/signaling?room=' + encodeURIComponent(roomCode()) + '&role=phone'
       }
 
       function mediaConstraints() {

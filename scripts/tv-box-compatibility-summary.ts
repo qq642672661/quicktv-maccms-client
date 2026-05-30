@@ -139,26 +139,58 @@ function failingFields(row) {
   return summaryFields.filter((field) => normalizeResult(row[field]) === 'fail')
 }
 
+function isPhoneCameraText(value) {
+  return /(^|[^a-z])phone([^a-z]|$)|mobile|webrtc|手机/i.test(String(value || ''))
+}
+
+function phoneCameraInScope(row) {
+  const connectionInScope = [
+    row.cameraConnection,
+    row.microphoneConnection,
+    row.cameraModel,
+    row.microphoneModel
+  ].some(isPhoneCameraText)
+  const explicitPhoneResult = phoneCameraFields
+    .map((field) => normalizeResult(row[field]))
+    .some((result) => ['pass', 'fail', 'skip'].includes(result))
+  return connectionInScope || explicitPhoneResult
+}
+
+function phoneCameraOpenFields(row) {
+  if (!phoneCameraInScope(row)) return []
+  return phoneCameraFields.filter((field) => !['pass', 'fail'].includes(normalizeResult(row[field])))
+}
+
 function unknownFields(row) {
-  return checkFields.filter((field) => normalizeResult(row[field]) === 'unknown')
+  return [
+    ...checkFields.filter((field) => normalizeResult(row[field]) === 'unknown'),
+    ...phoneCameraOpenFields(row)
+  ]
 }
 
 function buildCombination(row) {
   const title = rowTitle(row)
   const failures = failingFields(row)
   const unknowns = unknownFields(row)
+  const phoneRouteInScope = phoneCameraInScope(row)
   const elderReady = allPass(row, coreFields) &&
     allPass(row, ['remotePractice', 'exitConfirm', 'classicHomeRescue', 'searchRescue', 'historyRescue']) &&
     anyPass(row, ['zeroKeyHelp', 'helpKeyShortcuts', 'numericShortcuts'])
   const cameraReady = allPass(row, cameraFields)
   const audioReady = allPass(row, audioFields)
+  const phoneCameraReady = phoneRouteInScope && allPass(row, phoneCameraFields)
   const level = failures.length > 0
     ? 'needs_fix'
-    : elderReady && cameraReady && (audioReady || ['skip', 'na', 'unknown'].includes(normalizeResult(row.recordAudioPermission)))
+    : elderReady && (
+      (cameraReady && (audioReady || ['skip', 'na', 'unknown'].includes(normalizeResult(row.recordAudioPermission)))) ||
+      phoneCameraReady
+    )
       ? 'recommended'
-      : elderReady
-        ? 'tv_core_ready'
-        : unknowns.length > 0
+      : phoneRouteInScope && !phoneCameraReady
+        ? 'needs_manual_acceptance'
+        : elderReady
+          ? 'tv_core_ready'
+          : unknowns.length > 0
           ? 'needs_manual_acceptance'
           : 'watch'
 
@@ -185,6 +217,8 @@ function buildCombination(row) {
     },
     checks: Object.fromEntries(checkFields.map((field) => [field, normalizeResult(row[field])])),
     phoneCameraChecks: Object.fromEntries(phoneCameraFields.map((field) => [field, normalizeResult(row[field])])),
+    phoneCameraInScope: phoneRouteInScope,
+    phoneCameraReady,
     failingFields: failures,
     unknownFields: unknowns,
     notes: row.notes || ''
@@ -292,6 +326,15 @@ ${markdownTable(summary.needsManualAcceptance, [
 | 字段 | pass | fail | skip | na | unknown |
 | --- | --- | --- | --- | --- | --- |
 ${checkFields.map((field) => {
+  const counts = summary.checkSummary[field]
+  return `| ${field} | ${counts.pass} | ${counts.fail} | ${counts.skip} | ${counts.na} | ${counts.unknown} |`
+}).join('\n')}
+
+## 手机摄像头指标统计
+
+| 字段 | pass | fail | skip | na | unknown |
+| --- | --- | --- | --- | --- | --- |
+${phoneCameraFields.map((field) => {
   const counts = summary.checkSummary[field]
   return `| ${field} | ${counts.pass} | ${counts.fail} | ${counts.skip} | ${counts.na} | ${counts.unknown} |`
 }).join('\n')}

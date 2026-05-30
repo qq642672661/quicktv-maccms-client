@@ -101,12 +101,23 @@ function resultIsPassOrNotApplicable(record, key) {
 }
 
 function fieldScenariosRegressionPassed(report) {
+  const requiredIds = new Set([
+    'all_pass_camera_audio',
+    'tv_core_no_camera_no_mic',
+    'phone_camera_webrtc_all_pass',
+    'phone_camera_missing_first_frame',
+    'remote_focus_failure',
+    'unknown_rescue_left_open'
+  ])
+  const scenarios = Array.isArray(report?.scenarios) ? report.scenarios : []
+  const scenarioIds = new Set(scenarios.map((scenario) => scenario.id))
   return report?.status === 'pass' &&
-    report?.summary?.totalRecords === 4 &&
-    report?.summary?.recommendedCount === 1 &&
+    report?.summary?.totalRecords === 6 &&
+    report?.summary?.recommendedCount === 2 &&
     report?.summary?.tvCoreReadyCount === 1 &&
     report?.summary?.needsFixCount === 1 &&
-    report?.summary?.needsManualAcceptanceCount === 1
+    report?.summary?.needsManualAcceptanceCount === 2 &&
+    [...requiredIds].every((id) => scenarioIds.has(id))
 }
 
 function returnInboxScenariosRegressionPassed(report) {

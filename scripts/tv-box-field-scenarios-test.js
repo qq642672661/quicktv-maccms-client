@@ -6,6 +6,7 @@ const { spawnSync } = require('child_process')
 const {
   textPrompts,
   resultPrompts,
+  phoneCameraResultPrompts,
   schemaVersion
 } = require('./tv-box-field-wizard-schema')
 
@@ -79,6 +80,9 @@ function buildEnv(textOverrides, resultOverrides, notes) {
   for (const [key] of resultPrompts) {
     env[key] = resultOverrides[key] || 'pass'
   }
+  for (const [key] of phoneCameraResultPrompts) {
+    env[key] = resultOverrides[key] || 'na'
+  }
   env.FIELD_NOTES = notes
   env.FIELD_APPEND_MATRIX = 'true'
   return env
@@ -112,6 +116,20 @@ function withUnknowns(base = {}) {
   }
 }
 
+function phoneCameraAllPass(base = {}) {
+  return {
+    ...base,
+    ...Object.fromEntries(phoneCameraResultPrompts.map(([key]) => [key, 'pass']))
+  }
+}
+
+function phoneCameraMissingFirstFrame(base = {}) {
+  return {
+    ...phoneCameraAllPass(base),
+    FIELD_PHONE_TV_FIRST_FRAME: 'unknown'
+  }
+}
+
 const scenarios = [
   {
     id: 'all_pass_camera_audio',
@@ -139,6 +157,40 @@ const scenarios = [
       },
       withoutCameraAudio(),
       'Synthetic TV-core sample; camera and microphone are explicitly not applicable.'
+    )
+  },
+  {
+    id: 'phone_camera_webrtc_all_pass',
+    title: '手机摄像头路线全部通过：必须可进入 recommended',
+    expectedImportLevel: 'recommended_candidate',
+    expectedCombinationLevel: 'recommended',
+    env: buildEnv(
+      {
+        FIELD_BOX_MODEL: 'Scenario Phone Camera WebRTC All Pass',
+        FIELD_CAMERA_MODEL: 'Phone WebRTC Camera',
+        FIELD_CAMERA_CONNECTION: 'phone_webrtc',
+        FIELD_MICROPHONE_MODEL: 'Phone WebRTC Microphone',
+        FIELD_MICROPHONE_CONNECTION: 'phone_webrtc'
+      },
+      withoutCameraAudio(phoneCameraAllPass()),
+      'Synthetic phone-camera sample; proves all phone WebRTC closure evidence can be recommended.'
+    )
+  },
+  {
+    id: 'phone_camera_missing_first_frame',
+    title: '手机摄像头缺电视首帧：不能被推荐或关闭',
+    expectedImportLevel: 'needs_manual_acceptance',
+    expectedCombinationLevel: 'needs_manual_acceptance',
+    env: buildEnv(
+      {
+        FIELD_BOX_MODEL: 'Scenario Phone Camera Missing First Frame',
+        FIELD_CAMERA_MODEL: 'Phone WebRTC Camera',
+        FIELD_CAMERA_CONNECTION: 'phone_webrtc',
+        FIELD_MICROPHONE_MODEL: 'Phone WebRTC Microphone',
+        FIELD_MICROPHONE_CONNECTION: 'phone_webrtc'
+      },
+      withoutCameraAudio(phoneCameraMissingFirstFrame()),
+      'Synthetic phone-camera sample; missing TV first frame must keep acceptance open.'
     )
   },
   {
@@ -210,6 +262,8 @@ ${rows}
 
 - 全部通过样本必须进入 \`recommended\`，证明摄像头和麦克风可用时能成为推荐组合。
 - 无摄像头/麦克风样本必须进入 \`tv_core_ready\`，证明外设缺失不阻塞长辈小孩看电视。
+- 手机摄像头样本只有配对、手机权限、电视首帧、音频、stats、重连和停止全部通过时才能进入 \`recommended\`。
+- 手机摄像头缺电视首帧样本必须保持 \`needs_manual_acceptance\`，证明 phone_webrtc 不会被普通摄像头规则误关闭。
 - 遥控器失败样本必须进入 \`needs_fix\`，证明核心遥控器问题不会被误判为可交付。
 - unknown 样本必须保持 \`needs_manual_acceptance\`，证明不能用未补测字段关闭真实盒子验收。
 `
