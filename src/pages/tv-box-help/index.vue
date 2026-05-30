@@ -170,9 +170,15 @@ const deviceHintText = computed(() => {
   if (capabilities.value.source === 'fallback') return '打包安装到盒子后可读取'
   return '遥控器优先适配'
 })
+const hasSystemCamera = computed(() => {
+  if (capabilities.value.cameraCount !== null) return capabilities.value.cameraCount > 0
+  if (capabilities.value.externalCameraCount !== null) return capabilities.value.externalCameraCount > 0
+  return capabilities.value.source !== 'native' && capabilities.value.hasAnyCamera === true
+})
 const cameraStateText = computed(() => {
-  if (capabilities.value.hasAnyCamera === true) return '可识别'
+  if (hasSystemCamera.value) return '可用'
   if ((capabilities.value.usbVideoDeviceCount || 0) > 0) return 'USB 已接入'
+  if (capabilities.value.cameraCount === 0) return '未接入'
   if (capabilities.value.hasAnyCamera === false) return '未检测到'
   return '未知'
 })
@@ -205,17 +211,19 @@ const microphoneHintText = computed(() => {
 const supportCodeText = computed(() => formatTvBoxSupportCode(capabilities.value))
 const primaryNextTitle = computed(() => {
   if (capabilities.value.source === 'fallback') return '按 4 回首页看电视'
+  if (!hasSystemCamera.value && (capabilities.value.usbVideoDeviceCount || 0) > 0) return '按 2 试 USB 摄像头'
+  if (!hasSystemCamera.value && capabilities.value.cameraCount === 0) return '按 2 接 C920'
   if (capabilities.value.hasCameraPermission === false || capabilities.value.hasRecordAudioPermission === false) return '按 2 处理权限'
-  if (capabilities.value.hasAnyCamera === true && capabilities.value.hasCameraPermission === true) return '按 2 测摄像头'
-  if ((capabilities.value.usbVideoDeviceCount || 0) > 0) return '按 2 试 USB 摄像头'
+  if (hasSystemCamera.value && capabilities.value.hasCameraPermission === true) return '按 2 测摄像头'
   if (capabilities.value.hasAnyCamera === false && capabilities.value.hasMicrophone === false) return '按 4 直接看电视'
   return '不会操作按 3 练遥控'
 })
 const primaryNextHint = computed(() => {
   if (capabilities.value.source === 'fallback') return '装到盒子后会显示真实状态'
+  if (!hasSystemCamera.value && (capabilities.value.usbVideoDeviceCount || 0) > 0) return '能看到 USB 硬件，先做预览测试'
+  if (!hasSystemCamera.value && capabilities.value.cameraCount === 0) return 'C920 到货后直插 USB；没插摄像头也能先看电视'
   if (capabilities.value.hasCameraPermission === false || capabilities.value.hasRecordAudioPermission === false) return '摄像头页有一键授权和设置入口'
-  if (capabilities.value.hasAnyCamera === true && capabilities.value.hasCameraPermission === true) return '摄像头页按 3 打开预览测试'
-  if ((capabilities.value.usbVideoDeviceCount || 0) > 0) return '能看到 USB 硬件，先做预览测试'
+  if (hasSystemCamera.value && capabilities.value.hasCameraPermission === true) return '摄像头页按 3 打开预览测试'
   if (capabilities.value.hasAnyCamera === false && capabilities.value.hasMicrophone === false) return '没有外设也不影响直播和点播'
   return '跟着屏幕按方向键、OK 和返回'
 })

@@ -52,6 +52,14 @@ require_text() {
   pass "$label"
 }
 
+require_no_text() {
+  local path="$1"
+  local needle="$2"
+  local label="$3"
+  ! grep -Fq -- "$needle" "$path" || fail "$label unexpectedly found in $path"
+  pass "$label"
+}
+
 require_package_script() {
   local script_name="$1"
   node -e "const scripts=require('./package.json').scripts||{}; process.exit(scripts[process.argv[1]] ? 0 : 1)" "$script_name" \
@@ -573,11 +581,17 @@ require_text "src/pages/camera-setup/index.vue" "launch.launchTvBoxHelp()" "came
 require_text "src/pages/camera-setup/index.vue" "isRemoteHelpKey" "camera page supports menu/info/help keys"
 require_text "src/pages/camera-setup/index.vue" "supportCodeText" "camera page shows support code"
 require_text "src/pages/camera-setup/index.vue" "读给维护人员" "camera page explains support code handoff"
+require_text "src/pages/camera-setup/index.vue" "hasSystemCamera" "camera page distinguishes real Camera2 devices from hardware feature flags"
+require_text "src/pages/camera-setup/index.vue" "等待摄像头接入" "camera page avoids claiming C920 is ready when Camera2 count is zero"
+require_text "src/pages/camera-setup/index.vue" "系统摄像头为 0" "camera page explains zero Camera2 count before C920 arrives"
+require_no_text "src/pages/camera-setup/index.vue" "摄像头已可识别" "camera page no longer claims camera recognition from feature flags alone"
 require_text "src/pages/tv-box-help/index.vue" "6 或 0、菜单、信息或帮助键" "TV-box help page explains 6/0/menu/info/help keys"
 require_text "src/pages/tv-box-help/index.vue" "remoteNumber === 6" "TV-box help page supports 6-key self-check refresh"
 require_text "src/pages/tv-box-help/index.vue" "isRemoteHelpKey" "TV-box help page refreshes self-test from help keys"
 require_text "src/pages/tv-box-help/index.vue" "现在下一步" "TV-box help page shows one primary next action"
 require_text "src/pages/tv-box-help/index.vue" "primaryNextTitle" "TV-box help page computes one primary next action"
+require_text "src/pages/tv-box-help/index.vue" "hasSystemCamera" "TV-box help page distinguishes real Camera2 devices from hardware feature flags"
+require_text "src/pages/tv-box-help/index.vue" "按 2 接 C920" "TV-box help page gives clear C920 next step when Camera2 count is zero"
 require_text "src/pages/tv-box-help/index.vue" "摄像头检查" "TV-box help page exposes camera check shortcut"
 require_text "src/pages/tv-box-help/index.vue" "launch.launchCameraSetup" "TV-box help page can jump to camera setup"
 require_text "src/pages/tv-box-help/index.vue" "遥控练习" "TV-box help page exposes remote practice shortcut"

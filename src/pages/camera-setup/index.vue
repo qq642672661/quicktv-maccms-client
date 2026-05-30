@@ -152,15 +152,17 @@ const capabilities = ref<TvBoxCapabilities>({
 
 const cameraTitle = computed(() => {
   if (isChecking.value) return '正在检测摄像头'
-  if (capabilities.value.hasAnyCamera === true) return '摄像头已可识别'
+  if (hasSystemCamera.value) return '摄像头已可用'
   if (hasUsbVideoDevice.value) return 'USB 摄像头已接入'
+  if (capabilities.value.cameraCount === 0) return '等待摄像头接入'
   if (capabilities.value.hasAnyCamera === false) return '暂未检测到摄像头'
   return '等待电视盒子能力检测'
 })
 
 const cameraSubtitle = computed(() => {
   if (isChecking.value) return '请稍等，正在读取系统能力。'
-  if (capabilities.value.hasAnyCamera === false && hasUsbVideoDevice.value) return '已识别 USB 视频设备，但系统暂未把它开放为摄像头。'
+  if (!hasSystemCamera.value && hasUsbVideoDevice.value) return '已识别 USB 视频设备，但系统暂未把它开放为摄像头。'
+  if (capabilities.value.cameraCount === 0) return '当前系统摄像头为 0；C920 到货后直插 USB，再按 1 重新检测。'
   if (capabilities.value.hasAnyCamera === false) return '请确认 USB 摄像头已插好，并在系统设置里允许摄像头权限。'
   if (capabilities.value.source === 'fallback') return capabilities.value.message
   return capabilities.value.buildModel ? `设备型号：${capabilities.value.buildModel}` : '检测完成。'
@@ -168,9 +170,16 @@ const cameraSubtitle = computed(() => {
 
 const hasUsbVideoDevice = computed(() => (capabilities.value.usbVideoDeviceCount || 0) > 0)
 const hasAudioInput = computed(() => (capabilities.value.audioInputDeviceCount || 0) > 0)
+const hasSystemCamera = computed(() => {
+  if (capabilities.value.cameraCount !== null) return capabilities.value.cameraCount > 0
+  if (capabilities.value.externalCameraCount !== null) return capabilities.value.externalCameraCount > 0
+  return capabilities.value.source !== 'native' && capabilities.value.hasAnyCamera === true
+})
 const cameraStateText = computed(() => {
-  if (capabilities.value.hasAnyCamera === false && hasUsbVideoDevice.value) return '待适配'
-  return formatFlag(capabilities.value.hasAnyCamera, '可用', '未检测到')
+  if (hasSystemCamera.value) return '可用'
+  if (hasUsbVideoDevice.value) return '待适配'
+  if (capabilities.value.cameraCount === 0) return '未接入'
+  return formatFlag(capabilities.value.hasAnyCamera, '待确认', '未检测到')
 })
 const permissionStateText = computed(() => {
   if (capabilities.value.hasCameraPermission === true && capabilities.value.hasRecordAudioPermission === true) return '全允许'
@@ -218,8 +227,8 @@ const deviceHintText = computed(() => {
 const nextStepText = computed(() => {
   if (isChecking.value) return '请先等检测完成。'
   if (capabilities.value.source === 'fallback') return '当前不是电视盒子原生运行环境，可先打包 APK 后在盒子上复测。'
-  if (capabilities.value.hasAnyCamera === false && hasUsbVideoDevice.value) return '已看到 USB 摄像头硬件，先按“测试摄像头”；若打不开，可按 4 走手机摄像头保底路线。'
-  if (capabilities.value.hasAnyCamera === false) return '把 C920 插到盒子 USB 口后按“重新检测”；未接实体摄像头时可按 4 用手机摄像头。'
+  if (!hasSystemCamera.value && hasUsbVideoDevice.value) return '已看到 USB 摄像头硬件，先按“测试摄像头”；若打不开，可按 4 走手机摄像头保底路线。'
+  if (!hasSystemCamera.value) return '把 C920 插到盒子 USB 口后按“重新检测”；未接实体摄像头时可按 4 用手机摄像头。'
   if (capabilities.value.hasCameraPermission === false || capabilities.value.hasRecordAudioPermission === false) return '按遥控器 OK 选择“一键授权”；如果系统没有弹窗，再打开权限设置手动允许。'
   return '实体摄像头和权限已就绪；临时互动也可按 4 打开手机摄像头配对。返回键回首页。'
 })
