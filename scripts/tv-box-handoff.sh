@@ -1044,21 +1044,48 @@ Required evidence:
 2. Support-code photo
 3. INSTALL_LOG.txt or tv-box-support-latest.zip
 4. Issue photo/log/keyCode when any item failed or stayed unknown
+
+C920 PRO required evidence when testing the Logitech camera:
+- C920_PREVIEW_TV_SCREEN.jpg or C920_PREVIEW_TV_SCREEN.mp4
+- C920_MIC_BUSINESS_INPUT.mp4 or C920_MIC_BUSINESS_INPUT.txt
+- C920_HOTPLUG_RETEST.jpg or C920_HOTPLUG_RETEST.txt
+- SUPPORT_CODE_C920.jpg
+- tv-box-c920-pro-acceptance-latest.md and tv-box-c920-pro-acceptance-latest.json
 NOTE
 
 json_count="$(find "$PAYLOAD_DIR" -type f -iname '*.json' | wc -l | tr -d ' ')"
 photo_count="$(find "$PAYLOAD_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.heic' -o -iname '*.webp' \) | wc -l | tr -d ' ')"
 log_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'INSTALL_LOG.txt' -o -iname '*.log' -o -iname '*.txt' \) | wc -l | tr -d ' ')"
 support_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'tv-box-support*.zip' -o -iname 'tv-box-support*.tar.gz' \) | wc -l | tr -d ' ')"
+c920_context_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'C920_*' -o -iname 'SUPPORT_CODE_C920.*' -o -iname 'tv-box-c920-pro-acceptance-latest.*' \) | wc -l | tr -d ' ')"
+c920_preview_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'C920_PREVIEW_TV_SCREEN.jpg' -o -iname 'C920_PREVIEW_TV_SCREEN.jpeg' -o -iname 'C920_PREVIEW_TV_SCREEN.png' -o -iname 'C920_PREVIEW_TV_SCREEN.heic' -o -iname 'C920_PREVIEW_TV_SCREEN.webp' -o -iname 'C920_PREVIEW_TV_SCREEN.mp4' \) | wc -l | tr -d ' ')"
+c920_mic_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'C920_MIC_BUSINESS_INPUT.mp4' -o -iname 'C920_MIC_BUSINESS_INPUT.txt' \) | wc -l | tr -d ' ')"
+c920_hotplug_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'C920_HOTPLUG_RETEST.jpg' -o -iname 'C920_HOTPLUG_RETEST.jpeg' -o -iname 'C920_HOTPLUG_RETEST.png' -o -iname 'C920_HOTPLUG_RETEST.heic' -o -iname 'C920_HOTPLUG_RETEST.webp' -o -iname 'C920_HOTPLUG_RETEST.txt' \) | wc -l | tr -d ' ')"
+c920_support_code_count="$(find "$PAYLOAD_DIR" -type f \( -iname 'SUPPORT_CODE_C920.jpg' -o -iname 'SUPPORT_CODE_C920.jpeg' -o -iname 'SUPPORT_CODE_C920.png' -o -iname 'SUPPORT_CODE_C920.heic' -o -iname 'SUPPORT_CODE_C920.webp' \) | wc -l | tr -d ' ')"
+c920_acceptance_md_count="$(find "$PAYLOAD_DIR" -type f -iname 'tv-box-c920-pro-acceptance-latest.md' | wc -l | tr -d ' ')"
+c920_acceptance_json_count="$(find "$PAYLOAD_DIR" -type f -iname 'tv-box-c920-pro-acceptance-latest.json' | wc -l | tr -d ' ')"
 
 {
   echo "JSON 文件数: $json_count"
   echo "照片文件数: $photo_count"
   echo "日志文件数: $log_count"
   echo "排障包数: $support_count"
+  echo "C920 证据线索数: $c920_context_count"
+  echo "C920 预览证据数: $c920_preview_count"
+  echo "C920 麦克风证据数: $c920_mic_count"
+  echo "C920 热插拔证据数: $c920_hotplug_count"
+  echo "C920 维护码照片数: $c920_support_code_count"
+  echo "C920 验收报告 md/json: $c920_acceptance_md_count/$c920_acceptance_json_count"
   if [[ "$json_count" -eq 0 ]]; then echo "提醒: 没看到现场验收 JSON。"; fi
   if [[ "$photo_count" -eq 0 ]]; then echo "提醒: 没看到维护码或异常照片。"; fi
   if [[ "$log_count" -eq 0 && "$support_count" -eq 0 ]]; then echo "提醒: 没看到 INSTALL_LOG.txt 或排障包。"; fi
+  if [[ "$c920_context_count" -gt 0 ]]; then
+    if [[ "$c920_preview_count" -eq 0 ]]; then echo "提醒: C920 回传缺少 C920_PREVIEW_TV_SCREEN.jpg/mp4。"; fi
+    if [[ "$c920_mic_count" -eq 0 ]]; then echo "提醒: C920 回传缺少 C920_MIC_BUSINESS_INPUT.mp4/txt。"; fi
+    if [[ "$c920_hotplug_count" -eq 0 ]]; then echo "提醒: C920 回传缺少 C920_HOTPLUG_RETEST.jpg/txt。"; fi
+    if [[ "$c920_support_code_count" -eq 0 ]]; then echo "提醒: C920 回传缺少 SUPPORT_CODE_C920.jpg。"; fi
+    if [[ "$c920_acceptance_md_count" -eq 0 || "$c920_acceptance_json_count" -eq 0 ]]; then echo "提醒: C920 回传缺少 tv-box-c920-pro-acceptance-latest.md/json 成对报告。"; fi
+  fi
 } >> "$LOG_PATH"
 
 if command -v zip >/dev/null 2>&1; then
@@ -1108,16 +1135,31 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "New-Item -ItemType Directory -Force -Path $payload | Out-Null;" ^
   "if (Test-Path $return) { Get-ChildItem -LiteralPath $return -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $payload -Recurse -Force } };" ^
   "foreach ($name in @('INSTALL_LOG.txt','tv-box-support-latest.zip')) { $p=Join-Path $script $name; if ((Test-Path $p) -and -not (Test-Path (Join-Path $payload $name))) { Copy-Item -LiteralPath $p -Destination $payload -Force } };" ^
-  "$note=@('HelloTV field return package','Generated at: ' + (Get-Date),'Required evidence:','1. FIELD_WIZARD_OFFLINE.html JSON','2. Support-code photo','3. INSTALL_LOG.txt or tv-box-support-latest.zip','4. Issue photo/log/keyCode when any item failed or stayed unknown');" ^
+  "$note=@('HelloTV field return package','Generated at: ' + (Get-Date),'Required evidence:','1. FIELD_WIZARD_OFFLINE.html JSON','2. Support-code photo','3. INSTALL_LOG.txt or tv-box-support-latest.zip','4. Issue photo/log/keyCode when any item failed or stayed unknown','','C920 PRO required evidence when testing the Logitech camera:','- C920_PREVIEW_TV_SCREEN.jpg or C920_PREVIEW_TV_SCREEN.mp4','- C920_MIC_BUSINESS_INPUT.mp4 or C920_MIC_BUSINESS_INPUT.txt','- C920_HOTPLUG_RETEST.jpg or C920_HOTPLUG_RETEST.txt','- SUPPORT_CODE_C920.jpg','- tv-box-c920-pro-acceptance-latest.md and tv-box-c920-pro-acceptance-latest.json');" ^
   "Set-Content -LiteralPath (Join-Path $payload 'RETURN_NOTE.txt') -Encoding UTF8 -Value $note;" ^
   "$json=(Get-ChildItem -LiteralPath $payload -Recurse -File -Filter *.json).Count;" ^
   "$photo=(Get-ChildItem -LiteralPath $payload -Recurse -File | Where-Object { $_.Extension -match '^\.(jpg|jpeg|png|heic|webp)$' }).Count;" ^
   "$logs=(Get-ChildItem -LiteralPath $payload -Recurse -File | Where-Object { $_.Name -ieq 'INSTALL_LOG.txt' -or $_.Extension -match '^\.(log|txt)$' }).Count;" ^
   "$support=(Get-ChildItem -LiteralPath $payload -Recurse -File | Where-Object { $_.Name -like 'tv-box-support*.zip' -or $_.Name -like 'tv-box-support*.tar.gz' }).Count;" ^
+  "$files=Get-ChildItem -LiteralPath $payload -Recurse -File;" ^
+  "$c920=($files | Where-Object { $_.Name -like 'C920_*' -or $_.Name -like 'SUPPORT_CODE_C920.*' -or $_.Name -like 'tv-box-c920-pro-acceptance-latest.*' }).Count;" ^
+  "$c920Preview=($files | Where-Object { $_.Name -match '^C920_PREVIEW_TV_SCREEN\.(jpg|jpeg|png|heic|webp|mp4)$' }).Count;" ^
+  "$c920Mic=($files | Where-Object { $_.Name -match '^C920_MIC_BUSINESS_INPUT\.(mp4|txt)$' }).Count;" ^
+  "$c920Hotplug=($files | Where-Object { $_.Name -match '^C920_HOTPLUG_RETEST\.(jpg|jpeg|png|heic|webp|txt)$' }).Count;" ^
+  "$c920SupportCode=($files | Where-Object { $_.Name -match '^SUPPORT_CODE_C920\.(jpg|jpeg|png|heic|webp)$' }).Count;" ^
+  "$c920AcceptanceMd=($files | Where-Object { $_.Name -ieq 'tv-box-c920-pro-acceptance-latest.md' }).Count;" ^
+  "$c920AcceptanceJson=($files | Where-Object { $_.Name -ieq 'tv-box-c920-pro-acceptance-latest.json' }).Count;" ^
   "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('JSON 文件数: ' + $json);" ^
   "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('照片文件数: ' + $photo);" ^
   "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('日志文件数: ' + $logs);" ^
   "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('排障包数: ' + $support);" ^
+  "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('C920 证据线索数: ' + $c920);" ^
+  "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('C920 预览证据数: ' + $c920Preview);" ^
+  "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('C920 麦克风证据数: ' + $c920Mic);" ^
+  "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('C920 热插拔证据数: ' + $c920Hotplug);" ^
+  "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('C920 维护码照片数: ' + $c920SupportCode);" ^
+  "Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value ('C920 验收报告 md/json: ' + $c920AcceptanceMd + '/' + $c920AcceptanceJson);" ^
+  "if ($c920 -gt 0) { if ($c920Preview -eq 0) { Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value '提醒: C920 回传缺少 C920_PREVIEW_TV_SCREEN.jpg/mp4。' }; if ($c920Mic -eq 0) { Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value '提醒: C920 回传缺少 C920_MIC_BUSINESS_INPUT.mp4/txt。' }; if ($c920Hotplug -eq 0) { Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value '提醒: C920 回传缺少 C920_HOTPLUG_RETEST.jpg/txt。' }; if ($c920SupportCode -eq 0) { Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value '提醒: C920 回传缺少 SUPPORT_CODE_C920.jpg。' }; if (($c920AcceptanceMd -eq 0) -or ($c920AcceptanceJson -eq 0)) { Add-Content -LiteralPath (Join-Path $script 'FIELD_RETURN_PACK_LOG.txt') -Value '提醒: C920 回传缺少 tv-box-c920-pro-acceptance-latest.md/json 成对报告。' } };" ^
   "if (Test-Path $out) { Remove-Item -LiteralPath $out -Force };" ^
   "Compress-Archive -LiteralPath $payload -DestinationPath $out -Force;" ^
   "Remove-Item -LiteralPath $stage -Recurse -Force;" ^

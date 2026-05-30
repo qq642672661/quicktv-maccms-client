@@ -190,6 +190,9 @@ function checkFieldReturnCardLinks() {
   assert.match(html, /PACK_FIELD_RETURN_ON_WINDOWS\.bat/, 'field return card Windows return packer guidance is missing')
   assert.match(html, /PACK_FIELD_RETURN_ON_MAC\.command/, 'field return card macOS return packer guidance is missing')
   assert.match(html, /不要留 unknown/, 'field return card unknown-value closure guard is missing')
+  assert.match(html, /C920_PREVIEW_TV_SCREEN/, 'field return card C920 preview evidence filename is missing')
+  assert.match(html, /C920_MIC_BUSINESS_INPUT/, 'field return card C920 microphone evidence filename is missing')
+  assert.match(html, /C920_HOTPLUG_RETEST/, 'field return card C920 hotplug evidence filename is missing')
   assert.doesNotMatch(html, /\b(?:src|href)=["']https?:/i, 'field return card must not depend on remote scripts, styles, or links')
   note('FIELD_RETURN_CARD 现场回传卡文案完整', 'JSON, support-code photo, install log/support zip, unknown keyCode')
 

@@ -359,6 +359,8 @@ require_text "scripts/tv-box-handoff.sh" "C920_ARRIVAL_CARD.html" "handoff packa
 require_text "scripts/tv-box-handoff.sh" "FIELD_RETURN_CARD.html" "handoff package generates field return card"
 require_text "scripts/tv-box-handoff.sh" "PACK_FIELD_RETURN_ON_WINDOWS.bat" "handoff package generates Windows return packer"
 require_text "scripts/tv-box-handoff.sh" "PACK_FIELD_RETURN_ON_MAC.command" "handoff package generates macOS return packer"
+require_text "scripts/tv-box-handoff.sh" "C920 预览证据数" "handoff return packer logs C920 evidence counts"
+require_text "scripts/tv-box-handoff.sh" "C920_PREVIEW_TV_SCREEN" "handoff return packer preserves C920 evidence filename guidance"
 require_text "scripts/tv-box-handoff-html-smoke.js" "checkOperationCardLinks" "handoff HTML smoke checks printable operation card"
 require_text "scripts/tv-box-handoff-html-smoke.js" "checkHardwareSelectionCardLinks" "handoff HTML smoke checks printable hardware selection card"
 require_text "scripts/tv-box-handoff-html-smoke.js" "keyCode" "handoff HTML smoke checks remote keyCode guidance"

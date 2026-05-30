@@ -88,6 +88,9 @@ require_text "$WINDOWS_RETURN_PACKER" "INSTALL_LOG.txt" "Windows return packer i
 require_text "$WINDOWS_RETURN_PACKER" "tv-box-support-latest.zip" "Windows return packer includes support bundle"
 require_text "$WINDOWS_RETURN_PACKER" "HelloTV-field-return-%STAMP%.zip" "Windows return packer uses standard archive name"
 require_text "$WINDOWS_RETURN_PACKER" "FIELD_RETURN_PACK_LOG.txt" "Windows return packer writes pack log"
+require_text "$WINDOWS_RETURN_PACKER" "C920_PREVIEW_TV_SCREEN" "Windows return packer writes C920 evidence note"
+require_text "$WINDOWS_RETURN_PACKER" "C920 预览证据数" "Windows return packer counts C920 preview evidence"
+require_text "$WINDOWS_RETURN_PACKER" "tv-box-c920-pro-acceptance-latest.md/json" "Windows return packer warns about paired C920 acceptance report"
 
 rm -rf "$RETURN_DIR"
 mkdir -p "$RETURN_DIR"
@@ -167,7 +170,17 @@ if command -v unzip >/dev/null 2>&1; then
   ZIP_LISTING="$(unzip -l "$RETURN_ZIP")"
   grep -Fq "HelloTV-field-return/RETURN_NOTE.txt" <<< "$ZIP_LISTING" || fail "return zip is missing RETURN_NOTE.txt"
   grep -Fq "HelloTV-field-return/INSTALL_LOG.txt" <<< "$ZIP_LISTING" || fail "return zip is missing INSTALL_LOG.txt"
+  PACKED_RETURN_DIR="$TMP_ROOT/packed-return"
+  mkdir -p "$PACKED_RETURN_DIR"
+  unzip -q "$RETURN_ZIP" -d "$PACKED_RETURN_DIR"
+  require_text "$PACKED_RETURN_DIR/HelloTV-field-return/RETURN_NOTE.txt" "C920_PREVIEW_TV_SCREEN" "return note includes C920 preview evidence filename"
+  require_text "$PACKED_RETURN_DIR/HelloTV-field-return/RETURN_NOTE.txt" "C920_MIC_BUSINESS_INPUT" "return note includes C920 microphone evidence filename"
+  require_text "$PACKED_RETURN_DIR/HelloTV-field-return/RETURN_NOTE.txt" "C920_HOTPLUG_RETEST" "return note includes C920 hotplug evidence filename"
+  require_text "$PACKED_RETURN_DIR/HelloTV-field-return/RETURN_NOTE.txt" "SUPPORT_CODE_C920" "return note includes C920 support-code evidence filename"
 fi
+
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "C920 证据线索数" "macOS return packer logs C920 evidence context"
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "C920 预览证据数" "macOS return packer logs C920 preview evidence count"
 
 SELFTEST_REPORT_DIR="$TMP_ROOT/reports"
 REPORT_DIR="$SELFTEST_REPORT_DIR" npm run -s tv-box:return-inbox -- "$RETURN_ZIP" >/tmp/hellotv-return-inbox-test.out 2>/tmp/hellotv-return-inbox-test.err || {
@@ -200,6 +213,30 @@ OUTPUT_ZIP="$OUTPUT_DIR/HelloTV-field-return-self-test-$STAMP.zip"
 cp "$RETURN_ZIP" "$OUTPUT_ZIP"
 cp "$RETURN_INBOX_JSON" "$OUTPUT_DIR/tv-box-return-inbox-self-test-$STAMP.json"
 
+rm -rf "$RETURN_DIR"
+mkdir -p "$RETURN_DIR"
+cat > "$RETURN_DIR/tv-box-c920-pro-acceptance-latest.json" <<'C920PARTIAL'
+{
+  "status": "needs_camera_follow_up",
+  "fieldDecision": {
+    "level": "preview_opened_needs_visual_confirmation"
+  }
+}
+C920PARTIAL
+
+"$RETURN_PACKER" >/tmp/hellotv-field-return-packer-c920-partial.out 2>/tmp/hellotv-field-return-packer-c920-partial.err || {
+  cat /tmp/hellotv-field-return-packer-c920-partial.out >&2 || true
+  cat /tmp/hellotv-field-return-packer-c920-partial.err >&2 || true
+  fail "macOS field return packer failed on partial C920 evidence"
+}
+
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "C920 证据线索数: 1" "macOS return packer detects partial C920 context"
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "提醒: C920 回传缺少 C920_PREVIEW_TV_SCREEN.jpg/mp4。" "macOS return packer warns about missing C920 preview"
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "提醒: C920 回传缺少 C920_MIC_BUSINESS_INPUT.mp4/txt。" "macOS return packer warns about missing C920 microphone"
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "提醒: C920 回传缺少 C920_HOTPLUG_RETEST.jpg/txt。" "macOS return packer warns about missing C920 hotplug"
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "提醒: C920 回传缺少 SUPPORT_CODE_C920.jpg。" "macOS return packer warns about missing C920 support-code photo"
+require_text "$HANDOFF_DIR/FIELD_RETURN_PACK_LOG.txt" "提醒: C920 回传缺少 tv-box-c920-pro-acceptance-latest.md/json 成对报告。" "macOS return packer warns about missing paired C920 report"
+
 GENERATED_AT_UTC="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 node - "$OUTPUT_JSON" "$GENERATED_AT_UTC" "$ARCHIVE_PATH" "$OUTPUT_ZIP" "$READINESS_LEVEL" "$CLOSURE_STATUS" "$FIELD_JSON_COUNT" "$SUPPORT_PHOTO_COUNT" "$INSTALL_LOG_COUNT" "$FIELD_INBOX_EXIT_CODE" <<'NODE'
 const fs = require('fs')
@@ -227,7 +264,7 @@ const report = {
     fieldJsonCount: Number(fieldJsonCount),
     supportPhotoCount: Number(supportPhotoCount),
     installLogCount: Number(installLogCount),
-    windowsPackerStaticChecks: 7
+    windowsPackerStaticChecks: 10
   },
   returnInboxExitCode: Number(returnInboxExitCode),
   checks: [
@@ -255,7 +292,7 @@ cat > "$OUTPUT_MD" <<MARKDOWN
 - 有效现场 JSON: \`$FIELD_JSON_COUNT\`
 - 维护码照片: \`$SUPPORT_PHOTO_COUNT\`
 - 安装日志: \`$INSTALL_LOG_COUNT\`
-- Windows 打包器静态保护项: \`7\`
+- Windows 打包器静态保护项: \`10\`
 - field-inbox dry-run exitCode: \`$FIELD_INBOX_EXIT_CODE\`
 
 ## 结论
