@@ -64,6 +64,7 @@ run_step "C920 confirmation card" npm run -s tv-box:c920-confirm
 run_step "C920 confirmation self-test" npm run -s tv-box:c920-confirm-test
 run_step "C920 onsite prep card" npm run -s tv-box:c920-prep
 run_step "C920 onsite prep self-test" npm run -s tv-box:c920-prep-test
+run_step "C920 arrived dry-run evidence" env C920_ARRIVED_DRY_RUN=true C920_ARRIVED_CURRENT_DATE="${TV_BOX_C920_ARRIVED_DRY_RUN_DATE:-2026-05-31}" npm run -s tv-box:c920-arrived
 run_step "ESLint" npm run lint
 run_step "Android Java verification" ./scripts/android-verify.sh
 run_step "Debug APK build" npm run build-apk-debug
