@@ -19,7 +19,8 @@ function loadEnvFile(fileName) {
 
 const envConfig = {
   ...loadEnvFile(`.env.${buildMode}`),
-  ...loadEnvFile('.env')
+  ...loadEnvFile('.env'),
+  ...process.env
 }
 
 const importMetaEnv = {
