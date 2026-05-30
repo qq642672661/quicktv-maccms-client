@@ -90,13 +90,31 @@ function boolText(value) {
   return ''
 }
 
+function isPhoneCameraText(value) {
+  return /(^|[^a-z])phone([^a-z]|$)|mobile|webrtc|手机/i.test(String(value || ''))
+}
+
+function isPhoneCameraInScope(phoneCameraChecks) {
+  const connectionInScope = [
+    env('FIELD_CAMERA_CONNECTION'),
+    env('FIELD_MICROPHONE_CONNECTION'),
+    env('FIELD_CAMERA_MODEL'),
+    env('FIELD_MICROPHONE_MODEL')
+  ].some(isPhoneCameraText)
+  const explicitPhoneResult = Object.values(phoneCameraChecks || {})
+    .some((value) => ['pass', 'fail', 'skip'].includes(value))
+  return connectionInScope || explicitPhoneResult
+}
+
 function deriveVerdict(checks, inspection, phoneCameraChecks) {
   if (env('FIELD_VERDICT')) return env('FIELD_VERDICT')
   const values = Object.values(checks)
   const phoneValues = Object.values(phoneCameraChecks || {})
+  const phoneRouteInScope = isPhoneCameraInScope(phoneCameraChecks)
   if (values.includes('fail')) return 'needs_fix'
   if (phoneValues.includes('fail')) return 'needs_fix'
   if ((inspection.deviceEvidence || {}).status !== 'selected') return 'needs_box'
+  if (phoneRouteInScope && !phoneValues.every((value) => value === 'pass')) return 'needs_manual_acceptance'
   if (values.includes('unknown')) return 'needs_manual_acceptance'
   return 'pass'
 }

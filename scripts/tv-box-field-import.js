@@ -64,6 +64,23 @@ function boolString(value, fallback = 'false') {
   return fallback
 }
 
+function isPhoneCameraText(value) {
+  return /(^|[^a-z])phone([^a-z]|$)|mobile|webrtc|手机/i.test(String(value || ''))
+}
+
+function isPhoneCameraInScope(importedEnv) {
+  const connectionInScope = [
+    importedEnv.FIELD_CAMERA_CONNECTION,
+    importedEnv.FIELD_MICROPHONE_CONNECTION,
+    importedEnv.FIELD_CAMERA_MODEL,
+    importedEnv.FIELD_MICROPHONE_MODEL
+  ].some(isPhoneCameraText)
+  const explicitPhoneResult = phoneCameraResultPrompts
+    .map(([key]) => importedEnv[key])
+    .some((value) => ['pass', 'fail', 'skip'].includes(value))
+  return connectionInScope || explicitPhoneResult
+}
+
 function shellQuote(value) {
   return `'${String(value ?? '').replace(/'/g, `'\\''`)}'`
 }
@@ -107,15 +124,22 @@ function buildEnv(record) {
 }
 
 function classify(importedEnv) {
+  const phoneCameraInScope = isPhoneCameraInScope(importedEnv)
   const failures = resultPrompts
     .filter(([key]) => importedEnv[key] === 'fail')
     .map(([, label]) => label)
   const phoneCameraFailures = phoneCameraResultPrompts
     .filter(([key]) => importedEnv[key] === 'fail')
     .map(([, label]) => label)
+  const phoneCameraOpenItems = phoneCameraInScope
+    ? phoneCameraResultPrompts
+      .filter(([key]) => !['pass', 'fail'].includes(importedEnv[key]))
+      .map(([, label]) => label)
+    : []
   const unknowns = resultPrompts
     .filter(([key]) => importedEnv[key] === 'unknown')
     .map(([, label]) => label)
+    .concat(phoneCameraOpenItems)
 
   const coreReady = importedEnv.FIELD_REMOTE_FOCUS === 'pass'
     && importedEnv.FIELD_LIVE_PLAYBACK === 'pass'
@@ -130,13 +154,22 @@ function classify(importedEnv) {
     && importedEnv.FIELD_HISTORY_RESCUE === 'pass'
   const cameraReady = importedEnv.FIELD_CAMERA_PERMISSION === 'pass'
     && importedEnv.FIELD_CAMERA_PREVIEW === 'pass'
+  const phoneCameraReady = phoneCameraInScope
+    && phoneCameraResultPrompts.every(([key]) => importedEnv[key] === 'pass')
 
   if (failures.length > 0 || phoneCameraFailures.length > 0) {
-    return { level: 'needs_fix', failures: [...failures, ...phoneCameraFailures], unknowns }
+    return { level: 'needs_fix', failures: [...failures, ...phoneCameraFailures], unknowns, phoneCameraInScope, phoneCameraReady }
   }
-  if (coreReady && helpReady && practiceReady && exitReady && rescueReady && cameraReady) return { level: 'recommended_candidate', failures, unknowns }
-  if (coreReady && helpReady && practiceReady && exitReady && rescueReady) return { level: 'tv_core_ready_candidate', failures, unknowns }
-  return { level: unknowns.length > 0 ? 'needs_manual_acceptance' : 'watch', failures, unknowns }
+  if (phoneCameraInScope && phoneCameraOpenItems.length > 0) {
+    return { level: 'needs_manual_acceptance', failures, unknowns, phoneCameraInScope, phoneCameraReady }
+  }
+  if (coreReady && helpReady && practiceReady && exitReady && rescueReady && (cameraReady || phoneCameraReady)) {
+    return { level: 'recommended_candidate', failures, unknowns, phoneCameraInScope, phoneCameraReady }
+  }
+  if (coreReady && helpReady && practiceReady && exitReady && rescueReady) {
+    return { level: 'tv_core_ready_candidate', failures, unknowns, phoneCameraInScope, phoneCameraReady }
+  }
+  return { level: unknowns.length > 0 ? 'needs_manual_acceptance' : 'watch', failures, unknowns, phoneCameraInScope, phoneCameraReady }
 }
 
 function writeOutputs(importReport) {
