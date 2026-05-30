@@ -120,16 +120,13 @@ function normalizePhoneCameraBaseUrl(value: string): string {
 }
 
 function buildSignalingUrl(phoneCameraUrl: string): string {
-  try {
-    const url = new URL(phoneCameraUrl)
-    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-    url.pathname = '/phone-camera/signaling'
-    url.search = ''
-    url.hash = ''
-    return url.toString()
-  } catch {
+  const normalized = normalizePhoneCameraBaseUrl(phoneCameraUrl)
+  const match = normalized.match(/^(https?):\/\/([^/]+)(?:\/.*)?$/i)
+  if (!match) {
     return 'wss://quicktv.local/phone-camera/signaling'
   }
+  const signalingProtocol = match[1].toLowerCase() === 'https' ? 'wss' : 'ws'
+  return `${signalingProtocol}://${match[2]}/phone-camera/signaling`
 }
 
 function regenerateRoom() {

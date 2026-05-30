@@ -16,6 +16,9 @@ SCREENSHOT_PATH="${TV_BOX_PHONE_CAMERA_PAIR_SMOKE_SCREENSHOT:-$REPORT_DIR/tv-box
 UI_XML_PATH="${TV_BOX_PHONE_CAMERA_PAIR_SMOKE_UI_XML:-$REPORT_DIR/tv-box-phone-camera-pair-smoke-latest.xml}"
 RECEIVER_SCREENSHOT_PATH="${TV_BOX_PHONE_CAMERA_RECEIVER_SMOKE_SCREENSHOT:-$REPORT_DIR/tv-box-phone-camera-receiver-smoke-latest.png}"
 RECEIVER_UI_XML_PATH="${TV_BOX_PHONE_CAMERA_RECEIVER_SMOKE_UI_XML:-$REPORT_DIR/tv-box-phone-camera-receiver-smoke-latest.xml}"
+EXPECTED_SIGNALING_HOST="${TV_BOX_PHONE_CAMERA_EXPECTED_SIGNALING_HOST:-quicktv.local}"
+REQUIRE_NATIVE_WEBRTC_ENGINE="${TV_BOX_PHONE_CAMERA_REQUIRE_NATIVE_WEBRTC_ENGINE:-false}"
+REQUIRE_SIGNALING_ROOM="${TV_BOX_PHONE_CAMERA_REQUIRE_SIGNALING_ROOM:-false}"
 BOX_TARGET=""
 adb_cmd=(adb)
 
@@ -271,7 +274,7 @@ fi
 
 require_file_text "$RECEIVER_UI_XML_PATH" "手机摄像头电视接收端" "receiver activity title"
 require_file_text "$RECEIVER_UI_XML_PATH" "$ROOM_CODE" "receiver room code handoff"
-require_file_text "$RECEIVER_UI_XML_PATH" "quicktv.local" "receiver signaling host"
+require_file_text "$RECEIVER_UI_XML_PATH" "$EXPECTED_SIGNALING_HOST" "receiver signaling host"
 require_file_text "$RECEIVER_UI_XML_PATH" "手机入口" "receiver phone entry URL"
 require_file_text "$RECEIVER_UI_XML_PATH" "信令事件" "receiver signaling state"
 require_file_text "$RECEIVER_UI_XML_PATH" "WebRTC SDK" "receiver WebRTC SDK status"
@@ -319,10 +322,10 @@ function xmlText(filePath) {
   try {
     const raw = fs.readFileSync(filePath, 'utf8')
     const values = []
-    const pattern = /text="([^"]*)"/g
+    const pattern = /\btext=(["'])([\s\S]*?)\1/g
     let match
     while ((match = pattern.exec(raw)) !== null) {
-      const value = decodeXml(match[1]).trim()
+      const value = decodeXml(match[2]).trim()
       if (value) values.push(value)
     }
     return values.join('\n')
@@ -434,6 +437,29 @@ const report = {
 fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`)
 NODE
 
+REQUIRE_NATIVE_WEBRTC_ENGINE="$REQUIRE_NATIVE_WEBRTC_ENGINE" \
+REQUIRE_SIGNALING_ROOM="$REQUIRE_SIGNALING_ROOM" \
+node - "$OUTPUT_JSON" <<'NODE'
+const fs = require('fs')
+const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
+const receiver = report.evidence.receiverShell
+const requireNativeEngine = /^(1|true|yes|y)$/i.test(process.env.REQUIRE_NATIVE_WEBRTC_ENGINE || '')
+const requireSignalingRoom = /^(1|true|yes|y)$/i.test(process.env.REQUIRE_SIGNALING_ROOM || '')
+
+function fail(message) {
+  console.error(`ERROR: ${message}`)
+  process.exit(1)
+}
+
+if (requireNativeEngine && !receiver.hasNativeMediaEngine) {
+  fail(`native WebRTC media engine was required but receiver reported sdkStatus=${receiver.sdkStatus} mediaEngineStatus=${receiver.mediaEngineStatus}`)
+}
+
+if (requireSignalingRoom && !/waiting_for_phone|phone_connected|offer_received|remote_ice_candidate|webrtc_answer|webrtc_stats/.test(receiver.state)) {
+  fail(`signaling room was required but receiver state is ${receiver.state}`)
+}
+NODE
+
 cat > "$OUTPUT_MD" <<MD
 # HelloTV 手机摄像头配对页实机冒烟
 
@@ -442,6 +468,9 @@ cat > "$OUTPUT_MD" <<MD
 - 设备: \`$DEVICE_SERIAL\`
 - 路径: \`$PAIR_ROUTE\` -> 按 1 打开原生接收端骨架
 - 房间码: \`$ROOM_CODE\`
+- 期望信令主机: \`$EXPECTED_SIGNALING_HOST\`
+- 要求原生 WebRTC 引擎: \`$REQUIRE_NATIVE_WEBRTC_ENGINE\`
+- 要求 TV 信令房间创建: \`$REQUIRE_SIGNALING_ROOM\`
 - 配对页截图: \`$SCREENSHOT_PATH\` (${SCREENSHOT_BYTES} bytes)
 - 配对页 UI XML: \`$UI_XML_PATH\` (${UI_XML_BYTES} bytes)
 - 接收端截图: \`$RECEIVER_SCREENSHOT_PATH\` (${RECEIVER_SCREENSHOT_BYTES} bytes)
